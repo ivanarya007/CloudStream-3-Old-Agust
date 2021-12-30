@@ -1,4 +1,4 @@
-package com.lagradost.cloudstream3.movieproviders
+package com.lagradost.cloudstream3.animeproviders
 
 import com.lagradost.cloudstream3.TvType
 
