@@ -14,7 +14,6 @@ import kotlin.collections.ArrayList
  */
 
 open class AnimeIDProviderTemplate : MainAPI() {
-    override val lang = "es"
     open val homePageUrlList = listOf<String>()
     open val animeidExtractorUrl: String? = null
 
