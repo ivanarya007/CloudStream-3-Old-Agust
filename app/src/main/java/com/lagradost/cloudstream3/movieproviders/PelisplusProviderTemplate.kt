@@ -48,13 +48,13 @@ open class PelisplusProviderTemplate : MainAPI() {
             val poster = fixUrl(li.selectFirst("img").attr("src"))
 
             // .text() selects all the text in the element, be careful about doing this while too high up in the html hierarchy
-            val title = li.selectFirst(".name").text()
+            val title = li.selectFirst(".name").text().replace("Temporada","")
             // Use get(0) and toIntOrNull() to prevent any possible crashes, [0] or toInt() will error the search on unexpected values.
             val year = li.selectFirst(".date")?.text()?.split("-")?.get(0)?.toIntOrNull()
 
             TvSeriesSearchResponse(
                 // .trim() removes unwanted spaces in the start and end.
-                if (!title.contains("Episode")) title else title.split("Episode")[0].trim(),
+                if (!title.contains("Capítulo")) title else title.split("Capítulo")[0].trim(),
                 href,
                 this.name,
                 TvType.TvSeries,
@@ -73,16 +73,16 @@ open class PelisplusProviderTemplate : MainAPI() {
         val html = app.get(url).text
         val soup = Jsoup.parse(html)
 
-        var title = soup.selectFirst("h1,h2,h3").text()
-        title = if (!title.contains("Episode")) title else title.split("Episode")[0].trim()
+        var title = soup.selectFirst("h1,h2,h3").text().replace(Regex("Temporada (\\d+)"),"")
+        title = if (!title.contains("Capítulo")) title else title.split("Capítulo")[0].trim()
 
         val description = soup.selectFirst(".post-entry")?.text()?.trim()
         var poster: String? = null
 
         val episodes = soup.select(".listing.items.lists > .video-block").map { li ->
             val epTitle = if (li.selectFirst(".name") != null)
-                if (li.selectFirst(".name").text().contains("Episode"))
-                    "Episode " + li.selectFirst(".name").text().split("Episode")[1].trim()
+                if (li.selectFirst(".name").text().contains("Capítulo"))
+                    "Episode " + li.selectFirst(".name").text().split("Capítulo")[1].trim()
                 else
                     li.selectFirst(".name").text()
             else ""
@@ -94,7 +94,7 @@ open class PelisplusProviderTemplate : MainAPI() {
                     ?.replace(Regex("[';]"), "")
             }
 
-            val epNum = Regex("""Episode (\d+)""").find(epTitle)?.destructured?.component1()?.toIntOrNull()
+            val epNum = Regex("""Capítulo (\d+)""").find(epTitle)?.destructured?.component1()?.toIntOrNull()
 
             TvSeriesEpisode(
                 epTitle,
@@ -160,8 +160,8 @@ open class PelisplusProviderTemplate : MainAPI() {
                 val elements = inner.select(".video-block").map {
                     val link = fixUrl(it.select("a").attr("href"))
                     val image = it.select(".picture > img").attr("src").replace("//img", "https://img")
-                    val name = it.select("div.name").text().trim().replace(Regex("""[Ee]pisode \d+"""), "")
-                    val isSeries = (name.contains("Season") || name.contains("Episode"))
+                    val name = it.select("div.name").text().trim().replace(Regex("""Temporada (\d+) [Cc]apítulo (\d+)"""), "")
+                    val isSeries = (name.contains("Season") || name.contains("Capítulo"))
 
                     if (isSeries) {
                         TvSeriesSearchResponse(
