@@ -1,4 +1,5 @@
 package com.lagradost.cloudstream3.animeproviders
+//Credits to https://github.com/ArjixWasTaken/CloudStream-3/blob/master/app/src/main/java/com/ArjixWasTaken/cloudstream3/animeproviders/CrunchyrollProvider.kt
 
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.fasterxml.jackson.annotation.JsonProperty

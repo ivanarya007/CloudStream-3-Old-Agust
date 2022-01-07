@@ -86,7 +86,7 @@ open class PelisplusProviderTemplate : MainAPI() {
                 else
                     li.selectFirst(".name").text()
             else ""
-            val epThumb = fixUrl(li.selectFirst("img").attr("src"))
+            val epThumb = null //fixUrl(li.selectFirst("img").attr("src")) every thumb is the same
             val epDate = li.selectFirst(".meta > .date").text()
 
             if (poster == null) {
