@@ -30,10 +30,11 @@ object APIHolder {
         PelisplusProvider(),
         GogoanimeProvider(),
         AllAnimeProvider(),
+        AnimeIDProvider(),
         //ShiroProvider(), // v2 fucked me
         //AnimePaheProvider(), //ddos guard
         AnimeFlickProvider(),
-
+        KrunchyProvider(),
         TenshiProvider(),
         WcoProvider(),
         // MeloMovieProvider(), // Captcha for links
