@@ -1,11 +1,11 @@
 # CloudStream-3
 
-![GitHub release](https://img.shields.io/github/v/release/LagradOst/cloudstream-3?sort=semver&style=for-the-badge)
+![GitHub release](https://img.shields.io/github/v/release/Stormunblessed/cloudstream-3?sort=semver&style=for-the-badge)
 [![Discord](https://img.shields.io/discord/737724143126052974?style=for-the-badge)](https://discord.gg/5Hus6fM)
 
 
 **DOWNLOAD:**
-https://github.com/LagradOst/CloudStream-3/releases
+https://github.com/Stormunblessed/CloudStream-3/releases
 
 
 ***Features:***
