@@ -67,6 +67,8 @@ class KrunchyProvider : MainAPI() {
         get() = false
     override val hasMainPage: Boolean
         get() = true
+    override val hasChromecastSupport: Boolean
+        get() = false
     override val lang = "es"
 
     override val supportedTypes: Set<TvType>
@@ -81,6 +83,7 @@ class KrunchyProvider : MainAPI() {
             Pair("$mainUrl/videos/anime/popular/ajax_page?pg=1", "Popular 1"),
             Pair("$mainUrl/videos/anime/popular/ajax_page?pg=2", "Popular 2"),
             Pair("$mainUrl/videos/anime/popular/ajax_page?pg=3", "Popular 3"),
+            Pair("$mainUrl/videos/anime/simulcasts/ajax_page", "Simulcasts"),
         )
 
         val items = ArrayList<HomePageList>()
@@ -213,14 +216,22 @@ class KrunchyProvider : MainAPI() {
             it.select(".episode").forEach { ep ->
                 val epTitle = ep.selectFirst(".short-desc")?.text()
                 val epNum = KrunchyProvider.episodeNumRegex.find(ep.selectFirst("span.ellipsis")?.text().toString())?.destructured?.component1()
+                var poster = ep.selectFirst("img.landscape")?.attr("data-thumbnailurl")
+                val poster2 = ep.selectFirst("img")?.attr("src")
+                if (poster == "") { poster = poster2}
 
-                val epi = AnimeEpisode(
+                var epDesc = (if (epNum == null) "" else "Episode $epNum") + (if (!seasonName.isNullOrEmpty()) " - $seasonName" else "")
+                 if (poster?.contains("widestar") == true) {
+                     epDesc = "Premium-only episode, unable to load links.\n" +
+                             "Episodio solo premium, no se pueden obtener enlaces."
+                 }
+                     val epi = AnimeEpisode(
                     fixUrl(ep.attr("href")),
                     "$epTitle",
-                    ep.selectFirst("img")?.attr("src")?.replace("wide", "full"),
+                    poster,
                     null,
                     null,
-                    (if (epNum == null) "" else "Episode $epNum") + (if (!seasonName.isNullOrEmpty()) " - $seasonName" else ""),
+                    epDesc,
                     epNum?.toIntOrNull()
                 )
                 if (seasonName == null) {
@@ -244,7 +255,7 @@ class KrunchyProvider : MainAPI() {
             TvType.Anime,
             poster,
             year,
-            hashMapOf(DubStatus.Subbed to subEpisodes.reversed()),
+            hashMapOf(DubStatus.Subbed to subEpisodes.reversed()), //hashMapOf(DubStatus.Subbed to subEpisodes.reversed(), DubStatus.Dubbed to dubEpisodes.reversed()),
             null,
             description,
             genres
@@ -292,25 +303,43 @@ class KrunchyProvider : MainAPI() {
             for (stream in json.streams) {
                 if (
                     listOf(
-                        "adaptive_hls", "adaptive_dash",
+                        "adaptive_hls","trailer_hls", "adaptive_dash",
                         "multitrack_adaptive_hls_v2",
-                        "vo_adaptive_dash", "vo_adaptive_hls"
+                        "vo_adaptive_dash", "vo_adaptive_hls",
                     ).contains(stream.format)
                 ) {
-                    if (stream.audioLang == "jaJP" && (listOf(null, "esLA").contains(stream.hardsubLang)) && listOf("m3u", "m3u8").contains(hlsHelper.absoluteExtensionDetermination(stream.url))) {
-                        stream.title = if (stream.hardsubLang == "esLA")  "SUB Español (América Latina)" else "Raw"
+                    if (stream.audioLang == "jaJP" && (listOf("esLA").contains(stream.hardsubLang)) && listOf("m3u", "m3u8").contains(hlsHelper.absoluteExtensionDetermination(stream.url))) {
+                        stream.title ="SUB Español (América Latina)"
                         streams.add(stream)
                     }
 
-                    if (stream.audioLang == "jaJP" && (listOf(null, "enUS").contains(stream.hardsubLang)) && listOf("m3u", "m3u8").contains(hlsHelper.absoluteExtensionDetermination(stream.url))) {
-                        stream.title = if (stream.hardsubLang == "enUS")  "SUB English (US)" else "Raw"
+                    if (stream.audioLang == "jaJP" && (listOf("enUS").contains(stream.hardsubLang)) && listOf("m3u", "m3u8").contains(hlsHelper.absoluteExtensionDetermination(stream.url))) {
+                        stream.title = "SUB English (US)"
                         streams.add(stream)
                     }
 
-                    if (stream.audioLang == "jaJP" && (listOf(null, "esES").contains(stream.hardsubLang)) && listOf("m3u", "m3u8").contains(hlsHelper.absoluteExtensionDetermination(stream.url))) {
-                        stream.title = if (stream.hardsubLang == "esES")  "SUB Español (España)" else "Raw"
+                    if (stream.audioLang == "jaJP" && (listOf("esES").contains(stream.hardsubLang)) && listOf("m3u", "m3u8").contains(hlsHelper.absoluteExtensionDetermination(stream.url))) {
+                        stream.title = "SUB Español (España)"
                         streams.add(stream)
                     }
+
+                //All of this removed since I just want to watch subbed anime.
+                //      if (stream.audioLang == "jaJP" && (listOf(null).contains(stream.hardsubLang)) && listOf("m3u", "m3u8").contains(hlsHelper.absoluteExtensionDetermination(stream.url))) {
+                //         stream.title = "Raw"
+                //         streams.add(stream)
+                //     }
+                //     if (stream.audioLang == "enUS" && (listOf(null).contains(stream.hardsubLang)) && listOf("m3u", "m3u8").contains(hlsHelper.absoluteExtensionDetermination(stream.url))) {
+                //         stream.title = "English (US) Dubbed"
+                //  streams.add(stream)
+                //     }
+                //    if (stream.audioLang == "esLA" && (listOf(null).contains(stream.hardsubLang)) && listOf("m3u", "m3u8").contains(hlsHelper.absoluteExtensionDetermination(stream.url))) {
+                //       stream.title = "Doblaje Latino"
+                //        streams.add(stream)
+                //    }
+                //           if (stream.audioLang == "esES" && (listOf(null).contains(stream.hardsubLang)) && listOf("m3u", "m3u8").contains(hlsHelper.absoluteExtensionDetermination(stream.url))) {
+                //                  stream.title = "Doblaje Castellano"
+                //                   streams.add(stream)
+                //}
                 }
             }
 
@@ -329,11 +358,11 @@ class KrunchyProvider : MainAPI() {
                 }
             }
 
-          //  json.streams.forEach {
-            //     subtitleCallback(
-            //          SubtitleFile(it.hardsubLang.toString(), it.url)
-            //       )
-            //   }
+            //  json.subtitles.forEach {
+            //      subtitleCallback(
+            //             SubtitleFile(it.language, it.url)
+            //        )
+            //      }
 
             return true
         }

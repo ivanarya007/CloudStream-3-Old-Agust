@@ -200,6 +200,14 @@
         <Preference
                 android:title="@string/github"
                 android:icon="@drawable/ic_github_logo"
+                app:summary="https://github.com/Stormunblessed/CloudStream-3">
+            <intent android:action="android.intent.action.VIEW"
+                    android:data="https://github.com/Stormunblessed/CloudStream-3"/>
+        </Preference>
+
+        <Preference
+                android:title="Original app"
+                android:icon="@drawable/ic_github_logo"
                 app:summary="https://github.com/LagradOst/CloudStream-3">
             <intent android:action="android.intent.action.VIEW"
                     android:data="https://github.com/LagradOst/CloudStream-3"/>

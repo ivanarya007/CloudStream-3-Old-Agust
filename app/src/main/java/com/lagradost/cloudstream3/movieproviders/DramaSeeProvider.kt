@@ -95,7 +95,7 @@ class DramaSeeProvider : MainAPI() {
 
         // Episodes Links
         val episodeList = ArrayList<TvSeriesEpisode>()
-        val eps = body?.select("ul.episodes > li.episode-item")
+        val eps = body?.select("ul.episodes > li.episode-item")?.reversed()
         //Log.i(this.name, "Result => (eps) ${eps}")
         if (!eps.isNullOrEmpty()) {
             for (ep in eps) {
