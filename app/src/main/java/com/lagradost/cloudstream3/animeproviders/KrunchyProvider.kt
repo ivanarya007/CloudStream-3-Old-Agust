@@ -80,7 +80,7 @@ class KrunchyProvider : MainAPI() {
 
     override fun getMainPage(): HomePageResponse {
         val urls = listOf(
-            Pair("$mainUrl/videos/anime/popular/ajax_page?pg=1", "Popular 1"),
+            Pair("$mainUrl/videos/anime/popular/ajax_page?pg=1", "Popular 1",),
             Pair("$mainUrl/videos/anime/popular/ajax_page?pg=2", "Popular 2"),
             Pair("$mainUrl/videos/anime/popular/ajax_page?pg=3", "Popular 3"),
             Pair("$mainUrl/videos/anime/simulcasts/ajax_page", "Simulcasts"),

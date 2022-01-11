@@ -134,6 +134,7 @@
      <string name="episodes">Capítulos</string>
      <string name="season_short">T</string>
      <string name="episode_short">C</string>
+     <string name="no_episodes_found">No se han encontrado episodios.</string>
      <string name="delete_file">Eliminar Archivo</string>
      <string name="delete">Eliminar</string>
      <string name="pause">Pausar</string>
