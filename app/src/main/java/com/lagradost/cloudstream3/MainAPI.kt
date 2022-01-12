@@ -69,7 +69,8 @@ object APIHolder {
         PinoyHDXyzProvider(),
         PinoyMoviesEsProvider(),
         TrailersTwoProvider(),
-        DramaSeeProvider()
+        DramaSeeProvider(),
+        WatchAsianProvider()
     )
 
     val restrictedApis = arrayListOf(

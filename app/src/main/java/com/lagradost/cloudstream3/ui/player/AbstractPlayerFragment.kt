@@ -13,12 +13,12 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.WindowManager
 import android.widget.Toast
 import androidx.annotation.LayoutRes
 import androidx.annotation.StringRes
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import androidx.vectordrawable.graphics.drawable.AnimatedVectorDrawableCompat
 import com.google.android.exoplayer2.ExoPlayer
 import com.google.android.exoplayer2.PlaybackException
 import com.google.android.exoplayer2.ui.AspectRatioFrameLayout
@@ -97,13 +97,27 @@ abstract class AbstractPlayerFragment(
                 player_pause_play?.setImageResource(if (isPlayingRightNow) R.drawable.play_to_pause else R.drawable.pause_to_play)
                 val drawable = player_pause_play?.drawable
 
+                var startedAnimation = false
                 if (Build.VERSION.SDK_INT > Build.VERSION_CODES.P) {
                     if (drawable is AnimatedImageDrawable) {
                         drawable.start()
+                        startedAnimation = true
                     }
                 }
+
                 if (drawable is AnimatedVectorDrawable) {
                     drawable.start()
+                    startedAnimation = true
+                }
+
+                if (drawable is AnimatedVectorDrawableCompat) {
+                    drawable.start()
+                    startedAnimation = true
+                }
+
+                // somehow the phone is wacked
+                if(!startedAnimation) {
+                    player_pause_play?.setImageResource(if (isPlayingRightNow) R.drawable.netflix_pause else R.drawable.netflix_play)
                 }
             } else {
                 player_pause_play?.setImageResource(if (isPlayingRightNow) R.drawable.netflix_pause else R.drawable.netflix_play)
@@ -111,7 +125,7 @@ abstract class AbstractPlayerFragment(
         }
 
         canEnterPipMode = isPlayingRightNow
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && isInPIPMode) {
             activity?.let { act ->
                 PlayerPipHelper.updatePIPModeActions(act, isPlayingRightNow)
             }
@@ -281,15 +295,6 @@ abstract class AbstractPlayerFragment(
         keyEventListener = null
         SubtitlesFragment.applyStyleEvent -= ::onSubStyleChanged
 
-        // simply resets brightness and notch settings that might have been overridden
-        val lp = activity?.window?.attributes
-        lp?.screenBrightness = WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            lp?.layoutInDisplayCutoutMode =
-                WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_DEFAULT
-        }
-        activity?.window?.attributes = lp
-
         super.onDestroy()
     }
 
@@ -305,19 +310,11 @@ abstract class AbstractPlayerFragment(
     fun resize(resize: PlayerResize, showToast: Boolean) {
         setKey(RESIZE_MODE_KEY, resize.ordinal)
         val type = when (resize) {
-            PlayerResize.Fill -> AspectRatioFrameLayout.RESIZE_MODE_FIT
-            PlayerResize.Fit -> AspectRatioFrameLayout.RESIZE_MODE_FILL
+            PlayerResize.Fill -> AspectRatioFrameLayout.RESIZE_MODE_FILL
+            PlayerResize.Fit -> AspectRatioFrameLayout.RESIZE_MODE_FIT
             PlayerResize.Zoom -> AspectRatioFrameLayout.RESIZE_MODE_ZOOM
         }
         player_view?.resizeMode = type
-
-        exo_play?.setOnClickListener {
-            player.handleEvent(CSPlayerEvent.Play)
-        }
-
-        exo_pause?.setOnClickListener {
-            player.handleEvent(CSPlayerEvent.Pause)
-        }
 
         if (showToast)
             showToast(activity, resize.nameRes, Toast.LENGTH_SHORT)
