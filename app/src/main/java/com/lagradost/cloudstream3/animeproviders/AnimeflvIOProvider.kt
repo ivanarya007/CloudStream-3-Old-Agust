@@ -1,77 +1,75 @@
 package com.lagradost.cloudstream3.movieproviders
 
 import com.lagradost.cloudstream3.*
-import com.lagradost.cloudstream3.extractors.Pelisplus
 
 import com.lagradost.cloudstream3.extractors.Vidstream
-import com.lagradost.cloudstream3.extractors.XStreamCdn
+
 import com.lagradost.cloudstream3.utils.ExtractorLink
 import com.lagradost.cloudstream3.utils.getQualityFromName
-import com.lagradost.cloudstream3.utils.loadExtractor
-import kotlinx.coroutines.selects.select
 import org.jsoup.Jsoup
 import java.net.URI
 import java.util.*
 
-class PelisplusProvider:MainAPI() {
+class AnimeflvIOProvider:MainAPI() {
     override val mainUrl: String
-        get() = "https://pelisplus.so"
+        get() = "https://animeflv.io"
     override val name: String
-        get() = "Pelisplus.so"
+        get() = "Animeflv.io"
     override val lang = "es"
     override val hasMainPage = true
     override val hasChromecastSupport = true
     override val hasDownloadSupport = true
     override val supportedTypes = setOf(
-        TvType.Movie,
-        TvType.TvSeries,
+        TvType.AnimeMovie,
+        TvType.ONA,
         TvType.Anime,
     )
 
-    override fun getMainPage(): HomePageResponse? {
+    override fun getMainPage(): HomePageResponse {
         val items = ArrayList<HomePageList>()
         val resp = app.get(mainUrl).text
         val soup = Jsoup.parse(resp)
         val series = app.get(mainUrl+"/series").text
         val soup2 = Jsoup.parse(series)
+        val peliculas = app.get(mainUrl+"/peliculas").text
+        val soup3 = Jsoup.parse(peliculas)
 
         items.add(HomePageList("Estrenos", soup.select("div#owl-demo-premiere-movies .pull-left").map{
             val title = it.selectFirst("p").text()
-            TvSeriesSearchResponse(
+            AnimeSearchResponse(
                 title,
                 fixUrl(it.selectFirst("a").attr("href")),
                 this.name,
-                TvType.Movie,
+                TvType.Anime,
                 it.selectFirst("img").attr("src"),
                 it.selectFirst("span.year").toString().toIntOrNull(),
-                null,
+                EnumSet.of(DubStatus.Subbed),
             )
         }))
 
-        items.add(HomePageList("Peliculas Actualizadas", soup.select(".items-peliculas .pull-left").map{
+        items.add(HomePageList("Películas", soup3.select("div.item-pelicula").map{
             val title = it.selectFirst("p").text()
-            TvSeriesSearchResponse(
+            AnimeSearchResponse(
                 title,
                 fixUrl(it.selectFirst("a").attr("href")),
                 this.name,
-                TvType.Movie,
+                TvType.Anime,
                 it.selectFirst("img").attr("src"),
-                it.selectFirst("span.year").toString().toIntOrNull(),
                 null,
+                EnumSet.of(DubStatus.Subbed),
             )
         }))
 
         items.add(HomePageList("Series actualizadas", soup2.select("div.item-pelicula").map{
-            val titleRegex = Regex("(\\d+)x(\\d+)")
             val title = it.selectFirst("p").text()
-            TvSeriesSearchResponse(
-                title.replace(titleRegex,""),
+            AnimeSearchResponse(
+                title,
                 fixUrl(it.selectFirst("a").attr("href")),
                 this.name,
-                TvType.Movie,
+                TvType.Anime,
                 it.selectFirst("img").attr("src"),
                 it.selectFirst("span.year").toString().toIntOrNull(),
-                null,
+                EnumSet.of(DubStatus.Subbed),
             )
         }))
 
@@ -82,23 +80,19 @@ class PelisplusProvider:MainAPI() {
     override fun search(query: String): List<SearchResponse> {
 
         val headers = mapOf(
-            "Host" to "pelisplus.so",
+            "Host" to "animeflv.io",
             "User-Agent" to USER_AGENT,
             "Accept" to "*/*",
-            "Accept-Language" to "en-US,en;q=0.5",
-            "Referer" to "https://pelisplus.so/",
             "X-Requested-With" to "XMLHttpRequest",
             "DNT" to "1",
             "Connection" to "keep-alive",
-            "Sec-Fetch-Dest" to "document",
-            "Sec-Fetch-Mode" to "navigate",
-            "Sec-Fetch-Site" to "same-origin",
-            "TE" to "trailers",
-            "Pragma" to "no-cache",
-            "Cache-Control" to "no-cache",
-            "Upgrade-Insecure-Requests" to "1"
+            "Referer" to "https://animeflv.io",
+            "Cookie" to "no-cookie",
+            "Sec-Fetch-Dest" to "empty",
+            "Sec-Fetch-Mode" to "cors",
+            "Sec-Fetch-Site" to "same-origin"
         )
-        val url = "https://pelisplus.so/search.html?keyword=${query}"
+        val url = "${mainUrl}/search.html?keyword=${query}"
         val html = app.get(
             url,
             headers = headers
@@ -117,19 +111,19 @@ class PelisplusProvider:MainAPI() {
                     title,
                     href,
                     this.name,
-                    TvType.Movie,
+                    TvType.AnimeMovie,
                     image,
                     year
                 )
             } else {
-                TvSeriesSearchResponse(
+                AnimeSearchResponse(
                     title,
                     href,
                     this.name,
-                    TvType.TvSeries,
+                    TvType.Anime,
                     image,
                     year,
-                    null
+                    EnumSet.of(DubStatus.Subbed),
                 )
             }
         }
@@ -146,50 +140,36 @@ class PelisplusProvider:MainAPI() {
         val poster: String? = soup.selectFirst(".poster img").attr("src")
 
         val episodes = soup.select(".item-season-episodes a").map { li ->
-            val epTitle = null
-            val epThumb = null
             val href = fixUrl(li.selectFirst("a").attr("href"))
-            val epDate = null
-
-            val epNum = null
-
-            TvSeriesEpisode(
-                epTitle,
-                null,
-                epNum,
+            AnimeEpisode(
                 href,
-                epThumb,
-                epDate
             )
         }.reversed()
 
         val year = Regex("(\\d*)").find(soup.select(".info-half").text())
 
         // Make sure to get the type right to display the correct UI.
-        val tvType = if (url.contains("/pelicula/")) TvType.Movie else TvType.TvSeries
-        val tags = soup.select(".content-type-a a")
+        val tvType = if (url.contains("/pelicula/")) TvType.AnimeMovie else TvType.Anime
+        val genre = soup.select(".content-type-a a")
             .map { it?.text()?.trim().toString().replace(", ","") }
         val duration = Regex("""(\d*)""").find(
             soup.select("p.info-half:nth-child(4)").text())
 
         return when (tvType) {
-            TvType.TvSeries -> {
-                TvSeriesLoadResponse(
-                    title,
-                    url,
-                    this.name,
-                    tvType,
-                    episodes,
-                    poster,
-                    year.toString().toIntOrNull(),
-                    description,
-                    ShowStatus.Ongoing,
-                    null,
-                    null,
-                    tags,
-                )
+            TvType.Anime -> {
+                return newAnimeLoadResponse(title, url, tvType) {
+                    japName = null
+                    engName = title
+                    posterUrl = poster
+                    this.year = null
+                    addEpisodes(DubStatus.Subbed, episodes)
+                    plot = description
+                    tags = genre
+
+                    showStatus = null
+                }
             }
-            TvType.Movie -> {
+            TvType.AnimeMovie -> {
                 MovieLoadResponse(
                     title,
                     url,
@@ -201,9 +181,8 @@ class PelisplusProvider:MainAPI() {
                     description,
                     null,
                     null,
-                    tags,
+                    genre,
                     duration.toString().toIntOrNull(),
-
                     )
             }
             else -> null
@@ -222,13 +201,12 @@ class PelisplusProvider:MainAPI() {
 
         // In this case the video player is a vidstream clone and can be handled by the vidstream extractor.
         // This case is a both unorthodox and you normally do not call extractors as they detect the url returned and does the rest.
-        val vidstreamObject = Pelisplus("https://pelisplus.icu")
+        val vidstreamObject = Vidstream("https://animeid.cc")
         // https://vidembed.cc/streaming.php?id=MzUwNTY2&... -> MzUwNTY2
         val id = Regex("""id=([^?]*)""").find(iframeLink)?.groupValues?.get(1)
 
         if (id != null) {
-            vidstreamObject.getUrl(id, isCasting, callback) &&  vidstreamObject.getUrl2(id, isCasting, callback) && vidstreamObject.getUrl3(id, isCasting, callback)
-                    &&  vidstreamObject.getUrl3(id, isCasting, callback)
+            vidstreamObject.getUrl(id, isCasting, callback)
         }
 
         val html = app.get(fixUrl(iframeLink)).text

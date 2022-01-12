@@ -833,17 +833,15 @@ class ResultFragment : Fragment() {
                 }
 
                 ACTION_PLAY_EPISODE_IN_PLAYER -> {
-                    currentEpisodes?.let { episodes ->
-                        viewModel.getGenerator(episodes.indexOf(episodeClick.data))
-                            ?.let { generator ->
-                                activity?.navigate(
-                                    R.id.global_to_navigation_player,
-                                    GeneratorPlayer.newInstance(
-                                        generator
-                                    )
+                    viewModel.getGenerator(episodeClick.data)
+                        ?.let { generator ->
+                            activity?.navigate(
+                                R.id.global_to_navigation_player,
+                                GeneratorPlayer.newInstance(
+                                    generator
                                 )
-                            }
-                    }
+                            )
+                        }
                 }
 
                 ACTION_RELOAD_EPISODE -> {
@@ -1104,7 +1102,6 @@ class ResultFragment : Fragment() {
                                 result_info?.text = getString(R.string.no_episodes_found)
                                 result_info?.isVisible = true
                             }
-
                         }
 
                         currentHeaderName = d.name

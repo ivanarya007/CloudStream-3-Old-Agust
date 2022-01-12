@@ -88,11 +88,15 @@ open class AnimeIDProviderTemplate : MainAPI() {
                 else
                     li.selectFirst(".name").text()
             else ""
-            val epThumb = li.selectFirst("img")?.attr("src")
+            var epThumb = li.selectFirst("img")?.attr("src")
             val epDate = li.selectFirst(".meta > .date").text()
 
             if (poster == null) {
                 poster = li.selectFirst("img")?.attr("onerror")?.split("=")?.get(1)?.replace(Regex("[';]"), "")
+            }
+
+            if (epThumb == null) {
+                epThumb = li.selectFirst("img")?.attr("onerrror")?.split("=")?.get(1)?.replace(Regex("[';]"), "")
             }
 
             val epNum = Regex("""Episodio (\d+)""").find(epTitle)?.destructured?.component1()?.toIntOrNull()

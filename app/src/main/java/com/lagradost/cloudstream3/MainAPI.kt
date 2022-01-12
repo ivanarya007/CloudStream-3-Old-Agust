@@ -32,6 +32,7 @@ object APIHolder {
         GogoanimeProvider(),
         AllAnimeProvider(),
         AnimeIDProvider(),
+        AnimeflvIOProvider(),
         //ShiroProvider(), // v2 fucked me
         //AnimePaheProvider(), //ddos guard
         AnimeFlickProvider(),

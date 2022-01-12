@@ -191,7 +191,7 @@ class Pelisplus(val mainUrl: String) {
 
             /** Stolen from GogoanimeProvider.kt extractor */
             normalSafeApiCall {
-                val link = getDownloadUrl2(id)
+                val link = getDownloadUrl3(id)
                 println("Generated vidstream download link: $link")
                 val page = app.get(link, referer = extractorUrl)
 
