@@ -187,7 +187,7 @@ class Pelisplus(val mainUrl: String) {
                 val source = api.getSafeUrl(url)
                 source?.forEach { callback.invoke(it) }
             }
-            val extractorUrl = getExtractorUrl2(id)
+            val extractorUrl = getExtractorUrl3(id)
 
             /** Stolen from GogoanimeProvider.kt extractor */
             normalSafeApiCall {
@@ -203,7 +203,7 @@ class Pelisplus(val mainUrl: String) {
                     val href = element.attr("href") ?: return@pmap
                     val qual = if (element.text()
                             .contains("HDP")
-                    ) "1080" else qualityRegex.find(element.text())?.destructured?.component1().toString()
+                    ) "1080" else qualityRegex.find(element.text())?.destructured?.component1().toString() + "Castellano"
 
                     val streamtest = if (qual == "null") this.name else "${this.name} - " + qual + "p"
 
@@ -235,7 +235,7 @@ class Pelisplus(val mainUrl: String) {
                     // Matches vidstream links with extractors
                     extractorApis.filter { !it.requiresReferer || !isCasting }.pmap { api ->
                         if (link.startsWith(api.mainUrl)) {
-                            val extractedLinks = api.getSafeUrl(link, extractorUrl)
+                            val extractedLinks = api.getSafeUrl(link,extractorUrl)
                             if (extractedLinks?.isNotEmpty() == true) {
                                 extractedLinks.forEach {
                                     callback.invoke(it)

@@ -282,7 +282,7 @@
     <string name="episode_action_auto_download">Auto Download</string>
     <string name="episode_action_download_mirror">Download Mirror</string>
     <string name="episode_action_reload_links">Reload Links</string>
-
+    <string name="premium_only_crunchy">Premium-only episode, unable to load links.</string>
     <string name="no_update_found">No Update Found</string>
     <string name="check_for_update">Check for Update</string>
 

@@ -13,7 +13,6 @@ import java.util.*
 
 private fun String.toAscii() = this.map { it.toInt() }.joinToString()
 
-
 class KrunchyGeoBypasser {
     companion object {
         const val BYPASS_SERVER = "https://cr-unblocker.us.to/start_session"
@@ -50,7 +49,6 @@ class KrunchyGeoBypasser {
     }
 }
 
-
 class KrunchyProvider : MainAPI() {
     companion object {
         val crUnblock = KrunchyGeoBypasser()
@@ -62,7 +60,7 @@ class KrunchyProvider : MainAPI() {
     override val mainUrl: String
         get() = "http://www.crunchyroll.com/"
     override val name: String
-        get() = "Krunchy"
+        get() = "Crunchyroll"
     override val hasQuickSearch: Boolean
         get() = false
     override val hasMainPage: Boolean
@@ -225,6 +223,7 @@ class KrunchyProvider : MainAPI() {
                      epDesc = "Premium-only episode, unable to load links.\n" +
                              "Episodio solo premium, no se pueden obtener enlaces."
                  }
+
                      val epi = AnimeEpisode(
                     fixUrl(ep.attr("href")),
                     "$epTitle",
@@ -306,6 +305,7 @@ class KrunchyProvider : MainAPI() {
                         "adaptive_hls","trailer_hls", "adaptive_dash",
                         "multitrack_adaptive_hls_v2",
                         "vo_adaptive_dash", "vo_adaptive_hls",
+                        "trailer_hls",
                     ).contains(stream.format)
                 ) {
                     if (stream.audioLang == "jaJP" && (listOf("esLA").contains(stream.hardsubLang)) && listOf("m3u", "m3u8").contains(hlsHelper.absoluteExtensionDetermination(stream.url))) {
@@ -347,8 +347,8 @@ class KrunchyProvider : MainAPI() {
                 hlsHelper.m3u8Generation(M3u8Helper.M3u8Stream(stream.url, null), false).forEach {
                     callback(
                         ExtractorLink(
-                            "Krunchyroll",
-                            "Krunchy - ${stream.title} - ${it.quality}p",
+                            "Crunchyroll",
+                            "Crunchy - ${stream.title} - ${it.quality}p",
                             it.streamUrl,
                             "",
                             getQualityFromName(it.quality.toString()),

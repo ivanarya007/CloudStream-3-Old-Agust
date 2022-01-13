@@ -135,6 +135,7 @@
      <string name="season_short">T</string>
      <string name="episode_short">C</string>
      <string name="no_episodes_found">No se han encontrado episodios.</string>
+
      <string name="delete_file">Eliminar Archivo</string>
      <string name="delete">Eliminar</string>
      <string name="pause">Pausar</string>
@@ -174,6 +175,8 @@
      <string name="episode_action_auto_download">Auto Descargar</string>
      <string name="episode_action_download_mirror">Opciones de descarga</string>
      <string name="episode_action_reload_links">Recargar links</string>
+ <string name="premium_only_crunchy">Episodio disponile solo para usuarios premium,
+  no es posible obtener links</string>
      <string name="no_update_found">No hay Actualizaciones</string>
      <string name="check_for_update">Buscar Actualización</string>
      <string name="video_lock">Fijar</string>

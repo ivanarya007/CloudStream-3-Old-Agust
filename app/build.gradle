@@ -12,7 +12,6 @@ if (allFilesFromDir != null) {
     prerelaseStoreFile = allFilesFromDir.first()
 }
 
-
 android {
     testOptions {
         unitTests.returnDefaultValues = true
