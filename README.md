@@ -2,7 +2,7 @@
 
 ![GitHub release](https://img.shields.io/github/v/release/Stormunblessed/cloudstream-3?sort=semver&style=for-the-badge)
 [![Discord](https://img.shields.io/discord/737724143126052974?style=for-the-badge)](https://discord.gg/5Hus6fM)
-[![Pre-release](https://github.com/Stormunblessed/CloudStream-3/actions/workflows/prerelease.yml/badge.svg)](https://github.com/Stormunblessed/CloudStream-3/actions/workflows/prerelease.yml)
+![Build](https://img.shields.io/github/workflow/status/stormunblessed/CloudStream-3/Pre-release?style=for-the-badge)
 
 **DOWNLOAD:**
 https://github.com/Stormunblessed/CloudStream-3/releases
