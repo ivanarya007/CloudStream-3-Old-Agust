@@ -2,7 +2,7 @@
 
 ![GitHub release](https://img.shields.io/github/v/release/Stormunblessed/cloudstream-3?sort=semver&style=for-the-badge)
 [![Discord](https://img.shields.io/discord/737724143126052974?style=for-the-badge)](https://discord.gg/5Hus6fM)
-
+![Build](https://img.shields.io/github/workflow/status/stormunblessed/CloudStream-3/Pre-release?style=for-the-badge)
 
 **DOWNLOAD:**
 https://github.com/Stormunblessed/CloudStream-3/releases
@@ -55,7 +55,6 @@ It merely scrapes 3rd-party websites that are publicly accessable via any regula
 ***Sites used:***
 <!-- Do not remove those two comments -->
 <!--SITE LIST START-->
-- [pelisplus.icu](https://pelisplus.icu) 
 - [gogoanime.wiki](https://gogoanime.wiki) 
 - [allanime.site](https://allanime.site) 
 - [animeflick.net](https://animeflick.net) 
@@ -77,5 +76,6 @@ It merely scrapes 3rd-party websites that are publicly accessable via any regula
 - [pinoy-hd.xyz](https://www.pinoy-hd.xyz) 
 - [trailers.to](https://trailers.to) 
 - [dramasee.net](https://dramasee.net) 
+- [watchasian.sh](https://watchasian.sh) 
 - [asiaflix.app](https://asiaflix.app) 
 <!--SITE LIST END-->
