@@ -95,9 +95,7 @@ open class AnimeIDProviderTemplate : MainAPI() {
                 poster = li.selectFirst("img")?.attr("onerror")?.split("=")?.get(1)?.replace(Regex("[';]"), "")
             }
 
-            if (epThumb == null) {
-                epThumb = li.selectFirst("img")?.attr("onerrror")?.split("=")?.get(1)?.replace(Regex("[';]"), "")
-            }
+            
 
             val epNum = Regex("""Episodio (\d+)""").find(epTitle)?.destructured?.component1()?.toIntOrNull()
 
