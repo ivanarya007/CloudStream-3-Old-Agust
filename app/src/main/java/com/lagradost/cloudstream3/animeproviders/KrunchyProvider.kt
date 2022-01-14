@@ -358,11 +358,11 @@ class KrunchyProvider : MainAPI() {
                 }
             }
 
-            //  json.subtitles.forEach {
-            //      subtitleCallback(
-            //             SubtitleFile(it.language, it.url)
-            //        )
-            //      }
+              json.subtitles.forEach {
+                  subtitleCallback(
+                        SubtitleFile(it.language, it.url)
+                   )
+                  }
 
             return true
         }
