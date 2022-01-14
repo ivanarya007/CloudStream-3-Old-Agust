@@ -27,15 +27,14 @@ class PelisplusProvider:MainAPI() {
         TvType.TvSeries,
         TvType.Anime,
     )
-
     override fun getMainPage(): HomePageResponse? {
         val items = ArrayList<HomePageList>()
-        val resp = app.get(mainUrl).text
-        val soup = Jsoup.parse(resp)
-        val series = app.get(mainUrl+"/series").text
-        val soup2 = Jsoup.parse(series)
+        val urls = listOf(
+            Pair("$mainUrl/series", "Series actualizadas",),
+            Pair("$mainUrl/", "Peliculas actualizadas"),
+        )
 
-        items.add(HomePageList("Estrenos", soup.select("div#owl-demo-premiere-movies .pull-left").map{
+        items.add(HomePageList("Estrenos", Jsoup.parse(app.get(mainUrl).text).select("div#owl-demo-premiere-movies .pull-left").map{
             val title = it.selectFirst("p").text()
             TvSeriesSearchResponse(
                 title,
@@ -48,32 +47,29 @@ class PelisplusProvider:MainAPI() {
             )
         }))
 
-        items.add(HomePageList("Peliculas Actualizadas", soup.select(".items-peliculas .pull-left").map{
-            val title = it.selectFirst("p").text()
-            TvSeriesSearchResponse(
-                title,
-                fixUrl(it.selectFirst("a").attr("href")),
-                this.name,
-                TvType.Movie,
-                it.selectFirst("img").attr("src"),
-                it.selectFirst("span.year").toString().toIntOrNull(),
-                null,
-            )
-        }))
+        for (i in urls) {
+            try {
+                val response = app.get(i.first)
+                val soup = Jsoup.parse(response.text)
+                val home = soup.select(".main-peliculas div.item-pelicula").map {
+                    val title = it.selectFirst(".item-detail p").text()
+                    val titleRegex = Regex("(\\d+)x(\\d+)")
+                    TvSeriesSearchResponse(
+                        title.replace(titleRegex,""),
+                        fixUrl(it.selectFirst("a").attr("href")),
+                        this.name,
+                        TvType.Movie,
+                        it.selectFirst("img").attr("src"),
+                        it.selectFirst("span.year").toString().toIntOrNull(),
+                        null,
+                    )
+                }
 
-        items.add(HomePageList("Series actualizadas", soup2.select("div.item-pelicula").map{
-            val titleRegex = Regex("(\\d+)x(\\d+)")
-            val title = it.selectFirst("p").text()
-            TvSeriesSearchResponse(
-                title.replace(titleRegex,""),
-                fixUrl(it.selectFirst("a").attr("href")),
-                this.name,
-                TvType.Movie,
-                it.selectFirst("img").attr("src"),
-                it.selectFirst("span.year").toString().toIntOrNull(),
-                null,
-            )
-        }))
+                items.add(HomePageList(i.second, home))
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
 
         if (items.size <= 0) throw ErrorLoadingException()
         return HomePageResponse(items)

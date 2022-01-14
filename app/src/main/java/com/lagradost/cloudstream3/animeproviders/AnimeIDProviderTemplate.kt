@@ -88,7 +88,7 @@ open class AnimeIDProviderTemplate : MainAPI() {
                 else
                     li.selectFirst(".name").text()
             else ""
-            var epThumb = li.selectFirst("img")?.attr("src")
+            var epThumb = li.selectFirst("ul.items li .img img")?.attr("src")
             val epDate = li.selectFirst(".meta > .date").text()
 
             if (poster == null) {
@@ -96,7 +96,7 @@ open class AnimeIDProviderTemplate : MainAPI() {
             }
 
             if (epThumb == null) {
-                epThumb = li.selectFirst("img")?.attr("onerrror")?.split("=")?.get(1)?.replace(Regex("[';]"), "")
+                epThumb = soup.selectFirst("img")?.attr("onerrror")?.split("=")?.get(1)?.replace(Regex("[';]"), "")
             }
 
             val epNum = Regex("""Episodio (\d+)""").find(epTitle)?.destructured?.component1()?.toIntOrNull()

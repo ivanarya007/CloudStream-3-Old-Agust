@@ -9,6 +9,7 @@ import com.lagradost.cloudstream3.utils.getQualityFromName
 import org.jsoup.Jsoup
 import java.net.URI
 import java.util.*
+import kotlin.collections.ArrayList
 
 class AnimeflvIOProvider:MainAPI() {
     override val mainUrl: String
@@ -27,14 +28,11 @@ class AnimeflvIOProvider:MainAPI() {
 
     override fun getMainPage(): HomePageResponse {
         val items = ArrayList<HomePageList>()
-        val resp = app.get(mainUrl).text
-        val soup = Jsoup.parse(resp)
-        val series = app.get(mainUrl+"/series").text
-        val soup2 = Jsoup.parse(series)
-        val peliculas = app.get(mainUrl+"/peliculas").text
-        val soup3 = Jsoup.parse(peliculas)
-
-        items.add(HomePageList("Estrenos", soup.select("div#owl-demo-premiere-movies .pull-left").map{
+        val urls = listOf(
+            Pair("$mainUrl/series", "Series actualizadas",),
+            Pair("$mainUrl/peliculas", "Peliculas actualizadas"),
+        )
+        items.add(HomePageList("Estrenos", Jsoup.parse(app.get(mainUrl).text).select("div#owl-demo-premiere-movies .pull-left").map{
             val title = it.selectFirst("p").text()
             AnimeSearchResponse(
                 title,
@@ -46,51 +44,44 @@ class AnimeflvIOProvider:MainAPI() {
                 EnumSet.of(DubStatus.Subbed),
             )
         }))
+        for (i in urls) {
+            try {
+                val response = app.get(i.first)
+                val soup = Jsoup.parse(response.text)
+                val home = soup.select("div.item-pelicula").map {
+                    val title = it.selectFirst(".item-detail p").text()
+                    val poster = it.selectFirst("figure img").attr("src")
+                    AnimeSearchResponse(
+                        title,
+                        fixUrl(it.selectFirst("a").attr("href")),
+                        this.name,
+                        TvType.Anime,
+                        poster,
+                        null,
+                        if (title.contains("Latino") || title.contains("Castellano")) EnumSet.of(DubStatus.Dubbed) else EnumSet.of(DubStatus.Subbed),
+                    )
+                }
 
-        items.add(HomePageList("Películas", soup3.select("div.item-pelicula").map{
-            val title = it.selectFirst("p").text()
-            AnimeSearchResponse(
-                title,
-                fixUrl(it.selectFirst("a").attr("href")),
-                this.name,
-                TvType.Anime,
-                it.selectFirst("img").attr("src"),
-                null,
-                EnumSet.of(DubStatus.Subbed),
-            )
-        }))
-
-        items.add(HomePageList("Series actualizadas", soup2.select("div.item-pelicula").map{
-            val title = it.selectFirst("p").text()
-            AnimeSearchResponse(
-                title,
-                fixUrl(it.selectFirst("a").attr("href")),
-                this.name,
-                TvType.Anime,
-                it.selectFirst("img").attr("src"),
-                it.selectFirst("span.year").toString().toIntOrNull(),
-                EnumSet.of(DubStatus.Subbed),
-            )
-        }))
+                items.add(HomePageList(i.second, home))
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
 
         if (items.size <= 0) throw ErrorLoadingException()
         return HomePageResponse(items)
     }
 
-    override fun search(query: String): List<SearchResponse> {
+    override fun search(query: String): ArrayList<SearchResponse> {
 
         val headers = mapOf(
             "Host" to "animeflv.io",
             "User-Agent" to USER_AGENT,
-            "Accept" to "*/*",
             "X-Requested-With" to "XMLHttpRequest",
             "DNT" to "1",
+            "Alt-Used" to "animeflv.io",
             "Connection" to "keep-alive",
             "Referer" to "https://animeflv.io",
-            "Cookie" to "no-cookie",
-            "Sec-Fetch-Dest" to "empty",
-            "Sec-Fetch-Mode" to "cors",
-            "Sec-Fetch-Site" to "same-origin"
         )
         val url = "${mainUrl}/search.html?keyword=${query}"
         val html = app.get(
@@ -98,13 +89,12 @@ class AnimeflvIOProvider:MainAPI() {
             headers = headers
         ).text
         val document = Jsoup.parse(html)
-
-        return document.select(".item-pelicula.pull-left").map {
+         val episodes = document.select(".item-pelicula.pull-left").map {
             val title = it.selectFirst("div.item-detail p").text()
             val href = fixUrl(it.selectFirst("a").attr("href"))
-            val year = it.selectFirst("span.year").text().toIntOrNull()
-            val image = it.selectFirst("figure img").attr("src")
+            var image = it.selectFirst("figure img").attr("src")
             val isMovie = href.contains("/pelicula/")
+             if (image.contains("/static/img/picture.png")) { image = null}
 
             if (isMovie) {
                 MovieSearchResponse(
@@ -113,7 +103,7 @@ class AnimeflvIOProvider:MainAPI() {
                     this.name,
                     TvType.AnimeMovie,
                     image,
-                    year
+                    null
                 )
             } else {
                 AnimeSearchResponse(
@@ -122,33 +112,31 @@ class AnimeflvIOProvider:MainAPI() {
                     this.name,
                     TvType.Anime,
                     image,
-                    year,
+                    null,
                     EnumSet.of(DubStatus.Subbed),
                 )
             }
         }
+        return ArrayList(episodes)
     }
 
     override fun load(url: String): LoadResponse? {
         // Gets the url returned from searching.
         val html = app.get(url).text
         val soup = Jsoup.parse(html)
-
         val title = soup.selectFirst(".info-content h1").text()
-
         val description = soup.selectFirst("span.sinopsis")?.text()?.trim()
         val poster: String? = soup.selectFirst(".poster img").attr("src")
-
         val episodes = soup.select(".item-season-episodes a").map { li ->
             val href = fixUrl(li.selectFirst("a").attr("href"))
+            val name = li.selectFirst("a").text()
             AnimeEpisode(
-                href,
+                href, name,
             )
         }.reversed()
 
         val year = Regex("(\\d*)").find(soup.select(".info-half").text())
 
-        // Make sure to get the type right to display the correct UI.
         val tvType = if (url.contains("/pelicula/")) TvType.AnimeMovie else TvType.Anime
         val genre = soup.select(".content-type-a a")
             .map { it?.text()?.trim().toString().replace(", ","") }
@@ -188,7 +176,6 @@ class AnimeflvIOProvider:MainAPI() {
             else -> null
         }
     }
-
     override fun loadLinks(
         data: String,
         isCasting: Boolean,
@@ -198,20 +185,16 @@ class AnimeflvIOProvider:MainAPI() {
     ): Boolean {
         // "?: return" is a very useful statement which returns if the iframe link isn't found.
         val iframeLink = Jsoup.parse(app.get(data).text).selectFirst(".tab-video")?.attr("data-video") ?: return false
-
         // In this case the video player is a vidstream clone and can be handled by the vidstream extractor.
         // This case is a both unorthodox and you normally do not call extractors as they detect the url returned and does the rest.
         val vidstreamObject = Vidstream("https://animeid.cc")
         // https://vidembed.cc/streaming.php?id=MzUwNTY2&... -> MzUwNTY2
         val id = Regex("""id=([^?]*)""").find(iframeLink)?.groupValues?.get(1)
-
         if (id != null) {
             vidstreamObject.getUrl(id, isCasting, callback)
         }
-
         val html = app.get(fixUrl(iframeLink)).text
         val soup = Jsoup.parse(html)
-
         val servers = soup.select(".list-server-items > .linkserver").mapNotNull { li ->
             if (!li?.attr("data-video").isNullOrEmpty()) {
                 Pair(li.text(), fixUrl(li.attr("data-video")))
@@ -226,7 +209,6 @@ class AnimeflvIOProvider:MainAPI() {
                 // Regex can be used to effectively parse small amounts of json without bothering with writing a json class.
                 val sourceRegex = Regex("""sources:[\W\w]*?file:\s*["'](.*?)["'][\W\w]*?label:\s*["'](.*?)["']""")
                 val trackRegex = Regex("""tracks:[\W\w]*?file:\s*["'](.*?)["'][\W\w]*?label:\s*["'](.*?)["']""")
-
                 // Having a referer is often required. It's a basic security check most providers have.
                 // Try to replicate what your browser does.
                 val serverHtml = app.get(it.second, headers = mapOf("referer" to iframeLink)).text

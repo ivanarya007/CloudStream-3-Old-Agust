@@ -38,6 +38,7 @@ object APIHolder {
         AnimeFlickProvider(),
         KrunchyProvider(),
         TenshiProvider(),
+        MonoschinosProvider(),
         WcoProvider(),
         // MeloMovieProvider(), // Captcha for links
         DubbedAnimeProvider(),
@@ -46,7 +47,6 @@ object APIHolder {
         VMoveeProvider(),
         WatchCartoonOnlineProvider(),
         AllMoviesForYouProvider(),
-
         VidEmbedProvider(),
         VfFilmProvider(),
         VfSerieProvider(),
