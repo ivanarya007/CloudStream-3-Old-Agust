@@ -226,8 +226,8 @@ class KrunchyProvider : MainAPI() {
 
                      val epi = AnimeEpisode(
                     fixUrl(ep.attr("href")),
-                    "$epTitle",
-                    poster,
+             "$epTitle",
+                         poster?.replace("widestar","full")?.replace("wide","full"),
                     null,
                     null,
                     epDesc,
