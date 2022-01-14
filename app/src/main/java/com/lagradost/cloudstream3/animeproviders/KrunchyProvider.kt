@@ -264,7 +264,7 @@ class KrunchyProvider : MainAPI() {
     data class Subtitles (
         @JsonProperty("language") val language : String,
         @JsonProperty("url") val url : String,
-        @JsonProperty("title") val  title : String?,
+        @JsonProperty("title") var title : String?,
         @JsonProperty("format") val format : String?
     )
 
@@ -308,22 +308,22 @@ class KrunchyProvider : MainAPI() {
                         "trailer_hls",
                     ).contains(stream.format)
                 ) {
-                    if (stream.audioLang == "jaJP" && (listOf("esLA").contains(stream.hardsubLang)) && listOf("m3u", "m3u8").contains(hlsHelper.absoluteExtensionDetermination(stream.url))) {
-                        stream.title ="SUB Español (América Latina)"
+                    if (stream.audioLang == "jaJP" && (listOf(null).contains(stream.hardsubLang)) && listOf("m3u", "m3u8").contains(hlsHelper.absoluteExtensionDetermination(stream.url))) {
+                        stream.title = "RAW"
                         streams.add(stream)
                     }
+                //Soft subtitles work, I prefer them that way
+                //       if (stream.audioLang == "jaJP" && (listOf("enUS").contains(stream.hardsubLang)) && listOf("m3u", "m3u8").contains(hlsHelper.absoluteExtensionDetermination(stream.url))) {
+                //           stream.title = "SUB English (US)"
+                //          streams.add(stream)
+                //       }
 
-                    if (stream.audioLang == "jaJP" && (listOf("enUS").contains(stream.hardsubLang)) && listOf("m3u", "m3u8").contains(hlsHelper.absoluteExtensionDetermination(stream.url))) {
-                        stream.title = "SUB English (US)"
-                        streams.add(stream)
-                    }
+                //   if (stream.audioLang == "jaJP" && (listOf("esES").contains(stream.hardsubLang)) && listOf("m3u", "m3u8").contains(hlsHelper.absoluteExtensionDetermination(stream.url))) {
+                //         stream.title = "SUB Español (España)"
+                //         streams.add(stream)
+                //     }
 
-                    if (stream.audioLang == "jaJP" && (listOf("esES").contains(stream.hardsubLang)) && listOf("m3u", "m3u8").contains(hlsHelper.absoluteExtensionDetermination(stream.url))) {
-                        stream.title = "SUB Español (España)"
-                        streams.add(stream)
-                    }
-
-                //All of this removed since I just want to watch subbed anime.
+                //
                 //      if (stream.audioLang == "jaJP" && (listOf(null).contains(stream.hardsubLang)) && listOf("m3u", "m3u8").contains(hlsHelper.absoluteExtensionDetermination(stream.url))) {
                 //         stream.title = "Raw"
                 //         streams.add(stream)
