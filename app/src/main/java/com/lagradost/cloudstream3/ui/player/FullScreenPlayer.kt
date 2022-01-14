@@ -226,7 +226,7 @@ open class FullScreenPlayer : AbstractPlayerFragment(R.layout.fragment_player) {
     private fun setPlayBackSpeed(speed: Float) {
         try {
             setKey(PLAYBACK_SPEED_KEY, speed)
-            playback_speed_btt?.text =
+            player_speed_btt?.text =
                 getString(R.string.player_speed_text_format).format(speed)
                     .replace(".0x", "x")
         } catch (e: Exception) {
@@ -989,7 +989,8 @@ open class FullScreenPlayer : AbstractPlayerFragment(R.layout.fragment_player) {
                 //    settingsManager.getBoolean(ctx.getString(R.string.use_system_brightness_key), false)
             }
 
-            playback_speed_btt?.isVisible = playBackSpeedEnabled
+            player_speed_btt?.isVisible = playBackSpeedEnabled
+            player_resize_btt?.isVisible = playerResizeEnabled
         } catch (e: Exception) {
             logError(e)
         }
@@ -1005,7 +1006,7 @@ open class FullScreenPlayer : AbstractPlayerFragment(R.layout.fragment_player) {
             nextResize()
         }
 
-        playback_speed_btt?.setOnClickListener {
+        player_speed_btt?.setOnClickListener {
             autoHide()
             showSpeedDialog()
         }
@@ -1048,6 +1049,21 @@ open class FullScreenPlayer : AbstractPlayerFragment(R.layout.fragment_player) {
             return@setOnTouchListener handleMotionEvent(callView, event)
         }
 
+        exo_progress?.setOnTouchListener { _, event ->
+            // this makes the bar not disappear when sliding
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    currentTapIndex++
+                }
+                MotionEvent.ACTION_MOVE -> {
+                    currentTapIndex++
+                }
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL, MotionEvent.ACTION_BUTTON_RELEASE -> {
+                    autoHide()
+                }
+            }
+            return@setOnTouchListener false
+        }
         // init UI
         try {
             uiReset()
