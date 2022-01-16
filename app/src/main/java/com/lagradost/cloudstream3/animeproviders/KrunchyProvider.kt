@@ -305,25 +305,29 @@ class KrunchyProvider : MainAPI() {
                         "adaptive_hls","trailer_hls", "adaptive_dash",
                         "multitrack_adaptive_hls_v2",
                         "vo_adaptive_dash", "vo_adaptive_hls",
-                        "trailer_hls",
                     ).contains(stream.format)
                 ) {
                     if (stream.audioLang == "jaJP" && (listOf(null).contains(stream.hardsubLang)) && listOf("m3u", "m3u8").contains(hlsHelper.absoluteExtensionDetermination(stream.url))) {
                         stream.title = "RAW"
                         streams.add(stream)
                     }
-                //Soft subtitles work, I prefer them that way
-                //       if (stream.audioLang == "jaJP" && (listOf("enUS").contains(stream.hardsubLang)) && listOf("m3u", "m3u8").contains(hlsHelper.absoluteExtensionDetermination(stream.url))) {
-                //           stream.title = "SUB English (US)"
-                //          streams.add(stream)
-                //       }
 
-                //   if (stream.audioLang == "jaJP" && (listOf("esES").contains(stream.hardsubLang)) && listOf("m3u", "m3u8").contains(hlsHelper.absoluteExtensionDetermination(stream.url))) {
-                //         stream.title = "SUB Español (España)"
-                //         streams.add(stream)
-                //     }
+                    if (stream.audioLang == "jaJP" && (listOf("enUS").contains(stream.hardsubLang)) && listOf("m3u", "m3u8").contains(hlsHelper.absoluteExtensionDetermination(stream.url))) {
+                          stream.title = "Hardsub (US)"
+                          streams.add(stream)
+                     }
 
-                //
+                   if (stream.audioLang == "jaJP" && (listOf("esES").contains(stream.hardsubLang)) && listOf("m3u", "m3u8").contains(hlsHelper.absoluteExtensionDetermination(stream.url))) {
+                       stream.title = "Hardsub (España)"
+                       streams.add(stream)
+                     }
+
+                    if (stream.audioLang == "jaJP" && (listOf("esLA").contains(stream.hardsubLang)) && listOf("m3u", "m3u8").contains(hlsHelper.absoluteExtensionDetermination(stream.url))) {
+                        stream.title = "Hardsub(Latino)"
+                        streams.add(stream)
+                    }
+
+
                 //      if (stream.audioLang == "jaJP" && (listOf(null).contains(stream.hardsubLang)) && listOf("m3u", "m3u8").contains(hlsHelper.absoluteExtensionDetermination(stream.url))) {
                 //         stream.title = "Raw"
                 //         streams.add(stream)

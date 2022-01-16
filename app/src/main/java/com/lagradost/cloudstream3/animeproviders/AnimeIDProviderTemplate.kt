@@ -239,8 +239,6 @@ open class AnimeIDProviderTemplate : MainAPI() {
                 // Group 1: link, Group 2: Label
                 // Regex can be used to effectively parse small amounts of json without bothering with writing a json class.
                 val sourceRegex = Regex("""sources:[\W\w]*?file:\s*["'](.*?)["'][\W\w]*?label:\s*["'](.*?)["']""")
-                val trackRegex = Regex("""tracks:[\W\w]*?file:\s*["'](.*?)["'][\W\w]*?label:\s*["'](.*?)["']""")
-
                 // Having a referer is often required. It's a basic security check most providers have.
                 // Try to replicate what your browser does.
                 val serverHtml = app.get(it.second, headers = mapOf("referer" to iframeLink)).text
@@ -260,14 +258,7 @@ open class AnimeIDProviderTemplate : MainAPI() {
                         )
                     )
                 }
-                trackRegex.findAll(serverHtml).forEach { match ->
-                    subtitleCallback.invoke(
-                        SubtitleFile(
-                            match.groupValues.getOrNull(2) ?: "Unknown",
-                            match.groupValues[1]
-                        )
-                    )
-                }
+
             }
         }
 

@@ -38,7 +38,7 @@ object APIHolder {
         AnimeFlickProvider(),
         KrunchyProvider(),
         TenshiProvider(),
-        MonoschinosProvider(),
+        //MonoschinosProvider(), //still testing
         WcoProvider(),
         // MeloMovieProvider(), // Captcha for links
         DubbedAnimeProvider(),

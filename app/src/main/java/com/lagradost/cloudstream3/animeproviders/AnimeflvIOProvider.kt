@@ -208,9 +208,7 @@ class AnimeflvIOProvider:MainAPI() {
                 // Group 1: link, Group 2: Label
                 // Regex can be used to effectively parse small amounts of json without bothering with writing a json class.
                 val sourceRegex = Regex("""sources:[\W\w]*?file:\s*["'](.*?)["'][\W\w]*?label:\s*["'](.*?)["']""")
-                val trackRegex = Regex("""tracks:[\W\w]*?file:\s*["'](.*?)["'][\W\w]*?label:\s*["'](.*?)["']""")
-                // Having a referer is often required. It's a basic security check most providers have.
-                // Try to replicate what your browser does.
+
                 val serverHtml = app.get(it.second, headers = mapOf("referer" to iframeLink)).text
                 sourceRegex.findAll(serverHtml).forEach { match ->
                     callback.invoke(
@@ -225,14 +223,6 @@ class AnimeflvIOProvider:MainAPI() {
                             // isM3u8 makes the player pick the correct extractor for the source.
                             // If isM3u8 is wrong the player will error on that source.
                             URI(match.groupValues[1]).path.endsWith(".m3u8"),
-                        )
-                    )
-                }
-                trackRegex.findAll(serverHtml).forEach { match ->
-                    subtitleCallback.invoke(
-                        SubtitleFile(
-                            match.groupValues.getOrNull(2) ?: "Unknown",
-                            match.groupValues[1]
                         )
                     )
                 }

@@ -140,13 +140,11 @@ class PelisplusProvider:MainAPI() {
 
         val description = soup.selectFirst("span.sinopsis")?.text()?.trim()
         val poster: String? = soup.selectFirst(".poster img").attr("src")
-
         val episodes = soup.select(".item-season-episodes a").map { li ->
-            val epTitle = null
+            val epTitle = li.selectFirst("a").text()
             val epThumb = null
             val href = fixUrl(li.selectFirst("a").attr("href"))
             val epDate = null
-
             val epNum = null
 
             TvSeriesEpisode(
@@ -243,7 +241,6 @@ class PelisplusProvider:MainAPI() {
                 // Group 1: link, Group 2: Label
                 // Regex can be used to effectively parse small amounts of json without bothering with writing a json class.
                 val sourceRegex = Regex("""sources:[\W\w]*?file:\s*["'](.*?)["'][\W\w]*?label:\s*["'](.*?)["']""")
-                val trackRegex = Regex("""tracks:[\W\w]*?file:\s*["'](.*?)["'][\W\w]*?label:\s*["'](.*?)["']""")
 
                 // Having a referer is often required. It's a basic security check most providers have.
                 // Try to replicate what your browser does.
@@ -264,14 +261,7 @@ class PelisplusProvider:MainAPI() {
                         )
                     )
                 }
-                trackRegex.findAll(serverHtml).forEach { match ->
-                    subtitleCallback.invoke(
-                        SubtitleFile(
-                            match.groupValues.getOrNull(2) ?: "Unknown",
-                            match.groupValues[1]
-                        )
-                    )
-                }
+
             }
         }
 
