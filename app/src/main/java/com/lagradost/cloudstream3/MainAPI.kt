@@ -28,7 +28,6 @@ object APIHolder {
     private const val defProvider = 0
 
     val apis = arrayListOf(
-        PelisplusProvider(),
         GogoanimeProvider(),
         AllAnimeProvider(),
         AnimeIDProvider(),
@@ -44,6 +43,8 @@ object APIHolder {
         DubbedAnimeProvider(),
         IHaveNoTvProvider(), // Documentaries provider
         //LookMovieProvider(), // RECAPTCHA (Please allow up to 5 seconds...)
+        PelisplusHDProvider(),
+        PelisplusProvider(),
         VMoveeProvider(),
         WatchCartoonOnlineProvider(),
         AllMoviesForYouProvider(),
@@ -51,7 +52,6 @@ object APIHolder {
         VfFilmProvider(),
         VfSerieProvider(),
         FrenchStreamProvider(),
-
         AsianLoadProvider(),
 
         SflixProvider("https://sflix.to", "Sflix"),
