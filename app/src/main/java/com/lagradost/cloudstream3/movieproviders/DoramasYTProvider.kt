@@ -11,45 +11,45 @@ import kotlin.collections.ArrayList
 
 
 
-class MonoschinosProvider:MainAPI() {
+class DoramasYTProvider:MainAPI() {
 
     companion object {
         fun getType(t: String): TvType {
             return if (t.contains("OVA") || t.contains("Especial")) TvType.ONA
-            else if (t.contains("Pelicula")) TvType.AnimeMovie
-            else TvType.Anime
+            else if (t.contains("Pelicula")) TvType.Movie
+            else TvType.TvSeries
         }
     }
 
     override val mainUrl: String
-        get() = "https://monoschinos2.com"
+        get() = "https://doramasyt.com"
     override val name: String
-        get() = "Monoschinos"
+        get() = "DoramasYT"
     override val lang = "es"
     override val hasMainPage = true
     override val hasChromecastSupport = true
     override val hasDownloadSupport = true
     override val supportedTypes = setOf(
-        TvType.AnimeMovie,
-        TvType.ONA,
-        TvType.Anime,
+        TvType.TvSeries,
+        TvType.Movie,
     )
 
     override suspend fun getMainPage(): HomePageResponse {
         val urls = listOf(
             Pair("$mainUrl/emision", "En emisión"),
-            Pair("$mainUrl/animes?categoria=pelicula&genero=false&fecha=false&letra=false", "Peliculas"),
-            Pair("$mainUrl/animes", "Animes"),
+            Pair("$mainUrl/doramas?categoria=pelicula&genero=false&fecha=false&letra=false", "Peliculas"),
+            Pair("$mainUrl/doramas", "Doramas"),
+            Pair("$mainUrl/doramas?categoria=live-action&genero=false&fecha=false&letra=false", "Live Action"),
         )
 
         val items = ArrayList<HomePageList>()
 
         items.add(HomePageList("Capítulos actualizados", Jsoup.parse(app.get(mainUrl, timeout = 120).text).select(".col-6").map{
-            val title = it.selectFirst("p.animetitles").text()
-            val poster = it.selectFirst(".animeimghv").attr("data-src")
+            val title = it.selectFirst("p").text()
+            val poster = it.selectFirst(".chapter img").attr("src")
             val epRegex = Regex("episodio-(\\d+)")
-            val url = it.selectFirst("a").attr("href").replace("ver/","anime/").replace(epRegex,"sub-espanol")
-            val epNum = it.selectFirst(".positioning h5").text().toIntOrNull()
+            val url = it.selectFirst("a").attr("href").replace("ver/","dorama/").replace(epRegex,"sub-espanol")
+            val epNum = it.selectFirst("h3").text().toIntOrNull()
             AnimeSearchResponse(
                 title,
                 url,
@@ -65,17 +65,16 @@ class MonoschinosProvider:MainAPI() {
 
         for (i in urls) {
             try {
-
                 val soup = Jsoup.parse(app.get(i.first, timeout = 120).text)
                 val home = soup.select(".col-6").map {
-                    val title = it.selectFirst(".seristitles").text()
-                    val poster = it.selectFirst("img.animemainimg").attr("src")
+                    val title = it.selectFirst(".animedtls p").text()
+                    val poster = it.selectFirst(".anithumb img").attr("src")
                     AnimeSearchResponse(
                         title,
-                        fixUrl(it.selectFirst("a").attr("href")),
+                        it.selectFirst("a").attr("href"),
                         this.name,
                         TvType.Anime,
-                        fixUrl(poster),
+                        poster,
                         null,
                         if (title.contains("Latino") || title.contains("Castellano")) EnumSet.of(DubStatus.Dubbed) else EnumSet.of(DubStatus.Subbed),
                     )
@@ -93,15 +92,15 @@ class MonoschinosProvider:MainAPI() {
 
     override suspend fun search(query: String): ArrayList<SearchResponse> {
         val search = Jsoup.parse(app.get("$mainUrl/buscar?q=$query", timeout = 120).text).select(".col-6").map {
-            val title = it.selectFirst(".seristitles").text()
-            val href = fixUrl(it.selectFirst("a").attr("href"))
-            val image = it.selectFirst("img.animemainimg").attr("src")
+            val title = it.selectFirst(".animedtls p").text()
+            val href = it.selectFirst("a").attr("href")
+            val image = it.selectFirst(".animes img").attr("src")
             AnimeSearchResponse(
                 title,
                 href,
                 this.name,
                 TvType.Anime,
-                fixUrl(image),
+                image,
                 null,
                 if (title.contains("Latino") || title.contains("Castellano")) EnumSet.of(DubStatus.Dubbed) else EnumSet.of(DubStatus.Subbed),
             )
@@ -110,35 +109,32 @@ class MonoschinosProvider:MainAPI() {
     }
     override suspend fun load(url: String): LoadResponse {
         val doc = Jsoup.parse(app.get(url, timeout = 120).text)
-        val poster = doc.selectFirst(".chapterpic img").attr("src")
-        val title = doc.selectFirst(".chapterdetails h1").text()
-        val type = doc.selectFirst(".activecrumb a").text()
-        val year = doc.selectFirst(".btn2").text().toIntOrNull()
+        val poster = doc.selectFirst("div.flimimg img.img1").attr("src")
+        val title = doc.selectFirst("h1").text()
+        val type = doc.selectFirst("h4").text()
         val description = doc.selectFirst("p.textComplete").text().replace("Ver menos","")
-        val genres = doc.select(".breadcrumb-item a").map { it.text() }
-        val status = when (doc.selectFirst("btn1")?.text()) {
+        val genres = doc.select(".nobel a").map { it.text() }
+        val status = when (doc.selectFirst(".state h6")?.text()) {
             "Estreno" -> ShowStatus.Ongoing
             "Finalizado" -> ShowStatus.Completed
             else -> null
         }
-        val rat = doc.select(".chapterpic p").toString().toIntOrNull()
-        val episodes = doc.select("div.col-item").map {
-            val name = it.selectFirst("p.animetitles").text()
+        val episodes = doc.select(".heromain .col-item").map {
+            val name = it.selectFirst(".dtlsflim p").text()
             val link = it.selectFirst("a").attr("href")
-            val epThumb = it.selectFirst("img.animeimghv").attr("data-src")
-            AnimeEpisode(link, name, posterUrl = epThumb)
+           // val epThumb = it.selectFirst(".flimimg img.img1").attr("src") faster loading time?
+            AnimeEpisode(link, name, posterUrl = null)
         }
         return newAnimeLoadResponse(title, url, getType(type)) {
             posterUrl = poster
-            this.year = year
+            this.year = null
             addEpisodes(DubStatus.Subbed, episodes)
             showStatus = status
             plot = description
             tags = genres
-            rating = rat
+            rating = null
         }
     }
-
     override suspend fun loadLinks(
         data: String,
         isCasting: Boolean,
@@ -148,7 +144,7 @@ class MonoschinosProvider:MainAPI() {
         Jsoup.parse(app.get(data).text).select("div.playother p").forEach {
             val encodedurl = it.select("p").attr("data-player")
             val urlDecoded = Base64.decode(encodedurl, Base64.DEFAULT)
-            val url = String(urlDecoded).replace("https://monoschinos2.com/reproductor?url=", "")
+            val url = String(urlDecoded).replace("https://doramasyt.com/reproductor?url=", "")
             if (url.startsWith("https://www.fembed.com")) {
                 val extractor = FEmbed()
                 extractor.getUrl(url).forEach { link ->

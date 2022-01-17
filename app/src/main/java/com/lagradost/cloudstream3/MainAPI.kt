@@ -41,6 +41,7 @@ object APIHolder {
         AnimeflvIOProvider(),
         AsianLoadProvider(),
         DramaSeeProvider(),
+        DoramasYTProvider(),
         DubbedAnimeProvider(),
         FilmanProvider(),
         FrenchStreamProvider(),
@@ -48,6 +49,7 @@ object APIHolder {
         IHaveNoTvProvider(), // Documentaries provider
         KdramaHoodProvider(),
         KrunchyProvider(),
+        MonoschinosProvider(),
         PelisplusHDProvider(),
         PelisplusProvider(),
         PinoyHDXyzProvider(),
