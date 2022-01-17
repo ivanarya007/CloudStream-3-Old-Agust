@@ -26,7 +26,7 @@ class AnimeflvIOProvider:MainAPI() {
         TvType.Anime,
     )
 
-    override fun getMainPage(): HomePageResponse {
+    override suspend fun getMainPage(): HomePageResponse {
         val items = ArrayList<HomePageList>()
         val urls = listOf(
             Pair("$mainUrl/series", "Series actualizadas",),
@@ -72,7 +72,7 @@ class AnimeflvIOProvider:MainAPI() {
         return HomePageResponse(items)
     }
 
-    override fun search(query: String): ArrayList<SearchResponse> {
+    override suspend fun search(query: String): ArrayList<SearchResponse> {
 
         val headers = mapOf(
             "Host" to "animeflv.io",
@@ -120,7 +120,7 @@ class AnimeflvIOProvider:MainAPI() {
         return ArrayList(episodes)
     }
 
-    override fun load(url: String): LoadResponse? {
+    override suspend fun load(url: String): LoadResponse? {
         // Gets the url returned from searching.
         val html = app.get(url).text
         val soup = Jsoup.parse(html)
@@ -176,7 +176,7 @@ class AnimeflvIOProvider:MainAPI() {
             else -> null
         }
     }
-    override fun loadLinks(
+    override suspend fun loadLinks(
         data: String,
         isCasting: Boolean,
         // These callbacks are functions you should call when you get a link to a subtitle file or media file.

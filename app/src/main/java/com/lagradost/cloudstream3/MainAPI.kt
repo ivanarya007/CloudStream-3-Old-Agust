@@ -28,47 +28,43 @@ object APIHolder {
     private const val defProvider = 0
 
     val apis = arrayListOf(
-        PelisplusProvider(),
-        PelisplusHDProvider(),
-        GogoanimeProvider(),
+// MeloMovieProvider(), // Captcha for links
+//AnimePaheProvider(), //ddos guard
+//LookMovieProvider(), // RECAPTCHA (Please allow up to 5 seconds...)
+//ShiroProvider(), // v2 fucked me
+//TmdbProvider(),
+        AkwamProvider(),
         AllAnimeProvider(),
-        //ShiroProvider(), // v2 fucked me
-        //AnimePaheProvider(), //ddos guard
-        AnimeFlickProvider(),
-
-        TenshiProvider(),
-        WcoProvider(),
-        // MeloMovieProvider(), // Captcha for links
-        DubbedAnimeProvider(),
-        IHaveNoTvProvider(), // Documentaries provider
-        //LookMovieProvider(), // RECAPTCHA (Please allow up to 5 seconds...)
-        VMoveeProvider(),
-        WatchCartoonOnlineProvider(),
         AllMoviesForYouProvider(),
-
-        VidEmbedProvider(),
+        AnimeFlickProvider(),
+        AnimeIDProvider(),
+        AnimeflvIOProvider(),
+        AsianLoadProvider(),
+        DramaSeeProvider(),
+        DubbedAnimeProvider(),
+        FilmanProvider(),
+        FrenchStreamProvider(),
+        GogoanimeProvider(),
+        IHaveNoTvProvider(), // Documentaries provider
+        KdramaHoodProvider(),
+        KrunchyProvider(),
+        PelisplusHDProvider(),
+        PelisplusProvider(),
+        PinoyHDXyzProvider(),
+        PinoyMoviePediaProvider(),
+        PinoyMoviesEsProvider(),
+        SflixProvider("https://dopebox.to", "Dopebox"),
+        SflixProvider("https://sflix.to", "Sflix"),
+        TenshiProvider(),
+        TrailersTwoProvider(),
+        VMoveeProvider(),
         VfFilmProvider(),
         VfSerieProvider(),
-        FrenchStreamProvider(),
-
-        AsianLoadProvider(),
-
-        SflixProvider("https://sflix.to", "Sflix"),
-        SflixProvider("https://dopebox.to", "Dopebox"),
-
-        //TmdbProvider(),
-
-        FilmanProvider(),
-
-        ZoroProvider(),
-        PinoyMoviePediaProvider(),
-        PinoyHDXyzProvider(),
-        PinoyMoviesEsProvider(),
-        TrailersTwoProvider(),
-        DramaSeeProvider(),
+        VidEmbedProvider(),
         WatchAsianProvider(),
-        KdramaHoodProvider(),
-        AkwamProvider()
+        WatchCartoonOnlineProvider(),
+        WcoProvider(),
+        ZoroProvider(),
     )
 
     val restrictedApis = arrayListOf(

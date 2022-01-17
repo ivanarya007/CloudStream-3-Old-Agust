@@ -58,6 +58,7 @@ object SubtitleHelper {
                 ) return it.ISO_639_1
             }
 
+
         return null
     }
 
@@ -153,8 +154,6 @@ object SubtitleHelper {
         Language639("Dutch", "Nederlands, Vlaams", "nl", "nld", "", "nld", ""),
         Language639("Dzongkha", "རྫོང་ཁ", "dz", "dzo", "dzo", "dzo", ""),
         Language639("English", "English", "en", "eng", "eng", "eng", "engs"),
-        Language639("enUS", "English", "", "eng", "eng", "eng", "engs"),
-        Language639("esLA", "Español", "es", "spa", "spa", "spa", ""),
         Language639("Esperanto", "Esperanto", "eo", "epo", "epo", "epo", ""),
         Language639("Estonian", "eesti, eesti keel", "et", "est", "est", "est", ""),
         Language639("Ewe", "Eʋegbe", "ee", "ewe", "ewe", "ewe", ""),
@@ -308,4 +307,5 @@ object SubtitleHelper {
         Language639("Zhuang", "Saɯ cueŋƅ, Saw cuengh", "za", "zha", "zha", "zha", ""),
         Language639("Zulu", "isiZulu", "zu", "zul", "zul", "zul", ""),
     )
+
 }

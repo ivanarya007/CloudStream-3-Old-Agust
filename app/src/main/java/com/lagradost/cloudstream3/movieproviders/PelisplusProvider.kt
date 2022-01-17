@@ -27,7 +27,7 @@ class PelisplusProvider:MainAPI() {
         TvType.TvSeries,
         TvType.Anime,
     )
-    override fun getMainPage(): HomePageResponse? {
+    override suspend fun getMainPage(): HomePageResponse? {
         val items = ArrayList<HomePageList>()
         val urls = listOf(
             Pair("$mainUrl/series", "Series actualizadas",),
@@ -75,7 +75,7 @@ class PelisplusProvider:MainAPI() {
         return HomePageResponse(items)
     }
 
-    override fun search(query: String): List<SearchResponse> {
+    override suspend fun search(query: String): List<SearchResponse> {
 
         val headers = mapOf(
             "Host" to "pelisplus.so",
@@ -131,7 +131,7 @@ class PelisplusProvider:MainAPI() {
         }
     }
 
-    override fun load(url: String): LoadResponse? {
+    override suspend fun load(url: String): LoadResponse? {
         // Gets the url returned from searching.
         val html = app.get(url).text
         val soup = Jsoup.parse(html)
@@ -204,7 +204,7 @@ class PelisplusProvider:MainAPI() {
         }
     }
 
-    override fun loadLinks(
+    override suspend fun loadLinks(
         data: String,
         isCasting: Boolean,
         // These callbacks are functions you should call when you get a link to a subtitle file or media file.

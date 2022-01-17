@@ -29,7 +29,7 @@ class MonoschinosProvider:MainAPI() {
         TvType.Anime,
     )
 
-    override fun getMainPage(): HomePageResponse {
+    override suspend fun getMainPage(): HomePageResponse {
         val urls = listOf(
             Pair("$mainUrl/emision", "En emisión"),
             Pair("$mainUrl/animes?categoria=pelicula&genero=false&fecha=false&letra=false", "Peliculas"),
@@ -86,7 +86,7 @@ class MonoschinosProvider:MainAPI() {
         return HomePageResponse(items)
     }
 
-    override fun search(query: String): ArrayList<SearchResponse> {
+    override suspend fun search(query: String): ArrayList<SearchResponse> {
         val url = "${mainUrl}/buscar?q=${query}"
         val html = app.get(url).text
         val document = Jsoup.parse(html)
@@ -106,7 +106,7 @@ class MonoschinosProvider:MainAPI() {
         }
         return ArrayList(episodes)
     }
-    override fun load(url: String): LoadResponse {
+    override suspend fun load(url: String): LoadResponse {
         val html = app.get(url).text
         val doc = Jsoup.parse(html)
 
