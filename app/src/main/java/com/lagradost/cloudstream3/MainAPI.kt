@@ -28,30 +28,29 @@ object APIHolder {
     private const val defProvider = 0
 
     val apis = arrayListOf(
+        PelisplusProvider(),
+        PelisplusHDProvider(),
         GogoanimeProvider(),
         AllAnimeProvider(),
-        AnimeIDProvider(),
-        AnimeflvIOProvider(),
         //ShiroProvider(), // v2 fucked me
         //AnimePaheProvider(), //ddos guard
         AnimeFlickProvider(),
-        KrunchyProvider(),
+
         TenshiProvider(),
-        //MonoschinosProvider(), //still testing
         WcoProvider(),
         // MeloMovieProvider(), // Captcha for links
         DubbedAnimeProvider(),
         IHaveNoTvProvider(), // Documentaries provider
         //LookMovieProvider(), // RECAPTCHA (Please allow up to 5 seconds...)
-        PelisplusHDProvider(),
-        PelisplusProvider(),
         VMoveeProvider(),
         WatchCartoonOnlineProvider(),
         AllMoviesForYouProvider(),
+
         VidEmbedProvider(),
         VfFilmProvider(),
         VfSerieProvider(),
         FrenchStreamProvider(),
+
         AsianLoadProvider(),
 
         SflixProvider("https://sflix.to", "Sflix"),
@@ -232,24 +231,24 @@ abstract class MainAPI {
     open val vpnStatus = VPNStatus.None
     open val providerType = ProviderType.DirectProvider
 
-    open fun getMainPage(): HomePageResponse? {
+    suspend open fun getMainPage(): HomePageResponse? {
         throw NotImplementedError()
     }
 
-    open fun search(query: String): List<SearchResponse>? {
+    suspend open fun search(query: String): List<SearchResponse>? {
         throw NotImplementedError()
     }
 
-    open fun quickSearch(query: String): List<SearchResponse>? {
+    suspend open fun quickSearch(query: String): List<SearchResponse>? {
         throw NotImplementedError()
     }
 
-    open fun load(url: String): LoadResponse? {
+    suspend open fun load(url: String): LoadResponse? {
         throw NotImplementedError()
     }
 
     /**Callback is fired once a link is found, will return true if method is executed successfully*/
-    open fun loadLinks(
+    suspend open fun loadLinks(
         data: String,
         isCasting: Boolean,
         subtitleCallback: (SubtitleFile) -> Unit,
@@ -477,7 +476,7 @@ fun LoadResponse?.isAnimeBased(): Boolean {
 
 fun TvType?.isEpisodeBased(): Boolean {
     if (this == null) return false
-    return (this == TvType.TvSeries || this == TvType.Anime || this == TvType.ONA)
+    return (this == TvType.TvSeries || this == TvType.Anime)
 }
 
 data class AnimeEpisode(

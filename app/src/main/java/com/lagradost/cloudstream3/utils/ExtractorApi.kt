@@ -103,7 +103,7 @@ val extractorApis: Array<ExtractorApi> = arrayOf(
     Fplayer(),
     WatchSB(),
     Uqload(),
-    Uqload(),
+    Uqload1(),
     Evoload(),
     VoeExtractor(),
     UpstreamExtractor(),

@@ -19,7 +19,6 @@ class SBPlay2 : SBPlay() {
 
 class SBPlay3 : SBPlay() {
     override val mainUrl = "https://pelistop.co"
-    override val name = "PlusTo"
 }
 
 open class SBPlay : ExtractorApi() {
