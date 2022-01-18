@@ -1,5 +1,6 @@
 package com.lagradost.cloudstream3.movieproviders
 
+
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.extractors.FeHD
 import com.lagradost.cloudstream3.extractors.Pelisplus
@@ -217,12 +218,13 @@ class PelisplusSOProvider:MainAPI() {
         if (id != null) {
             vidstreamObject.getUrl(id, isCasting, callback) &&  vidstreamObject.getUrl2(id, isCasting, callback ) &&  vidstreamObject.getUrl3(id, isCasting, callback)
         }
+
         val html = app.get(data).document
         val selector = html.selectFirst(".server-item-1").toString()
         val episodeRegex = Regex("""(https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))""")
         val links = episodeRegex.findAll(selector).map {
-            it.value.replace("https://pelispng.online/v/","https://www.fembed.com/v/").replace("https://dood.ws","https://dood.la")
-        }.toList()
+            it.value.replace("https://pelispng.online/v/","https://fplayer.info/v/").replace("https://dood.ws","https://dood.la")
+                .replace("https://fembed-hd.com","https://embedsito.com")     }.toList()
         for (link in links) {
             for (extractor in extractorApis) {
                 if (link.startsWith(extractor.mainUrl)) {
@@ -235,8 +237,8 @@ class PelisplusSOProvider:MainAPI() {
         }
         val selector2 = html.selectFirst(".server-item-0").toString()
         val linkssub = episodeRegex.findAll(selector2).map {
-            it.value.replace("https://pelispng.online/v/","https://www.fembed.com/v/").replace("https://dood.ws","https://dood.la")
-        }.toList()
+            it.value.replace("https://pelispng.online/v/","https://fplayer.info/v/").replace("https://dood.ws","https://dood.la")
+                .replace("https://fembed-hd.com","https://embedsito.com")      }.toList()
         for (link in linkssub) {
             for (extractor in extractorApis) {
                 if (link.startsWith(extractor.mainUrl)) {
@@ -249,7 +251,8 @@ class PelisplusSOProvider:MainAPI() {
         }
         val selector3 = html.selectFirst(".server-item-2").toString()
         val linkscast = episodeRegex.findAll(selector3).map {
-            it.value.replace("https://pelispng.online/v/","https://www.fembed.com/v/").replace("https://dood.ws","https://dood.la")
+            it.value.replace("https://pelispng.online/v/","https://fplayer.info/v/").replace("https://dood.ws","https://dood.la")
+                .replace("https://fembed-hd.com","https://embedsito.com")
         }.toList()
         for (link in linkscast) {
             for (extractor in extractorApis) {
