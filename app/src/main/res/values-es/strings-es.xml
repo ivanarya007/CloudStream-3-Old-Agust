@@ -201,7 +201,7 @@
      <string name="app_layout">Orientación de la app</string>
      <string name="automatic">Automática</string>
      <string name="tv_layout">De TV</string>
-     <string name="phone_layout">De Celullar</string>
+     <string name="phone_layout">De Celular</string>
      <string name="preferred_media_settings">¿Qué prefieries ver?</string>
      <array name="media_type_pref">
      <item>Todo</item>

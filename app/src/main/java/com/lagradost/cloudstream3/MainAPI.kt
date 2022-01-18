@@ -147,7 +147,7 @@ object APIHolder {
     fun Context.getApiProviderLangSettings(): HashSet<String> {
         val settingsManager = PreferenceManager.getDefaultSharedPreferences(this)
         val hashSet = HashSet<String>()
-        hashSet.add("en") // def is only en
+        hashSet.add("es") // def is only en
         val list = settingsManager.getStringSet(
             this.getString(R.string.provider_lang_key),
             hashSet.toMutableSet()

@@ -559,6 +559,6 @@ class SettingsFragment : PreferenceFragmentCompat() {
 // Change locale settings in the app.
         // val dm = res.displayMetrics
         val conf = res.configuration
-        return conf?.locale?.language ?: "en"
+        return conf?.locale?.language ?: "es"
     }
 }
