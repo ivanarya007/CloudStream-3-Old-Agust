@@ -1,11 +1,11 @@
 package com.lagradost.cloudstream3.movieproviders
 
 import com.lagradost.cloudstream3.*
+import com.lagradost.cloudstream3.extractors.FEmbed
 
 import com.lagradost.cloudstream3.extractors.Vidstream
+import com.lagradost.cloudstream3.utils.*
 
-import com.lagradost.cloudstream3.utils.ExtractorLink
-import com.lagradost.cloudstream3.utils.getQualityFromName
 import org.jsoup.Jsoup
 import java.net.URI
 import java.util.*
@@ -179,57 +179,24 @@ class AnimeflvIOProvider:MainAPI() {
     override suspend fun loadLinks(
         data: String,
         isCasting: Boolean,
-        // These callbacks are functions you should call when you get a link to a subtitle file or media file.
         subtitleCallback: (SubtitleFile) -> Unit,
         callback: (ExtractorLink) -> Unit
     ): Boolean {
-        // "?: return" is a very useful statement which returns if the iframe link isn't found.
-        val iframeLink = Jsoup.parse(app.get(data).text).selectFirst(".tab-video")?.attr("data-video") ?: return false
-        // In this case the video player is a vidstream clone and can be handled by the vidstream extractor.
-        // This case is a both unorthodox and you normally do not call extractors as they detect the url returned and does the rest.
-        val vidstreamObject = Vidstream("https://animeid.cc")
-        // https://vidembed.cc/streaming.php?id=MzUwNTY2&... -> MzUwNTY2
-        val id = Regex("""id=([^?]*)""").find(iframeLink)?.groupValues?.get(1)
-        if (id != null) {
-            vidstreamObject.getUrl(id, isCasting, callback)
-        }
-        val html = app.get(fixUrl(iframeLink)).text
-        val soup = Jsoup.parse(html)
-        val servers = soup.select(".list-server-items > .linkserver").mapNotNull { li ->
-            if (!li?.attr("data-video").isNullOrEmpty()) {
-                Pair(li.text(), fixUrl(li.attr("data-video")))
-            } else {
-                null
-            }
-        }
-        servers.forEach {
-            // When checking strings make sure to make them lowercase and trimmed because edgecases like "beta server " wouldn't work otherwise.
-            if (it.first.trim().equals("beta server", ignoreCase = true)) {
-                // Group 1: link, Group 2: Label
-                // Regex can be used to effectively parse small amounts of json without bothering with writing a json class.
-                val sourceRegex = Regex("""sources:[\W\w]*?file:\s*["'](.*?)["'][\W\w]*?label:\s*["'](.*?)["']""")
-
-                val serverHtml = app.get(it.second, headers = mapOf("referer" to iframeLink)).text
-                sourceRegex.findAll(serverHtml).forEach { match ->
-                    callback.invoke(
-                        ExtractorLink(
-                            this.name,
-                            match.groupValues.getOrNull(2)?.let { "${this.name} $it" } ?: this.name,
-                            match.groupValues[1],
-                            it.second,
-                            // Useful function to turn something like "1080p" to an app quality.
-                            getQualityFromName(match.groupValues.getOrNull(2) ?: ""),
-                            // Kinda risky
-                            // isM3u8 makes the player pick the correct extractor for the source.
-                            // If isM3u8 is wrong the player will error on that source.
-                            URI(match.groupValues[1]).path.endsWith(".m3u8"),
-                        )
-                    )
+        val html = app.get(data).document
+        val selector = html.selectFirst(".active.anime_muti_link").toString()
+        val episodeRegex = Regex("""(https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))""")
+        val links = episodeRegex.findAll(selector).map {
+            it.value
+        }.toList()
+        for (link in links) {
+            for (extractor in extractorApis) {
+                if (link.startsWith(extractor.mainUrl)) {
+                    extractor.getSafeUrl(link, data)?.forEach {
+                        callback(it)
+                    }
                 }
             }
         }
-
         return true
     }
-
 }

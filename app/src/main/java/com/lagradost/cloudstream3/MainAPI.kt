@@ -51,7 +51,7 @@ object APIHolder {
         KrunchyProvider(),
         MonoschinosProvider(),
         PelisplusHDProvider(),
-        PelisplusProvider(),
+        PelisplusSOProvider(),
         PinoyHDXyzProvider(),
         PinoyMoviePediaProvider(),
         PinoyMoviesEsProvider(),

@@ -23,19 +23,9 @@ class Pelisplus(val mainUrl: String) {
     private fun getExtractorUrl2(id: String): String {
         return "$mainUrl/play?id=$id="
     }
+
     private fun getExtractorUrl3(id: String): String {
         return "$mainUrl/play?id=$id&option=castell"
-    }
-    private fun getDownloadUrl(id: String): String {
-        return "$mainUrl/download?id=$id"
-    }
-
-    private fun getDownloadUrl2(id: String): String {
-        return "$mainUrl/download?id=$id="
-    }
-
-    private fun getDownloadUrl3(id: String): String {
-        return "$mainUrl/download?id=$id&option=castell"
     }
 
     private val normalApis = arrayListOf(MultiQuality())
@@ -46,46 +36,15 @@ class Pelisplus(val mainUrl: String) {
             normalApis.pmap { api ->
                 val url = api.getExtractorUrl(id)
                 val source = api.getSafeUrl(url)
-                source?.forEach { callback.invoke(it) }
+                source?.forEach {
+                    it.name += " Latino"
+                    callback.invoke(it) }
             }
             val extractorUrl = getExtractorUrl(id)
-
-            /** Stolen from GogoanimeProvider.kt extractor */
-            normalSafeApiCall {
-                val link = getDownloadUrl(id)
-                println("Generated vidstream download link: $link")
-                val page = app.get(link, referer = extractorUrl)
-
-                val pageDoc = Jsoup.parse(page.text)
-                val qualityRegex = Regex("(\\d+)P")
-
-                //a[download]
-                pageDoc.select(".dowload > a")?.pmap { element ->
-                    val href = element.attr("href") ?: return@pmap
-                    val qual = if (element.text()
-                            .contains("HDP")
-                    ) "1080" else qualityRegex.find(element.text())?.destructured?.component1().toString()
-
-                    if (!loadExtractor(href, link, callback)) {
-                        callback.invoke(
-                            ExtractorLink(
-                                this.name,
-                                if (qual == "null") this.name else "${this.name} - " + qual + "p",
-                                href,
-                                page.url,
-                                getQualityFromName(qual),
-                                element.attr("href").contains(".m3u8")
-                            )
-                        )
-                    }
-                }
-            }
-
-            with(app.get(extractorUrl)) {
+            with(app.get(extractorUrl, timeout = 60)) {
                 val document = Jsoup.parse(this.text)
                 val primaryLinks = document.select("ul.list-server-items > li.linkserver")
                 //val extractedLinksList: MutableList<ExtractorLink> = mutableListOf()
-
                 // All vidstream links passed to extractors
                 primaryLinks.distinctBy { it.attr("data-video") }.forEach { element ->
                     val link = element.attr("data-video")
@@ -97,6 +56,7 @@ class Pelisplus(val mainUrl: String) {
                             val extractedLinks = api.getSafeUrl(link, extractorUrl)
                             if (extractedLinks?.isNotEmpty() == true) {
                                 extractedLinks.forEach {
+                                    it.name += " Latino"
                                     callback.invoke(it)
                                 }
                             }
@@ -115,44 +75,12 @@ class Pelisplus(val mainUrl: String) {
             normalApis.pmap { api ->
                 val url = api.getExtractorUrl(id)
                 val source = api.getSafeUrl(url)
-                source?.forEach { callback.invoke(it) }
+                source?.forEach {
+                    it.name += " Subtitulado"
+                    callback.invoke(it) }
             }
             val extractorUrl = getExtractorUrl2(id)
-
-            /** Stolen from GogoanimeProvider.kt extractor */
-            normalSafeApiCall {
-                val link = getDownloadUrl2(id)
-                println("Generated vidstream download link: $link")
-                val page = app.get(link, referer = extractorUrl)
-
-                val pageDoc = Jsoup.parse(page.text)
-                val qualityRegex = Regex("(\\d+)P")
-
-                //a[download]
-                pageDoc.select(".dowload > a")?.pmap { element ->
-                    val href = element.attr("href") ?: return@pmap
-                    val qual = if (element.text()
-                            .contains("HDP")
-                    ) "1080" else qualityRegex.find(element.text())?.destructured?.component1().toString()
-
-                    val streamtest = if (qual == "null") this.name else "${this.name} - " + qual + "p"
-
-                    if (!loadExtractor(href, link, callback)) {
-                        callback.invoke(
-                            ExtractorLink(
-                                this.name,
-                                streamtest,
-                                href,
-                                page.url,
-                                getQualityFromName(qual),
-                                element.attr("href").contains(".m3u8")
-                            )
-                        )
-                    }
-                }
-            }
-
-            with(app.get(extractorUrl)) {
+            with(app.get(extractorUrl, timeout = 60)) {
                 val document = Jsoup.parse(this.text)
                 val primaryLinks = document.select("ul.list-server-items > li.linkserver")
                 //val extractedLinksList: MutableList<ExtractorLink> = mutableListOf()
@@ -168,6 +96,7 @@ class Pelisplus(val mainUrl: String) {
                             val extractedLinks = api.getSafeUrl(link, extractorUrl)
                             if (extractedLinks?.isNotEmpty() == true) {
                                 extractedLinks.forEach {
+                                    it.name += " Subtitulado"
                                     callback.invoke(it)
                                 }
                             }
@@ -180,64 +109,33 @@ class Pelisplus(val mainUrl: String) {
             return false
         }
     }
+
+
     fun getUrl3(id: String, isCasting: Boolean = false, callback: (ExtractorLink) -> Unit): Boolean {
         try {
             normalApis.pmap { api ->
                 val url = api.getExtractorUrl(id)
                 val source = api.getSafeUrl(url)
-                source?.forEach { callback.invoke(it) }
+                source?.forEach {
+                    it.name += " Castellano"
+                    callback.invoke(it) }
             }
             val extractorUrl = getExtractorUrl3(id)
-
-            /** Stolen from GogoanimeProvider.kt extractor */
-            normalSafeApiCall {
-                val link = getDownloadUrl3(id)
-                println("Generated vidstream download link: $link")
-                val page = app.get(link, referer = extractorUrl)
-
-                val pageDoc = Jsoup.parse(page.text)
-                val qualityRegex = Regex("(\\d+)P")
-
-                //a[download]
-                pageDoc.select(".dowload > a")?.pmap { element ->
-                    val href = element.attr("href") ?: return@pmap
-                    val qual = if (element.text()
-                            .contains("HDP")
-                    ) "1080" else qualityRegex.find(element.text())?.destructured?.component1().toString() + "Castellano"
-
-                    val streamtest = if (qual == "null") this.name else "${this.name} - " + qual + "p"
-
-                    if (!loadExtractor(href, link, callback)) {
-                        callback.invoke(
-                            ExtractorLink(
-                                this.name,
-                                streamtest,
-                                href,
-                                page.url,
-                                getQualityFromName(qual),
-                                element.attr("href").contains(".m3u8")
-                            )
-                        )
-                    }
-                }
-            }
-
-            with(app.get(extractorUrl)) {
+            with(app.get(extractorUrl, timeout = 60)) {
                 val document = Jsoup.parse(this.text)
                 val primaryLinks = document.select("ul.list-server-items > li.linkserver")
                 //val extractedLinksList: MutableList<ExtractorLink> = mutableListOf()
-
                 // All vidstream links passed to extractors
                 primaryLinks.distinctBy { it.attr("data-video") }.forEach { element ->
                     val link = element.attr("data-video")
                     //val name = element.text()
-
                     // Matches vidstream links with extractors
                     extractorApis.filter { !it.requiresReferer || !isCasting }.pmap { api ->
                         if (link.startsWith(api.mainUrl)) {
                             val extractedLinks = api.getSafeUrl(link,extractorUrl)
                             if (extractedLinks?.isNotEmpty() == true) {
                                 extractedLinks.forEach {
+                                    it.name += " Castellano"
                                     callback.invoke(it)
                                 }
                             }
@@ -250,4 +148,5 @@ class Pelisplus(val mainUrl: String) {
             return false
         }
     }
+
 }
