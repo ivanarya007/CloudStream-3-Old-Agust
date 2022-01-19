@@ -37,6 +37,7 @@ object APIHolder {
         AllAnimeProvider(),
         AllMoviesForYouProvider(),
         AnimeFlickProvider(),
+        AnimefenixProvider(),
         AnimeIDProvider(),
         AnimeflvIOProvider(),
         AsianLoadProvider(),

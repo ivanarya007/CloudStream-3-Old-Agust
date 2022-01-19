@@ -345,4 +345,3 @@ class SflixProvider(providerUrl: String, providerName: String) : MainAPI() {
         }
     }
 }
-
