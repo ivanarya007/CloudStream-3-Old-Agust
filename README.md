@@ -68,6 +68,7 @@ It merely scrapes 3rd-party websites that are publicly accessable via any regula
 - [kdramahood.com](https://kdramahood.com) 
 - [pinoy-hd.xyz](https://www.pinoy-hd.xyz) 
 - [pinoymoviepedia.ru](https://pinoymoviepedia.ru) 
+- [fmovies.app](https://fmovies.app) 
 - [tenshi.moe](https://tenshi.moe) 
 - [trailers.to](https://trailers.to) 
 - [vmovee.watch](https://www.vmovee.watch) 
