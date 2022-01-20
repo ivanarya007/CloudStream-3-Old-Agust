@@ -135,6 +135,7 @@ class HomeFragment : Fragment() {
                 val movies = dialog.findViewById<MaterialButton>(R.id.home_select_movies)
                 val cancelBtt = dialog.findViewById<MaterialButton>(R.id.cancel_btt)
                 val applyBtt = dialog.findViewById<MaterialButton>(R.id.apply_btt)
+                val mirror = dialog.findViewById<MaterialButton>(R.id.home_select_mirror)
 
                 cancelBtt?.setOnClickListener {
                     dialog.dismissSafe()
@@ -166,7 +167,8 @@ class HomeFragment : Fragment() {
                     Pair(cartoons, listOf(TvType.Cartoon)),
                     Pair(tvs, listOf(TvType.TvSeries)),
                     Pair(docs, listOf(TvType.Documentary)),
-                    Pair(movies, listOf(TvType.Movie, TvType.Torrent))
+                    Pair(movies, listOf(TvType.Movie, TvType.Torrent)),
+                    Pair(mirror, listOf(TvType.Mirror)),
                 )
 
                 fun updateList() {

@@ -52,12 +52,18 @@ object APIHolder {
         KrunchyProvider(),
         MonoschinosProvider(),
         PelisplusHDProvider(),
+
         PelisplusSOProvider(),
         PinoyHDXyzProvider(),
         PinoyMoviePediaProvider(),
         PinoyMoviesEsProvider(),
         SflixProvider("https://dopebox.to", "Dopebox"),
         SflixProvider("https://sflix.to", "Sflix"),
+        YesMoviesProviders("https://hdtoday.tv", "HDToday"), //Sflix mirror
+        YesMoviesProviders("https://yesmovies.mn", "YesMovies"), //Sflix mirror
+        YesMoviesProviders("https://moviesjoy.to", "Moviesjoy"), //Sflix mirror
+        YesMoviesProviders("https://myflixertv.to", "MyFlixer"), //Sflix mirror
+        FmoviesProvider(), //Sflix mirror
         TenshiProvider(),
         TrailersTwoProvider(),
         VMoveeProvider(),
@@ -78,7 +84,7 @@ object APIHolder {
     )
 
     private val backwardsCompatibleProviders = arrayListOf(
-        KawaiifuProvider(), // removed due to cloudflare
+        KawaiifuProvider(),  // removed due to cloudflare
         HDMProvider(),// removed due to cloudflare
     )
 
@@ -225,6 +231,7 @@ abstract class MainAPI {
         TvType.Cartoon,
         TvType.Anime,
         TvType.ONA,
+        TvType.Mirror
     )
 
     open val vpnStatus = VPNStatus.None
@@ -367,6 +374,7 @@ enum class TvType {
     ONA,
     Torrent,
     Documentary,
+    Mirror,
 }
 
 // IN CASE OF FUTURE ANIME MOVIE OR SMTH

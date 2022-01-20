@@ -521,6 +521,7 @@ class ResultFragment : Fragment() {
                     TvType.Cartoon -> "Cartoons/$titleName"
                     TvType.Torrent -> "Torrent"
                     TvType.Documentary -> "Documentaries"
+                    TvType.Mirror -> "Mirror"
                     null -> null
                 }
 

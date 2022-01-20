@@ -12,9 +12,9 @@
             android:nextFocusLeft="@id/apply_btt"
 
             android:id="@+id/listview1"
-            android:layout_marginBottom="60dp"
+            android:layout_marginBottom="70dp"
             android:minHeight="0dp"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="20dp"
             android:requiresFadingEdge="vertical"
             tools:listitem="@layout/sort_bottom_single_choice"
             android:layout_width="match_parent"
@@ -22,9 +22,9 @@
             android:layout_rowWeight="1"
     />
     <HorizontalScrollView
-            android:layout_marginTop="-60dp"
-            android:paddingStart="10dp"
-            android:paddingEnd="10dp"
+            android:layout_marginTop="-65dp"
+            android:paddingStart="15dp"
+            android:paddingEnd="15dp"
             android:clipToPadding="true"
             android:fadingEdge="horizontal"
             android:requiresFadingEdge="horizontal"
@@ -46,7 +46,6 @@
             <!-- <com.google.android.material.button.MaterialButton
                      android:nextFocusRight="@id/home_select_tv_series"
                      app:icon="@drawable/ic_baseline_close_24"
-
                      android:id="@+id/home_select_none"
                      style="@style/RoundedSelectableButtonIcon"/>-->
             <com.google.android.material.button.MaterialButton
@@ -78,9 +77,17 @@
                     style="@style/RoundedSelectableButton"/>
             <com.google.android.material.button.MaterialButton
                     android:nextFocusLeft="@id/home_select_cartoons"
+                    android:nextFocusRight="@id/home_select_mirror"
 
                     android:id="@+id/home_select_documentaries"
                     android:text="@string/documentaries"
+                    style="@style/RoundedSelectableButton"/>
+            <com.google.android.material.button.MaterialButton
+                    android:nextFocusLeft="@id/home_select_documentaries"
+                    android:nextFocusRight="@id/home_select_mirror"
+
+                    android:id="@+id/home_select_mirror"
+                    android:text="@string/mirror"
                     style="@style/RoundedSelectableButton"/>
         </LinearLayout>
     </HorizontalScrollView>
