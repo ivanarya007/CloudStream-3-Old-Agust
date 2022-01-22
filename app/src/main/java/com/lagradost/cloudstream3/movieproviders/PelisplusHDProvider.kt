@@ -94,14 +94,13 @@ class PelisplusHDProvider:MainAPI() {
         val poster: String? = soup.selectFirst(".img-fluid").attr("src")
         val episodes = soup.select("div.tab-pane .btn").map { li ->
             val href = li.selectFirst("a").attr("href")
-            val epThumb = app.get(href).document.selectFirst(".d-block.mx-auto.m-b-30").attr("src")
+         //testing loading time  // val epThumb = app.get(href).document.selectFirst(".d-block.mx-auto.m-b-30").attr("src")
             val name = li.selectFirst(".btn-primary.btn-block").text()
             TvSeriesEpisode(
                 name,
                 null,
                 null,
                 href,
-                epThumb
             )
         }
 
