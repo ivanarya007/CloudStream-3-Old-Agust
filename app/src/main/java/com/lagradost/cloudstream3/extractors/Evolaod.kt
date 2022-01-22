@@ -3,14 +3,15 @@ package com.lagradost.cloudstream3.extractors
 import com.lagradost.cloudstream3.utils.*
 import com.lagradost.cloudstream3.app
 
+class Evoload1 : SBPlay() {
+    override val mainUrl = "https://evoload.io"
+}
 
-class Evoload : ExtractorApi() {
+open class Evoload : ExtractorApi() {
     override val name: String = "Evoload"
     override val mainUrl: String = "https://www.evoload.io"
     //private val srcRegex = Regex("""video .*src="(.*)""""")  // would be possible to use the parse and find src attribute
     override val requiresReferer = true
-
-
 
     override fun getUrl(url: String, referer: String?): List<ExtractorLink> {
         val id = url.replace("https://evoload.io/e/", "")  // wanted media id

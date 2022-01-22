@@ -42,6 +42,7 @@ object APIHolder {
         AnimeflvIOProvider(),
         AnimeflvnetProvider(),
         AsianLoadProvider(),
+        CinecalidadProvider(),
         DramaSeeProvider(),
         DoramasYTProvider(),
         DubbedAnimeProvider(),
