@@ -1,5 +1,4 @@
 package com.lagradost.cloudstream3.animeproviders
-//Credits to https://github.com/ArjixWasTaken/CloudStream-3/blob/master/app/src/main/java/com/ArjixWasTaken/cloudstream3/animeproviders/CrunchyrollProvider.kt
 
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.fasterxml.jackson.annotation.JsonProperty
@@ -12,6 +11,7 @@ import org.jsoup.Jsoup
 import java.util.*
 
 private fun String.toAscii() = this.map { it.toInt() }.joinToString()
+
 
 class KrunchyGeoBypasser {
     companion object {
@@ -49,6 +49,7 @@ class KrunchyGeoBypasser {
     }
 }
 
+
 class KrunchyProvider : MainAPI() {
     companion object {
         val crUnblock = KrunchyGeoBypasser()
@@ -58,16 +59,13 @@ class KrunchyProvider : MainAPI() {
     }
 
     override val mainUrl: String
-        get() = "http://www.crunchyroll.com/"
+        get() = "http://www.crunchyroll.com"
     override val name: String
         get() = "Crunchyroll"
     override val hasQuickSearch: Boolean
         get() = false
     override val hasMainPage: Boolean
         get() = true
-    override val hasChromecastSupport: Boolean
-        get() = false
-    override val lang = "es"
 
     override val supportedTypes: Set<TvType>
         get() = setOf(
@@ -78,7 +76,7 @@ class KrunchyProvider : MainAPI() {
 
     override suspend fun getMainPage(): HomePageResponse {
         val urls = listOf(
-            Pair("$mainUrl/videos/anime/popular/ajax_page?pg=1", "Popular 1",),
+            Pair("$mainUrl/videos/anime/popular/ajax_page?pg=1", "Popular 1"),
             Pair("$mainUrl/videos/anime/popular/ajax_page?pg=2", "Popular 2"),
             Pair("$mainUrl/videos/anime/popular/ajax_page?pg=3", "Popular 3"),
             Pair("$mainUrl/videos/anime/simulcasts/ajax_page", "Simulcasts"),
@@ -219,15 +217,15 @@ class KrunchyProvider : MainAPI() {
                 if (poster == "") { poster = poster2}
 
                 var epDesc = (if (epNum == null) "" else "Episode $epNum") + (if (!seasonName.isNullOrEmpty()) " - $seasonName" else "")
-                 if (poster?.contains("widestar") == true) {
-                     epDesc = "Premium-only episode, unable to load links.\n" +
-                             "Episodio solo premium, no se pueden obtener enlaces."
-                 }
+                if (poster?.contains("widestar") == true) {
+                    epDesc = "Premium-only episode, unable to load links.\n" +
+                            "Episodio solo premium, no se pueden obtener enlaces."
+                }
 
-                     val epi = AnimeEpisode(
+                val epi = AnimeEpisode(
                     fixUrl(ep.attr("href")),
-             "$epTitle",
-                         poster?.replace("widestar","full")?.replace("wide","full"),
+                    "$epTitle",
+                    poster?.replace("widestar","full")?.replace("wide","full"),
                     null,
                     null,
                     epDesc,
@@ -264,7 +262,7 @@ class KrunchyProvider : MainAPI() {
     data class Subtitles (
         @JsonProperty("language") val language : String,
         @JsonProperty("url") val url : String,
-        @JsonProperty("title") var title : String?,
+        @JsonProperty("title") val  title : String?,
         @JsonProperty("format") val format : String?
     )
 
@@ -302,9 +300,9 @@ class KrunchyProvider : MainAPI() {
             for (stream in json.streams) {
                 if (
                     listOf(
-                        "adaptive_hls","trailer_hls", "adaptive_dash",
+                        "adaptive_hls", "adaptive_dash",
                         "multitrack_adaptive_hls_v2",
-                        "vo_adaptive_dash", "vo_adaptive_hls",
+                        "vo_adaptive_dash", "vo_adaptive_hls"
                     ).contains(stream.format)
                 ) {
                     if (stream.audioLang == "jaJP" && (listOf(null).contains(stream.hardsubLang)) && listOf("m3u", "m3u8").contains(hlsHelper.absoluteExtensionDetermination(stream.url))) {
@@ -313,37 +311,19 @@ class KrunchyProvider : MainAPI() {
                     }
 
                     if (stream.audioLang == "jaJP" && (listOf("enUS").contains(stream.hardsubLang)) && listOf("m3u", "m3u8").contains(hlsHelper.absoluteExtensionDetermination(stream.url))) {
-                          stream.title = "Hardsub (US)"
-                          streams.add(stream)
-                     }
+                        stream.title = "Hardsub (US)"
+                        streams.add(stream)
+                    }
 
-                   if (stream.audioLang == "jaJP" && (listOf("esES").contains(stream.hardsubLang)) && listOf("m3u", "m3u8").contains(hlsHelper.absoluteExtensionDetermination(stream.url))) {
-                       stream.title = "Hardsub (España)"
-                       streams.add(stream)
-                     }
+                    if (stream.audioLang == "jaJP" && (listOf("esES").contains(stream.hardsubLang)) && listOf("m3u", "m3u8").contains(hlsHelper.absoluteExtensionDetermination(stream.url))) {
+                        stream.title = "Hardsub (España)"
+                        streams.add(stream)
+                    }
 
                     if (stream.audioLang == "jaJP" && (listOf("esLA").contains(stream.hardsubLang)) && listOf("m3u", "m3u8").contains(hlsHelper.absoluteExtensionDetermination(stream.url))) {
                         stream.title = "Hardsub(Latino)"
                         streams.add(stream)
                     }
-
-
-                //      if (stream.audioLang == "jaJP" && (listOf(null).contains(stream.hardsubLang)) && listOf("m3u", "m3u8").contains(hlsHelper.absoluteExtensionDetermination(stream.url))) {
-                //         stream.title = "Raw"
-                //         streams.add(stream)
-                //     }
-                //     if (stream.audioLang == "enUS" && (listOf(null).contains(stream.hardsubLang)) && listOf("m3u", "m3u8").contains(hlsHelper.absoluteExtensionDetermination(stream.url))) {
-                //         stream.title = "English (US) Dubbed"
-                //  streams.add(stream)
-                //     }
-                //    if (stream.audioLang == "esLA" && (listOf(null).contains(stream.hardsubLang)) && listOf("m3u", "m3u8").contains(hlsHelper.absoluteExtensionDetermination(stream.url))) {
-                //       stream.title = "Doblaje Latino"
-                //        streams.add(stream)
-                //    }
-                //           if (stream.audioLang == "esES" && (listOf(null).contains(stream.hardsubLang)) && listOf("m3u", "m3u8").contains(hlsHelper.absoluteExtensionDetermination(stream.url))) {
-                //                  stream.title = "Doblaje Castellano"
-                //                   streams.add(stream)
-                //}
                 }
             }
 
@@ -362,11 +342,11 @@ class KrunchyProvider : MainAPI() {
                 }
             }
 
-              json.subtitles.forEach {
-                  subtitleCallback(
-                        SubtitleFile(it.language, it.url)
-                   )
-                  }
+            json.subtitles.forEach {
+                subtitleCallback(
+                    SubtitleFile(it.language, it.url)
+                )
+            }
 
             return true
         }

@@ -2,7 +2,6 @@ package com.lagradost.cloudstream3.movieproviders
 
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.utils.*
-import org.jsoup.Jsoup
 import java.util.*
 
 class PelisplusHDProvider:MainAPI() {
@@ -29,8 +28,7 @@ class PelisplusHDProvider:MainAPI() {
         )
         for (i in urls) {
             try {
-                val response = app.get(i.first)
-                val soup = Jsoup.parse(response.text)
+                val soup = app.get(i.first).document
                 val home = soup.select("a.Posters-link").map {
                     val title = it.selectFirst(".listing-content p").text()
                     val link = it.selectFirst("a").attr("href")
@@ -57,8 +55,7 @@ class PelisplusHDProvider:MainAPI() {
 
     override suspend fun search(query: String): List<SearchResponse> {
         val url = "https://pelisplushd.net/search?s=${query}"
-        val html = app.get(url).text
-        val document = Jsoup.parse(html)
+        val document = app.get(url).document
 
         return document.select("a.Posters-link").map {
             val title = it.selectFirst(".listing-content p").text()
@@ -90,19 +87,21 @@ class PelisplusHDProvider:MainAPI() {
     }
 
     override suspend fun load(url: String): LoadResponse? {
-        val html = app.get(url).text
-        val soup = Jsoup.parse(html)
+        val soup = app.get(url, timeout = 120).document
 
         val title = soup.selectFirst(".m-b-5").text()
         val description = soup.selectFirst("div.text-large")?.text()?.trim()
         val poster: String? = soup.selectFirst(".img-fluid").attr("src")
         val episodes = soup.select("div.tab-pane .btn").map { li ->
             val href = li.selectFirst("a").attr("href")
+            val epThumb = app.get(href).document.selectFirst(".d-block.mx-auto.m-b-30").attr("src")
+            val name = li.selectFirst(".btn-primary.btn-block").text()
             TvSeriesEpisode(
-                null,
+                name,
                 null,
                 null,
                 href,
+                epThumb
             )
         }
 
@@ -152,8 +151,7 @@ class PelisplusHDProvider:MainAPI() {
         subtitleCallback: (SubtitleFile) -> Unit,
         callback: (ExtractorLink) -> Unit
     ): Boolean {
-        val html = app.get(data).text
-        val soup = Jsoup.parse(html)
+        val soup = app.get(data).document
         val selector = soup.selectFirst("div.player > script").toString()
         val linkRegex = Regex("""(https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))""")
         val links = linkRegex.findAll(selector).map {
