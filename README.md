@@ -69,6 +69,7 @@ It merely scrapes 3rd-party websites that are publicly accessable via any regula
 - [crunchyroll.com](http://www.crunchyroll.com) 
 - [pinoy-hd.xyz](https://www.pinoy-hd.xyz) 
 - [pinoymoviepedia.ru](https://pinoymoviepedia.ru) 
+- [pinoymovies.es](https://pinoymovies.es) 
 - [fmovies.app](https://fmovies.app) 
 - [tenshi.moe](https://tenshi.moe) 
 - [trailers.to](https://trailers.to) 
