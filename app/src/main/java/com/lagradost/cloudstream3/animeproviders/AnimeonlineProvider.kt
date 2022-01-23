@@ -154,7 +154,7 @@ class AnimeonlineProvider:MainAPI() {
             for (extractor in extractorApis) {
                 if (link.startsWith(extractor.mainUrl)) {
                     extractor.getSafeUrl(link, data)?.forEach {
-                        it.name += " Subtituladdo"
+                        it.name += " Subtitulado"
                         callback(it)
                     }
                 }
