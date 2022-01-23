@@ -8,6 +8,13 @@ import com.lagradost.cloudstream3.utils.ExtractorApi
 import com.lagradost.cloudstream3.utils.ExtractorLink
 import com.lagradost.cloudstream3.utils.getQualityFromName
 
+
+class Suzihaza: XStreamCdn() {
+    override val mainUrl: String = "https://suzihaza.com"
+    override var domainUrl: String = "suzihaza.com"
+}
+
+
 open class XStreamCdn : ExtractorApi() {
     override val name: String = "XStreamCdn"
     override val mainUrl: String = "https://embedsito.com"

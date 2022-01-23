@@ -101,6 +101,7 @@ val extractorApis: Array<ExtractorApi> = arrayOf(
     FEmbed(),
     FeHD(),
     Fplayer(),
+    Suzihaza(),
     WatchSB(),
     Uqload(),
     Uqload1(),
