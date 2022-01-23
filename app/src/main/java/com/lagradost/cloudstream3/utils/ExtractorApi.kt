@@ -94,6 +94,7 @@ val extractorApis: Array<ExtractorApi> = arrayOf(
     Mp4Upload(),
     StreamTape(),
     MixDrop(),
+    MixDrop1(),
     XStreamCdn(),
     StreamSB(),
     Streamhub(),
@@ -103,6 +104,9 @@ val extractorApis: Array<ExtractorApi> = arrayOf(
     Fplayer(),
     Suzihaza(),
     WatchSB(),
+    Watchsb1(),
+    Watchsb2(),
+    Watchsb3(),
     Uqload(),
     Uqload1(),
     Evoload(),
@@ -118,10 +122,7 @@ val extractorApis: Array<ExtractorApi> = arrayOf(
 
     AsianLoad(),
 
-    SBPlay(),
-    SBPlay1(),
-    SBPlay2(),
-    SBPlay3(),
+
 )
 
 fun getExtractorApiFromName(name: String): ExtractorApi {

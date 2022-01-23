@@ -155,6 +155,7 @@ class PelisplusHDProvider:MainAPI() {
         val linkRegex = Regex("""(https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))""")
         val links = linkRegex.findAll(selector).map {
             it.value.replace("https://pelisplushd.net/fembed.php?url=","https://www.fembed.com/v/")
+                .replace("https://pelistop.co/","https://watchsb.com/")
         }.toList()
         for (link in links) {
             for (extractor in extractorApis) {

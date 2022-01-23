@@ -2,14 +2,10 @@ package com.lagradost.cloudstream3.animeproviders
 
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.utils.*
-import org.jsoup.Jsoup
 import java.util.*
 import kotlin.collections.ArrayList
 
-
-
 class AnimeflvnetProvider:MainAPI() {
-
     companion object {
         fun getType(t: String): TvType {
             return if (t.contains("OVA") || t.contains("Especial")) TvType.ONA
@@ -122,14 +118,16 @@ class AnimeflvnetProvider:MainAPI() {
         subtitleCallback: (SubtitleFile) -> Unit,
         callback: (ExtractorLink) -> Unit
     ): Boolean {
-        //There migh be a better way to do this, but this one works
+        //There might be a better way to do this, but this one works
         val html = app.get(data).text
         val linkRegex = Regex("""(https:.*?\.html.*)""")
         val videos = linkRegex.findAll(html).map {
             it.value.replace("\\/", "/")
         }.toList()
         val serversRegex = Regex("(https?:\\/\\/(www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b([-a-zA-Z0-9()@:%_\\+.~#?&\\/\\/=]*))")
-        val links = serversRegex.findAll(videos.toString()).map { it.value }.toList()
+        val links = serversRegex.findAll(videos.toString()).map {
+            it.value.replace("https://embedsb.com","https://watchsb.com")
+        }.toList()
         for (link in links) {
             for (extractor in extractorApis) {
                 if (link.startsWith(extractor.mainUrl)) {

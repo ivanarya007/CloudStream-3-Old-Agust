@@ -3,7 +3,11 @@ package com.lagradost.cloudstream3.extractors
 import com.lagradost.cloudstream3.app
 import com.lagradost.cloudstream3.utils.*
 
-class MixDrop : ExtractorApi() {
+
+class MixDrop1: MixDrop() {
+    override val mainUrl: String = "https://mixdrop.to"
+}
+open class MixDrop : ExtractorApi() {
     override val name = "MixDrop"
     override val mainUrl = "https://mixdrop.co"
     private val srcRegex = Regex("""wurl.*?=.*?"(.*?)";""")
@@ -12,7 +16,6 @@ class MixDrop : ExtractorApi() {
     override fun getExtractorUrl(id: String): String {
         return "$mainUrl/e/$id"
     }
-
     override fun getUrl(url: String, referer: String?): List<ExtractorLink>? {
         with(app.get(url)) {
             getAndUnpack(this.text).let { unpackedText ->

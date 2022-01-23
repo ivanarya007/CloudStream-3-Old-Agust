@@ -7,6 +7,19 @@ import com.lagradost.cloudstream3.utils.ExtractorLink
 import com.lagradost.cloudstream3.utils.M3u8Helper
 import com.lagradost.cloudstream3.utils.getQualityFromName
 
+
+class Watchsb1 : WatchSB() {
+    override val mainUrl = "https://sbplay1.com"
+}
+
+class Watchsb2 : WatchSB() {
+    override val mainUrl = "https://sbplay2.com"
+}
+
+class Watchsb3 : WatchSB() {
+    override val mainUrl = "https://sbplay.one"
+}
+
 open class WatchSB : ExtractorApi() {
     override val name = "WatchSB"
     override val mainUrl = "https://watchsb.com"

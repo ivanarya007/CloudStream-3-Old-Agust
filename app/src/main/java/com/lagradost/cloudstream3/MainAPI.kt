@@ -36,6 +36,7 @@ object APIHolder {
         AkwamProvider(),
         AllAnimeProvider(),
         AllMoviesForYouProvider(),
+        AnimeonlineProvider(),
         AnimeFlickProvider(),
         AnimefenixProvider(),
         AnimeIDProvider(),
