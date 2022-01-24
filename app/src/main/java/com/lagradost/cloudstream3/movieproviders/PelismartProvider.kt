@@ -1,14 +1,15 @@
 package com.lagradost.cloudstream3.movieproviders
 
 import com.lagradost.cloudstream3.*
-import com.lagradost.cloudstream3.utils.*
-import java.util.*
+import com.lagradost.cloudstream3.utils.ExtractorLink
+import com.lagradost.cloudstream3.utils.extractorApis
+import java.util.ArrayList
 
-class CinecalidadProvider:MainAPI() {
+class PelismartProvider: MainAPI() {
     override val mainUrl: String
-        get() = "https://cinecalidad.lol"
+        get() = "https://pelismart.com"
     override val name: String
-        get() = "Cinecalidad"
+        get() = "PeliSmart"
     override val lang = "es"
     override val hasMainPage = true
     override val hasChromecastSupport = true
@@ -16,40 +17,27 @@ class CinecalidadProvider:MainAPI() {
     override val supportedTypes = setOf(
         TvType.Movie,
         TvType.TvSeries,
-        TvType.Anime,
     )
     override suspend fun getMainPage(): HomePageResponse {
         val items = ArrayList<HomePageList>()
         val urls = listOf(
-            Pair("$mainUrl/", "Peliculas"),
-            Pair("$mainUrl/genero-de-la-pelicula/peliculas-en-calidad-4k/", "4K UHD"),
+            Pair("$mainUrl/peliculas/", "Peliculas"),
+            Pair("$mainUrl/series/", "Series"),
+            Pair("$mainUrl/documentales/", "Documentales"),
         )
-
-        items.add(HomePageList("Series",app.get("$mainUrl/ver-serie/").document.select(".item.tvshows").map{
-            val title = it.selectFirst("div.in_title").text()
-            TvSeriesSearchResponse(
-                title,
-                it.selectFirst("a").attr("href"),
-                this.name,
-                TvType.TvSeries,
-                it.selectFirst(".poster.custom img").attr("data-src"),
-                null,
-                null,
-            )
-        }))
 
         for (i in urls) {
             try {
                 val soup = app.get(i.first).document
-                val home = soup.select(".item.movies").map {
-                    val title = it.selectFirst("div.in_title").text()
+                val home = soup.select(".description-off").map {
+                    val title = it.selectFirst("h3.entry-title a").text()
                     val link = it.selectFirst("a").attr("href")
                     TvSeriesSearchResponse(
                         title,
                         link,
                         this.name,
-                        if (link.contains("/ver-pelicula/")) TvType.Movie else TvType.TvSeries,
-                        it.selectFirst(".poster.custom img").attr("data-src"),
+                        if (link.contains("pelicula")) TvType.Movie else TvType.TvSeries,
+                        it.selectFirst("div img").attr("src"),
                         null,
                         null,
                     )
@@ -66,14 +54,14 @@ class CinecalidadProvider:MainAPI() {
     }
 
     override suspend fun search(query: String): List<SearchResponse> {
-        val url = "$mainUrl/buscar/?s=${query}"
+        val url = "$mainUrl?s=${query}&post_type=post"
         val document = app.get(url).document
 
-        return document.select("article").map {
-            val title = it.selectFirst("div.in_title").text()
+        return document.select(".description-off").map {
+            val title = it.selectFirst("h3.entry-title a").text()
             val href = it.selectFirst("a").attr("href")
-            val image = it.selectFirst(".poster.custom img").attr("data-src")
-            val isMovie = href.contains("/ver-pelicula/")
+            val image = it.selectFirst("div img").attr("src")
+            val isMovie = href.contains("pelicula")
 
             if (isMovie) {
                 MovieSearchResponse(
@@ -101,23 +89,21 @@ class CinecalidadProvider:MainAPI() {
 
     override suspend fun load(url: String): LoadResponse? {
         val soup = app.get(url, timeout = 120).document
-
-        val title = soup.selectFirst(".single_left h1").text()
-        val description = soup.selectFirst(".single_left > table:nth-child(3) > tbody:nth-child(1) > tr:nth-child(1) > td:nth-child(2) > p")?.text()?.trim()
-        val poster: String? = soup.selectFirst(".alignnone").attr("data-src")
-        val episodes = soup.select("div.se-c div.se-a ul.episodios li").map { li ->
+        val title = soup.selectFirst(".wpb_wrapper h1").text()
+        val description = soup.selectFirst("div.wpb_wrapper p")?.text()?.trim()
+        val poster: String? = soup.selectFirst(".vc_single_image-img").attr("src")
+        val episodes = soup.select("div.vc_tta-panel-body div a").map { li ->
             val href = li.selectFirst("a").attr("href")
-            val epThumb = li.selectFirst("div.imagen img").attr("data-src")
-            val name = li.selectFirst(".episodiotitle a").text()
+            val preregex = Regex("(\\d+)\\. ")
+            val name = li.selectFirst("a").text().replace(preregex,"")
             TvSeriesEpisode(
                 name,
                 null,
                 null,
                 href,
-                epThumb
             )
         }
-        return when (val tvType = if (url.contains("/ver-pelicula/")) TvType.Movie else TvType.TvSeries) {
+        return when (val tvType = if (episodes.isEmpty()) TvType.Movie else TvType.TvSeries) {
             TvType.TvSeries -> {
                 TvSeriesLoadResponse(
                     title,
@@ -145,31 +131,27 @@ class CinecalidadProvider:MainAPI() {
             else -> null
         }
     }
-
-
     override suspend fun loadLinks(
         data: String,
         isCasting: Boolean,
         subtitleCallback: (SubtitleFile) -> Unit,
         callback: (ExtractorLink) -> Unit
     ): Boolean {
-        app.get(data).document.select(".ajax_mode .dooplay_player_option").forEach {
-            val movieID = it.attr("data-post")
-            val serverID = it.attr("data-nume")
-            val url = "$mainUrl/wp-json/dooplayer/v2/$movieID/movie/$serverID"
-            val urlserver = app.get(url).text
-            val serverRegex = Regex("(https:.*?\\\")")
-            val videos = serverRegex.findAll(urlserver).map {
-                it.value.replace("\\/", "/").replace("\"","")
-            }.toList()
-            val serversRegex = Regex("(https?:\\/\\/(www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b([-a-zA-Z0-9()@:%_\\+.~#?&\\/\\/=]*))")
-            val links = serversRegex.findAll(videos.toString()).map { it.value }.toList()
-            for (link in links) {
-                for (extractor in extractorApis) {
-                    if (link.startsWith(extractor.mainUrl)) {
-                        extractor.getSafeUrl(link, data)?.forEach {
-                            callback(it)
-                        }
+        val soup = app.get(data).text
+        val linkRegex = Regex("""(https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))""")
+        val link1 = linkRegex.findAll(soup).map {
+            it.value.replace("https://pelismart.com/p/1.php?v=","https://evoload.io/e/")
+            .replace("https://pelismart.com/p/2.php?v=","https://streamtape.com/e/")
+            .replace("https://pelismart.com/p/4.php?v=","https://dood.to/e/")
+            .replace("https://pelismarthd.com/p/1.php?v=","https://evoload.io/e/")
+            .replace("https://pelismarthd.com/p/2.php?v=","https://streamtape.com/e/")
+            .replace("https://pelismarthd.com/p/4.php?v=","https://dood.to/e/")
+        }.toList()
+        for (link in link1) {
+            for (extractor in extractorApis) {
+                if (link.startsWith(extractor.mainUrl)) {
+                    extractor.getSafeUrl(link, data)?.forEach {
+                        callback(it)
                     }
                 }
             }

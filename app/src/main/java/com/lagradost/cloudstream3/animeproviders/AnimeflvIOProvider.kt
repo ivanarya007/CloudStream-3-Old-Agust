@@ -1,13 +1,10 @@
 package com.lagradost.cloudstream3.movieproviders
 
 import com.lagradost.cloudstream3.*
-import com.lagradost.cloudstream3.extractors.FEmbed
 
-import com.lagradost.cloudstream3.extractors.Vidstream
 import com.lagradost.cloudstream3.utils.*
 
 import org.jsoup.Jsoup
-import java.net.URI
 import java.util.*
 import kotlin.collections.ArrayList
 

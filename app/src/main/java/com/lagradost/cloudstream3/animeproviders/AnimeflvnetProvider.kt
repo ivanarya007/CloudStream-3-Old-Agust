@@ -31,7 +31,7 @@ class AnimeflvnetProvider:MainAPI() {
 
     override suspend fun getMainPage(): HomePageResponse {
         val urls = listOf(
-            Pair("$mainUrl/browse?type[]=movie&order=updated", "Peliculas actualizadas",),
+            Pair("$mainUrl/browse?type[]=movie&order=updated", "Peliculas actualizadas"),
             Pair("$mainUrl/browse?order=updated", "Animes recientemente actualizados"),
             Pair("$mainUrl/browse?status[]=2&order=default", "Animes finalizados"),
             Pair("$mainUrl/browse?status[]=1&order=rating", "En emision"),
@@ -84,7 +84,7 @@ class AnimeflvnetProvider:MainAPI() {
         return ArrayList(episodes)
     }
 
-    override suspend fun load(url: String): LoadResponse? {
+    override suspend fun load(url: String): LoadResponse {
         val doc = app.get(url).document
         val title = doc.selectFirst("h1.Title").text()
         val description = doc.selectFirst(".Anime > header:nth-child(1) > p:nth-child(3)").text().replace("Sinopsis: ","")
@@ -134,6 +134,16 @@ class AnimeflvnetProvider:MainAPI() {
                     extractor.getSafeUrl(link, data)?.forEach {
                         callback(it)
                     }
+                } else {
+                    callback(
+                        ExtractorLink(
+                            this.name,
+                            "${this.name} - Auto",
+                            "$links",
+                            "",
+                            Qualities.P1080.value
+                        )
+                    )
                 }
             }
 
