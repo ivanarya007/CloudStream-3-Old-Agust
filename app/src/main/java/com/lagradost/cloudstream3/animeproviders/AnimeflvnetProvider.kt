@@ -134,16 +134,6 @@ class AnimeflvnetProvider:MainAPI() {
                     extractor.getSafeUrl(link, data)?.forEach {
                         callback(it)
                     }
-                } else {
-                    callback(
-                        ExtractorLink(
-                            this.name,
-                            "${this.name} - Auto",
-                            "$links",
-                            "",
-                            Qualities.P1080.value
-                        )
-                    )
                 }
             }
 
