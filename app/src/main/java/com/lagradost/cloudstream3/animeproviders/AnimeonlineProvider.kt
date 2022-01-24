@@ -92,10 +92,28 @@ class AnimeonlineProvider:MainAPI() {
         val title = soup.selectFirst("div.data h1").text()
         val description = soup.selectFirst("div#info.sbox div.wp-content p").text()
         val poster: String? = soup.selectFirst("div.poster img").attr("data-src")
-        val episodes = soup.select(".se-a .episodios li").map { li ->
-            val href = li.selectFirst("a").attr("href")
-            val epThumb = li.selectFirst("div.imagen img").attr("data-src")
-            val name = li.selectFirst(".episodiotitle a").text()
+        val episodes = soup.select("div ul.episodios li").map { li ->
+            val href = try {
+                li.select("a").attr("href")
+            } catch (e: Exception) {
+                li.select("div.episodiotitle a").attr("href")
+            } catch (e: Exception) {
+                li.select("li a").attr("href")
+            }
+            val epThumb = try {
+                li.select("div.imagen img").attr("data-src")
+            } catch (e: Exception) {
+                li.select("img.loaded").attr("data-src")
+            } catch (e: Exception) {
+                li.select("div img").attr("data-src")
+            }
+            val name = try {
+                li.select("a").text()
+            } catch (e: Exception) {
+                li.select(".episodiotitle a").text()
+            } catch (e: Exception) {
+                li.select("div a").text()
+            }
             AnimeEpisode(
                 href,
                 name,
@@ -142,7 +160,7 @@ class AnimeonlineProvider:MainAPI() {
     ): Boolean {
       val doc = app.get(data).document
       val epID = doc.selectFirst("ul .dooplay_player_option").attr("data-post")
-      val multiserver = app.get("$mainUrl/wp-json/dooplayer/v1/post/$epID?type=tv&source=1").text //I'll filx this thing later
+      val multiserver = app.get("$mainUrl/wp-json/dooplayer/v1/post/$epID?type=tv&source=1").text //I'll fix this thing later
       val serversRegex = Regex("(https?:\\/\\/(www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b([-a-zA-Z0-9()@:%_\\+.~#?&\\/\\/=]*))")
       val json = mapper.readValue<Saidourl>(multiserver)
       val docu = app.get(json.embedUrl).document
