@@ -163,7 +163,9 @@ class CinecalidadProvider:MainAPI() {
                 it.value.replace("\\/", "/").replace("\"","")
             }.toList()
             val serversRegex = Regex("(https?:\\/\\/(www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b([-a-zA-Z0-9()@:%_\\+.~#?&\\/\\/=]*))")
-            val links = serversRegex.findAll(videos.toString()).map { it.value }.toList()
+            val links = serversRegex.findAll(videos.toString()).map {
+                it.value
+            }.toList()
             for (link in links) {
                 for (extractor in extractorApis) {
                     if (link.startsWith(extractor.mainUrl)) {
