@@ -109,7 +109,7 @@ class MonoschinosProvider:MainAPI() {
         val doc = app.get(url, timeout = 120).document
         val poster = doc.selectFirst(".chapterpic img").attr("src")
         val title = doc.selectFirst(".chapterdetails h1").text()
-        val type = doc.selectFirst("li.breadcrumb-item a").text()
+        val type = doc.selectFirst("div.chapterdetls2").text()
         val description = doc.selectFirst("p.textComplete").text().replace("Ver menos","")
         val genres = doc.select(".breadcrumb-item a").map { it.text() }
         val status = when (doc.selectFirst("button.btn1")?.text()) {
