@@ -5,7 +5,7 @@ import com.lagradost.cloudstream3.utils.ExtractorLink
 import com.lagradost.cloudstream3.utils.extractorApis
 import java.util.ArrayList
 
-class PelismartProvider: MainAPI() {
+class PeliSmartProvider: MainAPI() {
     override val mainUrl: String
         get() = "https://pelismart.com"
     override val name: String
@@ -141,11 +141,11 @@ class PelismartProvider: MainAPI() {
         val linkRegex = Regex("""(https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))""")
         val link1 = linkRegex.findAll(soup).map {
             it.value.replace("https://pelismart.com/p/1.php?v=","https://evoload.io/e/")
-            .replace("https://pelismart.com/p/2.php?v=","https://streamtape.com/e/")
-            .replace("https://pelismart.com/p/4.php?v=","https://dood.to/e/")
-            .replace("https://pelismarthd.com/p/1.php?v=","https://evoload.io/e/")
-            .replace("https://pelismarthd.com/p/2.php?v=","https://streamtape.com/e/")
-            .replace("https://pelismarthd.com/p/4.php?v=","https://dood.to/e/")
+                .replace("https://pelismart.com/p/2.php?v=","https://streamtape.com/e/")
+                .replace("https://pelismart.com/p/4.php?v=","https://dood.to/e/")
+                .replace("https://pelismarthd.com/p/1.php?v=","https://evoload.io/e/")
+                .replace("https://pelismarthd.com/p/2.php?v=","https://streamtape.com/e/")
+                .replace("https://pelismarthd.com/p/4.php?v=","https://dood.to/e/")
         }.toList()
         for (link in link1) {
             for (extractor in extractorApis) {
