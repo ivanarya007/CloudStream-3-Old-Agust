@@ -20,6 +20,10 @@ class Watchsb3 : WatchSB() {
     override val mainUrl = "https://sbplay.one"
 }
 
+class Watchsb4 : WatchSB() {
+    override val mainUrl = "https://cloudemb.com"
+}
+
 open class WatchSB : ExtractorApi() {
     override val name = "WatchSB"
     override val mainUrl = "https://watchsb.com"

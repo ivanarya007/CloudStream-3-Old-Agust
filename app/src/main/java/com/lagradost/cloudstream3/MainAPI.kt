@@ -47,6 +47,7 @@ object APIHolder {
         DramaSeeProvider(),
         DoramasYTProvider(),
         DubbedAnimeProvider(),
+        ElifilmsProvider(),
         FilmanProvider(),
         FrenchStreamProvider(),
         GogoanimeProvider(),

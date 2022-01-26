@@ -1,0 +1,110 @@
+@file:Suppress("SpellCheckingInspection")
+
+package com.lagradost.cloudstream3.movieproviders
+
+import com.lagradost.cloudstream3.*
+import com.lagradost.cloudstream3.extractors.FEmbed
+import com.lagradost.cloudstream3.utils.*
+import java.util.*
+
+class ElifilmsProvider:MainAPI() {
+    override val mainUrl: String
+        get() = "https://elifilms.net"
+    override val name: String
+        get() = "Elifilms"
+    override val lang = "es"
+    override val hasMainPage = true
+    override val hasChromecastSupport = true
+    override val hasDownloadSupport = true
+    override val supportedTypes = setOf(
+        TvType.Movie,
+    )
+    override suspend fun getMainPage(): HomePageResponse {
+        val items = ArrayList<HomePageList>()
+        val newest = app.get(mainUrl).document.selectFirst("a.fav_link.premiera").attr("href")
+        val urls = listOf(
+            Pair("$mainUrl/", "Películas recientes"),
+            Pair("$mainUrl/4k-peliculas/", "Películas en 4k"),
+            Pair(newest, "Últimos estrenos"),
+        )
+        for (i in urls) {
+            try {
+                val soup = app.get(i.first).document
+                val home = soup.select("article.shortstory.cf").map {
+                    val title = it.selectFirst(".short_header").text()
+                    val link = it.selectFirst("div a").attr("href")
+                    TvSeriesSearchResponse(
+                        title,
+                        link,
+                        this.name,
+                        TvType.Movie,
+                        it.selectFirst("a.ah-imagge img").attr("data-src"),
+                        null,
+                        null,
+                    )
+                }
+
+                items.add(HomePageList(i.second, home))
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+        if (items.size <= 0) throw ErrorLoadingException()
+        return HomePageResponse(items)
+    }
+    override suspend fun search(query: String): List<SearchResponse> {
+        val url = "$mainUrl/?s=$query"
+        val doc = app.get(url).document
+        val returnValue = ArrayList<SearchResponse>()
+            val href = doc.selectFirst("div.short_content a").attr("href")
+            val poster = doc.selectFirst("a.ah-imagge img").attr("data-src")
+            val name = doc.selectFirst(".short_header").text()
+            returnValue.add(MovieSearchResponse(name, href, this.name, TvType.Movie, poster, null))
+        return returnValue
+    }
+    override suspend fun load(url: String): LoadResponse {
+        val document = app.get(url, timeout = 120).document
+        val title = document.selectFirst(".post_title h1").text()
+        val rating = document.select("span.imdb.rki").toString().toIntOrNull()
+        val poster = document.selectFirst(".wp-post-image").attr("src")
+        val desc = document.selectFirst("div.notext .actors p").text()
+        val tags = document.select("td.notext a")
+            .map { it?.text()?.trim().toString() }
+        return MovieLoadResponse(
+            title,
+            url,
+            this.name,
+            TvType.Movie,
+            url,
+            poster,
+            null,
+            desc,
+            null,
+            rating,
+            tags
+
+        )
+    }
+    override suspend fun loadLinks(
+        data: String,
+        isCasting: Boolean,
+        subtitleCallback: (SubtitleFile) -> Unit,
+        callback: (ExtractorLink) -> Unit
+    ): Boolean {
+        app.get(data).document.select("li.change-server a").forEach {
+            val encodedurl = it.select("a").attr("data-id")
+            val urlDecoded = base64Decode(encodedurl)
+            val url = (urlDecoded)
+            if (url.startsWith("https://www.fembed.com")) {
+                val extractor = FEmbed()
+                extractor.getUrl(url).forEach { link ->
+                    callback.invoke(link)
+                }
+            }
+            else {
+                loadExtractor(url, mainUrl, callback)
+            }
+        }
+        return true
+    }
+}

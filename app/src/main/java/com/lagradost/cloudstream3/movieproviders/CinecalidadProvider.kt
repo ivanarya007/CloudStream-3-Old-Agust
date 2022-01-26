@@ -16,8 +16,9 @@ class CinecalidadProvider:MainAPI() {
     override val supportedTypes = setOf(
         TvType.Movie,
         TvType.TvSeries,
-        TvType.Anime,
     )
+    override val vpnStatus = VPNStatus.MightBeNeeded //Due to evoload sometimes not loading
+
     override suspend fun getMainPage(): HomePageResponse {
         val items = ArrayList<HomePageList>()
         val urls = listOf(
@@ -153,8 +154,8 @@ class CinecalidadProvider:MainAPI() {
         subtitleCallback: (SubtitleFile) -> Unit,
         callback: (ExtractorLink) -> Unit
     ): Boolean {
-        val document = app.get(data).document
-       document.select(".ajax_mode .dooplay_player_option").forEach {
+        //For normal links
+       app.get(data).document.select(".ajax_mode .dooplay_player_option").forEach {
             val movieID = it.attr("data-post")
             val serverID = it.attr("data-nume")
             val url = "$mainUrl/wp-json/dooplayer/v2/$movieID/movie/$serverID"
@@ -177,8 +178,8 @@ class CinecalidadProvider:MainAPI() {
                 }
             }
         } //There might be a better way to get this
-        val test = app.get(data).text
-        if (test.contains("castellano")) {
+        val castellano = app.get(data).text
+        if (castellano.contains("Ver en castellano")) {
             app.get(data+"?ref=es").document.select(".ajax_mode .dooplay_player_option").forEach {
                 val movieID = it.attr("data-post")
                 val serverID = it.attr("data-nume")

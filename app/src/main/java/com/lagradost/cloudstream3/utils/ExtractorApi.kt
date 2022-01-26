@@ -107,6 +107,7 @@ val extractorApis: Array<ExtractorApi> = arrayOf(
     Watchsb1(),
     Watchsb2(),
     Watchsb3(),
+    Watchsb4(),
     Uqload(),
     Uqload1(),
     Evoload(),
