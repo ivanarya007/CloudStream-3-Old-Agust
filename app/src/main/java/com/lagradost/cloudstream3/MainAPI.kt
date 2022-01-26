@@ -1,6 +1,5 @@
 package com.lagradost.cloudstream3
 
-import com.lagradost.cloudstream3.movieproviders.PelismartProvider
 import android.annotation.SuppressLint
 import android.content.Context
 import androidx.preference.PreferenceManager
@@ -56,7 +55,7 @@ object APIHolder {
         KrunchyProvider(),
         MonoschinosProvider(),
         PelisplusHDProvider(),
-        PelismartProvider(),
+        PeliSmartProvider(),
 
         PelisplusSOProvider(),
         PinoyHDXyzProvider(),
