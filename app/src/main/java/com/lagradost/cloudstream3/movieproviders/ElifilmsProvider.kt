@@ -1,11 +1,9 @@
-@file:Suppress("SpellCheckingInspection")
-
 package com.lagradost.cloudstream3.movieproviders
 
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.extractors.FEmbed
 import com.lagradost.cloudstream3.utils.*
-import java.util.*
+import kotlin.collections.ArrayList
 
 class ElifilmsProvider:MainAPI() {
     override val mainUrl: String
@@ -52,15 +50,16 @@ class ElifilmsProvider:MainAPI() {
         if (items.size <= 0) throw ErrorLoadingException()
         return HomePageResponse(items)
     }
-    override suspend fun search(query: String): List<SearchResponse> {
+    override suspend fun search(query: String): ArrayList<SearchResponse> {
         val url = "$mainUrl/?s=$query"
         val doc = app.get(url).document
-        val returnValue = ArrayList<SearchResponse>()
-            val href = doc.selectFirst("div.short_content a").attr("href")
-            val poster = doc.selectFirst("a.ah-imagge img").attr("data-src")
-            val name = doc.selectFirst(".short_header").text()
-            returnValue.add(MovieSearchResponse(name, href, this.name, TvType.Movie, poster, null))
-        return returnValue
+        val search = doc.select("article.cf").map {
+            val href = it.selectFirst("div.short_content a").attr("href")
+            val poster = it.selectFirst("a.ah-imagge img").attr("data-src")
+            val name = it.selectFirst(".short_header").text()
+             (MovieSearchResponse(name, href, this.name, TvType.Movie, poster, null))
+        }
+        return ArrayList(search)
     }
     override suspend fun load(url: String): LoadResponse {
         val document = app.get(url, timeout = 120).document
