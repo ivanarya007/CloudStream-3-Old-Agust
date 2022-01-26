@@ -153,7 +153,8 @@ class CinecalidadProvider:MainAPI() {
         subtitleCallback: (SubtitleFile) -> Unit,
         callback: (ExtractorLink) -> Unit
     ): Boolean {
-        app.get(data).document.select(".ajax_mode .dooplay_player_option").forEach {
+        val document = app.get(data).document
+       document.select(".ajax_mode .dooplay_player_option").forEach {
             val movieID = it.attr("data-post")
             val serverID = it.attr("data-nume")
             val url = "$mainUrl/wp-json/dooplayer/v2/$movieID/movie/$serverID"
@@ -171,6 +172,33 @@ class CinecalidadProvider:MainAPI() {
                     if (link.startsWith(extractor.mainUrl)) {
                         extractor.getSafeUrl(link, data)?.forEach {
                             callback(it)
+                        }
+                    }
+                }
+            }
+        } //There might be a better way to get this
+        val test = app.get(data).text
+        if (test.contains("castellano")) {
+            app.get(data+"?ref=es").document.select(".ajax_mode .dooplay_player_option").forEach {
+                val movieID = it.attr("data-post")
+                val serverID = it.attr("data-nume")
+                val url = "$mainUrl/wp-json/dooplayer/v2/$movieID/movie/$serverID"
+                val urlserver = app.get(url).text
+                val serverRegex = Regex("(https:.*?\\\")")
+                val videos = serverRegex.findAll(urlserver).map {
+                    it.value.replace("\\/", "/").replace("\"","")
+                }.toList()
+                val serversRegex = Regex("(https?:\\/\\/(www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b([-a-zA-Z0-9()@:%_\\+.~#?&\\/\\/=]*))")
+                val links = serversRegex.findAll(videos.toString()).map {
+                    it.value
+                }.toList()
+                for (link in links) {
+                    for (extractor in extractorApis) {
+                        if (link.startsWith(extractor.mainUrl)) {
+                            extractor.getSafeUrl(link, data)?.forEach {
+                                it.name += " Castellano"
+                                callback(it)
+                            }
                         }
                     }
                 }
