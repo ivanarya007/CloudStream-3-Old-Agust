@@ -65,7 +65,7 @@ class ElifilmsProvider:MainAPI() {
         val document = app.get(url, timeout = 120).document
         val title = document.selectFirst(".post_title h1").text()
         val rating = document.select("span.imdb.rki").toString().toIntOrNull()
-        val poster = document.selectFirst(".wp-post-image").attr("src")
+        val poster = document.selectFirst(".poster img").attr("src")
         val desc = document.selectFirst("div.notext .actors p").text()
         val tags = document.select("td.notext a")
             .map { it?.text()?.trim().toString() }
@@ -81,7 +81,6 @@ class ElifilmsProvider:MainAPI() {
             null,
             rating,
             tags
-
         )
     }
     override suspend fun loadLinks(

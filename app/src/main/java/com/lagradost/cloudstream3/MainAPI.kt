@@ -57,6 +57,9 @@ object APIHolder {
         MonoschinosProvider(),
         PelisplusHDProvider(),
         PeliSmartProvider(),
+        PelisflixProvider(),
+        SeriesflixProvider(),
+        HenaojaraProvider(),
 
         PelisplusSOProvider(),
         PinoyHDXyzProvider(),
