@@ -49,7 +49,7 @@ class CinecalidadProvider:MainAPI() {
                         title,
                         link,
                         this.name,
-                        if (link.contains("/ver-pelicula/")) TvType.Movie else TvType.TvSeries,
+                        if (link.contains("/movies/")) TvType.Movie else TvType.TvSeries,
                         it.selectFirst(".poster.custom img").attr("data-src"),
                         null,
                         null,
@@ -74,7 +74,7 @@ class CinecalidadProvider:MainAPI() {
             val title = it.selectFirst("div.in_title").text()
             val href = it.selectFirst("a").attr("href")
             val image = it.selectFirst(".poster.custom img").attr("data-src")
-            val isMovie = href.contains("/ver-pelicula/")
+            val isMovie = href.contains("/movies/")
 
             if (isMovie) {
                 MovieSearchResponse(
@@ -118,7 +118,7 @@ class CinecalidadProvider:MainAPI() {
                 epThumb
             )
         }
-        return when (val tvType = if (url.contains("/ver-pelicula/")) TvType.Movie else TvType.TvSeries) {
+        return when (val tvType = if (url.contains("/movies/")) TvType.Movie else TvType.TvSeries) {
             TvType.TvSeries -> {
                 TvSeriesLoadResponse(
                     title,
