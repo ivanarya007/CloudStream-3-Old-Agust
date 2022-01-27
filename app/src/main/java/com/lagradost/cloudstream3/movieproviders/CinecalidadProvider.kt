@@ -55,7 +55,7 @@ class CinecalidadProvider:MainAPI() {
     }
 
     override suspend fun search(query: String): List<SearchResponse> {
-        val url = "$mainUrl/buscar/?s=${query}"
+        val url = "$mainUrl/?s=${query}"
         val document = app.get(url).document
 
         return document.select("article").map {
