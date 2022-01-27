@@ -23,21 +23,9 @@ class CinecalidadProvider:MainAPI() {
         val items = ArrayList<HomePageList>()
         val urls = listOf(
             Pair("$mainUrl/", "Peliculas"),
+            Pair("$mainUrl/ver-serie/", "Peliculas"),
             Pair("$mainUrl/genero-de-la-pelicula/peliculas-en-calidad-4k/", "4K UHD"),
         )
-
-        items.add(HomePageList("Series",app.get("$mainUrl/ver-serie/").document.select(".item.tvshows").map{
-            val title = it.selectFirst("div.in_title").text()
-            TvSeriesSearchResponse(
-                title,
-                it.selectFirst("a").attr("href"),
-                this.name,
-                TvType.TvSeries,
-                it.selectFirst(".poster.custom img").attr("data-src"),
-                null,
-                null,
-            )
-        }))
 
         for (i in urls) {
             try {
@@ -49,7 +37,7 @@ class CinecalidadProvider:MainAPI() {
                         title,
                         link,
                         this.name,
-                        if (link.contains("/movies/")) TvType.Movie else TvType.TvSeries,
+                        if (link.contains("/ver-pelicula/")) TvType.Movie else TvType.TvSeries,
                         it.selectFirst(".poster.custom img").attr("data-src"),
                         null,
                         null,
@@ -74,7 +62,7 @@ class CinecalidadProvider:MainAPI() {
             val title = it.selectFirst("div.in_title").text()
             val href = it.selectFirst("a").attr("href")
             val image = it.selectFirst(".poster.custom img").attr("data-src")
-            val isMovie = href.contains("/movies/")
+            val isMovie = href.contains("/ver-pelicula/")
 
             if (isMovie) {
                 MovieSearchResponse(
@@ -118,7 +106,7 @@ class CinecalidadProvider:MainAPI() {
                 epThumb
             )
         }
-        return when (val tvType = if (url.contains("/movies/")) TvType.Movie else TvType.TvSeries) {
+        return when (val tvType = if (url.contains("/ver-pelicula/")) TvType.Movie else TvType.TvSeries) {
             TvType.TvSeries -> {
                 TvSeriesLoadResponse(
                     title,
