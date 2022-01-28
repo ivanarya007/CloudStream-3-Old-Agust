@@ -100,6 +100,7 @@ val extractorApis: Array<ExtractorApi> = arrayOf(
     Streamhub(),
 
     FEmbed(),
+    Femax20(),
     FeHD(),
     Fplayer(),
     Suzihaza(),

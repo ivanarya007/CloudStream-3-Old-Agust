@@ -14,6 +14,10 @@ class Suzihaza: XStreamCdn() {
     override var domainUrl: String = "suzihaza.com"
 }
 
+class Femax20: XStreamCdn() {
+    override val mainUrl: String = "https://femax20.com"
+}
+
 
 open class XStreamCdn : ExtractorApi() {
     override val name: String = "XStreamCdn"

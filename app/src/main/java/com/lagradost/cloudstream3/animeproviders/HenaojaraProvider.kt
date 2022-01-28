@@ -100,7 +100,7 @@ class HenaojaraProvider: MainAPI() {
                 epThumb
             )
         }
-        return newAnimeLoadResponse(title, url, TvType.Anime) {
+        return newAnimeLoadResponse(title, url, if (episodes.isEmpty()) TvType.Movie else TvType.Anime) {
             posterUrl = poster
             addEpisodes(DubStatus.Subbed, episodes)
             showStatus = status

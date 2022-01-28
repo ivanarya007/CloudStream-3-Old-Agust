@@ -1,6 +1,9 @@
 package com.lagradost.cloudstream3.movieproviders
 
 import com.lagradost.cloudstream3.*
+import com.lagradost.cloudstream3.extractors.Evoload
+import com.lagradost.cloudstream3.extractors.FEmbed
+import com.lagradost.cloudstream3.extractors.StreamTape
 import com.lagradost.cloudstream3.utils.*
 import java.util.*
 
@@ -22,8 +25,8 @@ class CinecalidadProvider:MainAPI() {
     override suspend fun getMainPage(): HomePageResponse {
         val items = ArrayList<HomePageList>()
         val urls = listOf(
+            Pair("$mainUrl/ver-serie/", "Series"),
             Pair("$mainUrl/", "Peliculas"),
-            Pair("$mainUrl/ver-serie/", "Peliculas"),
             Pair("$mainUrl/genero-de-la-pelicula/peliculas-en-calidad-4k/", "4K UHD"),
         )
 
@@ -92,11 +95,11 @@ class CinecalidadProvider:MainAPI() {
         val soup = app.get(url, timeout = 120).document
 
         val title = soup.selectFirst(".single_left h1").text()
-        val description = soup.selectFirst(".single_left > table:nth-child(3) > tbody:nth-child(1) > tr:nth-child(1) > td:nth-child(2) > p")?.text()?.trim()
+        val description = soup.selectFirst("div.single_left table tbody tr td p")?.text()?.trim()
         val poster: String? = soup.selectFirst(".alignnone").attr("data-src")
         val episodes = soup.select("div.se-c div.se-a ul.episodios li").map { li ->
             val href = li.selectFirst("a").attr("href")
-            val epThumb = li.selectFirst("div.imagen img").attr("data-src")
+            val epThumb = li.selectFirst("div.imagen img").attr("src")
             val name = li.selectFirst(".episodiotitle a").text()
             TvSeriesEpisode(
                 name,
@@ -135,62 +138,33 @@ class CinecalidadProvider:MainAPI() {
         }
     }
 
-
     override suspend fun loadLinks(
         data: String,
         isCasting: Boolean,
         subtitleCallback: (SubtitleFile) -> Unit,
         callback: (ExtractorLink) -> Unit
     ): Boolean {
-        //For normal links
-       app.get(data).document.select(".ajax_mode .dooplay_player_option").forEach {
-            val movieID = it.attr("data-post")
-            val serverID = it.attr("data-nume")
-            val url = "$mainUrl/wp-json/dooplayer/v2/$movieID/movie/$serverID"
-            val urlserver = app.get(url).text
-            val serverRegex = Regex("(https:.*?\\\")")
-            val videos = serverRegex.findAll(urlserver).map {
-                it.value.replace("\\/", "/").replace("\"","")
-            }.toList()
-            val serversRegex = Regex("(https?:\\/\\/(www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b([-a-zA-Z0-9()@:%_\\+.~#?&\\/\\/=]*))")
-            val links = serversRegex.findAll(videos.toString()).map {
-                it.value
-            }.toList()
-            for (link in links) {
-                for (extractor in extractorApis) {
-                    if (link.startsWith(extractor.mainUrl)) {
-                        extractor.getSafeUrl(link, data)?.forEach {
-                            callback(it)
-                        }
-                    }
+        app.get(data).document.select(".dooplay_player_option").forEach {
+            val url = it.attr("data-option")
+            if (url.startsWith("https://evoload.io")) {
+                val extractor = Evoload()
+                extractor.getUrl(url.replace("https://streamtape.com/v/","https://streamtape.com/e/")).forEach { link ->
+                    callback.invoke(link)
                 }
+            } else {
+                loadExtractor(url, mainUrl, callback)
             }
-        } //There might be a better way to get this
-        val castellano = app.get(data).text
-        if (castellano.contains("Ver en castellano")) {
-            app.get(data+"?ref=es").document.select(".ajax_mode .dooplay_player_option").forEach {
-                val movieID = it.attr("data-post")
-                val serverID = it.attr("data-nume")
-                val url = "$mainUrl/wp-json/dooplayer/v2/$movieID/movie/$serverID"
-                val urlserver = app.get(url).text
-                val serverRegex = Regex("(https:.*?\\\")")
-                val videos = serverRegex.findAll(urlserver).map {
-                    it.value.replace("\\/", "/").replace("\"","")
-                }.toList()
-                val serversRegex = Regex("(https?:\\/\\/(www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b([-a-zA-Z0-9()@:%_\\+.~#?&\\/\\/=]*))")
-                val links = serversRegex.findAll(videos.toString()).map {
-                    it.value
-                }.toList()
-                for (link in links) {
-                    for (extractor in extractorApis) {
-                        if (link.startsWith(extractor.mainUrl)) {
-                            extractor.getSafeUrl(link, data)?.forEach {
-                                it.name += " Castellano"
-                                callback(it)
-                            }
-                        }
-                    }
+        }
+        if ((app.get(data).text.contains("en castellano"))) app.get("$data?ref=es").document.select(".dooplay_player_option").forEach {
+            val url = it.attr("data-option")
+            if (url.startsWith("https://evoload.io")) {
+                val extractor = Evoload()
+                extractor.getUrl(url.replace("https://streamtape.com/v/","https://streamtape.com/e/")).forEach { link ->
+                    link.name += " Castellano"
+                    callback.invoke(link)
                 }
+            } else {
+                loadExtractor(url, mainUrl, callback)
             }
         }
         return true

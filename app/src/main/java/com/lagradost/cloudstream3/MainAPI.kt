@@ -59,7 +59,7 @@ object APIHolder {
         PeliSmartProvider(),
         PelisflixProvider(),
         SeriesflixProvider(),
-        HenaojaraProvider(),
+       // HenaojaraProvider(), removed due to scraping providers that are already implemented
 
         PelisplusSOProvider(),
         PinoyHDXyzProvider(),

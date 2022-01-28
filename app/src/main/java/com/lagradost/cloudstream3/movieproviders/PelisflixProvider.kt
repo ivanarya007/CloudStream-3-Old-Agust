@@ -83,13 +83,22 @@ class PelisflixProvider:MainAPI() {
     override suspend fun load(url: String): LoadResponse? {
         val doc = app.get(url, timeout = 120).document
         val title = doc.selectFirst("h1.Title").text()
-        val poster = doc.selectFirst(".TPostBg").attr("src").replace("//image","https://image")
+
+        val postercss = doc.selectFirst("head").toString()
+        val posterRegex = Regex("(\"og:image\" content=\"https:\\/\\/pelisflix.li\\/wp-content\\/uploads\\/(\\d+)\\/(\\d+)\\/.*.jpg)")
+        val poster = try {
+            posterRegex.findAll(postercss).map {
+                it.value.replace("\"og:image\" content=\"","")
+            }.toList().first()
+        } catch (e: Exception) {
+            doc.select(".TPostBg").attr("src")
+        }
         val desc = if (url.contains("pelicula")) doc.selectFirst("div.Description strong").text() else doc.selectFirst("div.Description").text()
         val tags = doc.select("p.Genre a")
             .map { it?.text()?.trim().toString() }
-
         val seasonsDocument = app.get(url).document
         val episodes = arrayListOf<TvSeriesEpisode>()
+        val year = doc.selectFirst("div.TPMvCn div.Info span.Date").text().toIntOrNull()
 
         seasonsDocument.select(".episodes-load")
             .forEachIndexed { season, element ->
@@ -107,11 +116,13 @@ class PelisflixProvider:MainAPI() {
 
                         episode++
 
+                        val epnum = it.selectFirst("tr.Viewed span.Num").text().toIntOrNull()
+
                         episodes.add(
                             TvSeriesEpisode(
                                 episodeTitle,
                                 season + 1,
-                                null,
+                                epnum,
                                 episodeData,
                                 fixUrl(episodePosterUrl)
                             )
@@ -119,8 +130,7 @@ class PelisflixProvider:MainAPI() {
                     }
             }
 
-        val tvType = if (url.contains("/pelicula/")) TvType.Movie else TvType.TvSeries
-        return when (tvType) {
+        return when (val tvType = if (episodes.isEmpty() && url.contains("pelicula")) TvType.Movie else TvType.TvSeries) {
             TvType.TvSeries -> {
                 TvSeriesLoadResponse(
                     title,
@@ -129,7 +139,7 @@ class PelisflixProvider:MainAPI() {
                     tvType,
                     episodes,
                     poster,
-                    null,
+                    year,
                     desc,
                     ShowStatus.Ongoing,
                     null,
@@ -145,7 +155,7 @@ class PelisflixProvider:MainAPI() {
                     tvType,
                     url,
                     poster,
-                    null,
+                    year,
                     desc,
                     null,
                     null,
@@ -192,14 +202,10 @@ class PelisflixProvider:MainAPI() {
                 params = mapOf(Pair("h", postkey)),
                 data =  mapOf(Pair("h", postkey)),
                 allowRedirects = false
-            ).response.headers
-            val linkRegex = Regex("""(https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))""")
-            val links = linkRegex.findAll(server.toString()).map {
-                it.value.replace("#bu","").replace("https://dood.ws/d/","https://dood.ws/e/")
-            }.toList()
-            for (link in links) {
+            ).response.headers.values("location")
+            for (link in server) {
                 for (extractor in extractorApis) {
-                    if (link.startsWith(extractor.mainUrl)) {
+                    if (link.replace("#bu","").startsWith(extractor.mainUrl)) {
                         extractor.getSafeUrl(link, data)?.forEach {
                             callback(it)
                         }
