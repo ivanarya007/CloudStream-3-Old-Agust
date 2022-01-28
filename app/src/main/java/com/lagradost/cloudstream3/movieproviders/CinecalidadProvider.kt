@@ -23,21 +23,9 @@ class CinecalidadProvider:MainAPI() {
         val items = ArrayList<HomePageList>()
         val urls = listOf(
             Pair("$mainUrl/", "Peliculas"),
+            Pair("$mainUrl/ver-serie/", "Peliculas"),
             Pair("$mainUrl/genero-de-la-pelicula/peliculas-en-calidad-4k/", "4K UHD"),
         )
-
-        items.add(HomePageList("Series",app.get("$mainUrl/ver-serie/").document.select(".item.tvshows").map{
-            val title = it.selectFirst("div.in_title").text()
-            TvSeriesSearchResponse(
-                title,
-                it.selectFirst("a").attr("href"),
-                this.name,
-                TvType.TvSeries,
-                it.selectFirst(".poster.custom img").attr("data-src"),
-                null,
-                null,
-            )
-        }))
 
         for (i in urls) {
             try {
@@ -67,7 +55,7 @@ class CinecalidadProvider:MainAPI() {
     }
 
     override suspend fun search(query: String): List<SearchResponse> {
-        val url = "$mainUrl/buscar/?s=${query}"
+        val url = "$mainUrl/?s=${query}"
         val document = app.get(url).document
 
         return document.select("article").map {
