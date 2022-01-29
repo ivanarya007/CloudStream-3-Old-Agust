@@ -624,7 +624,7 @@ class ResultFragment : Fragment() {
                 if (!skipLoading && displayLoading) {
                     val builder =
                         AlertDialog.Builder(requireContext(), R.style.AlertDialogCustomTransparent)
-                    val customLayout = layoutInflater.inflate(R.layout.dialog_loading, null)
+                    val customLayout = layoutInflater.inflate(R.layout.dialog_loading_links, null)
                     builder.setView(customLayout)
 
                     loadingDialog = builder.create()
@@ -662,8 +662,8 @@ class ResultFragment : Fragment() {
                 ACTION_CLICK_DEFAULT -> true
                 ACTION_SHOW_TOAST -> true
                 ACTION_DOWNLOAD_EPISODE -> {
-                    showToast(activity, R.string.download_started, Toast.LENGTH_SHORT)
-                    requireLinks(false, false)
+                //showToast(activity, R.string.download_started, Toast.LENGTH_SHORT)
+                    requireLinks(false, true)
                 }
                 ACTION_CHROME_CAST_EPISODE -> requireLinks(true)
                 ACTION_CHROME_CAST_MIRROR -> requireLinks(true)
@@ -879,7 +879,7 @@ class ResultFragment : Fragment() {
                         ),//(currentLinks ?: return@main).filter { !it.isM3u8 },
                         getString(R.string.episode_action_download_mirror)
                     ) { link ->
-                        showToast(activity, R.string.download_started, Toast.LENGTH_SHORT)
+                        showToast(activity, R.string.download_started, Toast.LENGTH_LONG)
                         startDownload(
                             listOf(link),
                             sortSubs(currentSubs ?: return@acquireSingleExtractorLink)

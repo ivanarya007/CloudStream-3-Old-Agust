@@ -41,7 +41,7 @@ class CustomReportSender : ReportSender {
 
         runOnMainThread { // to run it on main looper
             normalSafeApiCall {
-                Toast.makeText(context, R.string.acra_report_toast, Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, R.string.acra_report_toast, Toast.LENGTH_LONG).show()
             }
         }
     }

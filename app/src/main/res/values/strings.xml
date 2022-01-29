@@ -81,6 +81,7 @@
     <string name="result_open_in_browser">Open In Browser</string>
     <string name="skip_loading">Skip Loading</string>
     <string name="loading_chromecast">Loading…</string>
+    <string name="loading_download_links">Loading links…</string>
 
     <string name="type_watching">Watching</string>
     <string name="type_on_hold">On-Hold</string>
@@ -90,7 +91,7 @@
     <string name="type_none">None</string>
     <string name="type_re_watching">ReWatching</string>
 
-    <string name="play_movie_button">Play Movie</string>
+    <string name="play_movie_button">Play</string>
     <string name="play_torrent_button">Stream Torrent</string>
     <string name="pick_source">Sources</string>
     <string name="pick_subtitle">Subtitles</string>
