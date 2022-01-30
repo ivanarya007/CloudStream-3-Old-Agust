@@ -230,6 +230,7 @@ open class Requests {
                 )
             ).apply {
                 when (dns) {
+                    0 -> null
                     1 -> addGoogleDns()
                     2 -> addCloudFlareDns()
 //                3 -> addOpenDns()
