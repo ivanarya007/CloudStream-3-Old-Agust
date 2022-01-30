@@ -127,6 +127,11 @@ val extractorApis: Array<ExtractorApi> = arrayOf(
     Jawcloud(),
     Jawcloud1(),
 
+    OkRu(),
+    Okru1(),
+    Mailru(),
+    Mailru1(),
+
     Videobin(),
     Videobin1(),
 
