@@ -1,6 +1,7 @@
 package com.lagradost.cloudstream3.movieproviders
 
 import com.lagradost.cloudstream3.*
+import com.lagradost.cloudstream3.extractors.FEmbed
 
 import com.lagradost.cloudstream3.utils.*
 
@@ -179,16 +180,11 @@ class AnimeflvIOProvider:MainAPI() {
         subtitleCallback: (SubtitleFile) -> Unit,
         callback: (ExtractorLink) -> Unit
     ): Boolean {
-        val html = app.get(data).document
-        val selector = html.selectFirst(".active.anime_muti_link").toString()
-        val episodeRegex = Regex("""(https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))""")
-        val links = episodeRegex.findAll(selector).map {
-            it.value
-        }.toList()
-        for (link in links) {
+        app.get(data).document.select("li.tab-video").apmap {
+            val url = it.attr("data-video")
             for (extractor in extractorApis) {
-                if (link.startsWith(extractor.mainUrl)) {
-                    extractor.getSafeUrl(link, data)?.forEach {
+                if (url.startsWith(extractor.mainUrl)) {
+                    extractor.getSafeUrl(url, data)?.forEach {
                         callback(it)
                     }
                 }

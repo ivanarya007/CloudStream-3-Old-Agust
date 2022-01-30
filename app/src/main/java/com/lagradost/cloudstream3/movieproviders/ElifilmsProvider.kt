@@ -89,18 +89,16 @@ class ElifilmsProvider:MainAPI() {
         subtitleCallback: (SubtitleFile) -> Unit,
         callback: (ExtractorLink) -> Unit
     ): Boolean {
-        app.get(data).document.select("li.change-server a").forEach {
-            val encodedurl = it.select("a").attr("data-id")
+        app.get(data).document.select("li.change-server a").apmap {
+            val encodedurl = it.attr("data-id")
             val urlDecoded = base64Decode(encodedurl)
             val url = (urlDecoded)
-            if (url.startsWith("https://www.fembed.com")) {
-                val extractor = FEmbed()
-                extractor.getUrl(url).forEach { link ->
-                    callback.invoke(link)
+            for (extractor in extractorApis) {
+                if (url.startsWith(extractor.mainUrl)) {
+                    extractor.getSafeUrl(url, data)?.forEach {
+                        callback(it)
+                    }
                 }
-            }
-            else {
-                loadExtractor(url, mainUrl, callback)
             }
         }
         return true

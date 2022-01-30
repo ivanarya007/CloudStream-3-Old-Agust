@@ -2,10 +2,11 @@ package com.lagradost.cloudstream3.movieproviders
 
 
 import com.lagradost.cloudstream3.*
-import com.lagradost.cloudstream3.extractors.Pelisplus
-
+import com.lagradost.cloudstream3.extractors.FEmbed
+import com.lagradost.cloudstream3.extractors.FeHD
 import com.lagradost.cloudstream3.utils.ExtractorLink
 import com.lagradost.cloudstream3.utils.extractorApis
+import com.lagradost.cloudstream3.utils.loadExtractor
 import org.jsoup.Jsoup
 import java.util.*
 
@@ -204,54 +205,36 @@ class PelisplusSOProvider:MainAPI() {
         subtitleCallback: (SubtitleFile) -> Unit,
         callback: (ExtractorLink) -> Unit
     ): Boolean {
-        val iframeLink = Jsoup.parse(app.get(data).text).selectFirst(".tab-video")?.attr("data-video") ?: return false
-        val vidstreamObject = Pelisplus("https://pelisplus.icu")
-        // https://vidembed.cc/streaming.php?id=MzUwNTY2&... -> MzUwNTY2
-        val id = Regex("""id=([^?]*)""").find(iframeLink)?.groupValues?.get(1)
-        if (id != null) {
-            vidstreamObject.getUrl(id, isCasting, callback) &&  vidstreamObject.getUrl2(id, isCasting, callback ) &&  vidstreamObject.getUrl3(id, isCasting, callback)
+        app.get(data).document.select(".server-item-1 li.tab-video").apmap {
+            val url = it.attr("data-video")
+            for (extractor in extractorApis) {
+                if (url.startsWith(extractor.mainUrl)) {
+                    extractor.getSafeUrl(url, data)?.forEach {
+                        it.name += " Latino"
+                        callback(it)
+                    }
+                }
+            }
         }
 
-        val html = app.get(data).document
-        val selector = html.selectFirst(".server-item-1").toString()
-        val episodeRegex = Regex("""(https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))""")
-        val links = episodeRegex.findAll(selector).map {
-            it.value.replace("https://pelispng.online/v/","https://www.fembed.com/v/").replace("https://dood.ws","https://dood.la")
-                .replace("https://fembed-hd.com","https://embedsito.com")     }.toList()
-        for (link in links) {
+        app.get(data).document.select(".server-item-0 li.tab-video").apmap {
+            val url = it.attr("data-video")
             for (extractor in extractorApis) {
-                if (link.startsWith(extractor.mainUrl)) {
-                    extractor.getSafeUrl(link, data)?.forEach {
-                        it.name += " Latino 2"
+                if (url.startsWith(extractor.mainUrl)) {
+                    extractor.getSafeUrl(url, data)?.forEach {
+                        it.name += " Subtitulado"
                         callback(it)
                     }
                 }
             }
         }
-        val selector2 = html.selectFirst(".server-item-0").toString()
-        val linkssub = episodeRegex.findAll(selector2).map {
-            it.value.replace("https://pelispng.online/v/","https://www.fembed.com/v/").replace("https://dood.ws","https://dood.la")
-                .replace("https://fembed-hd.com","https://embedsito.com")      }.toList()
-        for (link in linkssub) {
+
+        app.get(data).document.select(".server-item-2 li.tab-video").apmap {
+            val url = it.attr("data-video")
             for (extractor in extractorApis) {
-                if (link.startsWith(extractor.mainUrl)) {
-                    extractor.getSafeUrl(link, data)?.forEach {
-                        it.name += " Subtitulado 2"
-                        callback(it)
-                    }
-                }
-            }
-        }
-        val selector3 = html.selectFirst(".server-item-2").toString()
-        val linkscast = episodeRegex.findAll(selector3).map {
-            it.value.replace("https://pelispng.online/v/","https://www.fembed.com/v/").replace("https://dood.ws","https://dood.la")
-                .replace("https://fembed-hd.com","https://embedsito.com")
-        }.toList()
-        for (link in linkscast) {
-            for (extractor in extractorApis) {
-                if (link.startsWith(extractor.mainUrl)) {
-                    extractor.getSafeUrl(link, data)?.forEach {
-                        it.name += " Castellano 2"
+                if (url.startsWith(extractor.mainUrl)) {
+                    extractor.getSafeUrl(url, data)?.forEach {
+                        it.name += " Castellano"
                         callback(it)
                     }
                 }

@@ -3,6 +3,7 @@ package com.lagradost.cloudstream3.animeproviders
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.extractors.FEmbed
 import com.lagradost.cloudstream3.utils.ExtractorLink
+import com.lagradost.cloudstream3.utils.extractorApis
 import com.lagradost.cloudstream3.utils.loadExtractor
 import java.util.*
 import kotlin.collections.ArrayList
@@ -149,18 +150,17 @@ class MonoschinosProvider : MainAPI() {
         subtitleCallback: (SubtitleFile) -> Unit,
         callback: (ExtractorLink) -> Unit
     ): Boolean {
-        app.get(data).document.select("div.playother p").forEach {
+        app.get(data).document.select("div.playother p").apmap {
             val encodedurl = it.select("p").attr("data-player")
             val urlDecoded = base64Decode(encodedurl)
             val url = (urlDecoded).replace("https://monoschinos2.com/reproductor?url=", "")
                 .replace("https://repro.monoschinos2.com/aqua/sv?url=","")
-            if (url.startsWith("https://www.fembed.com")) {
-                val extractor = FEmbed()
-                extractor.getUrl(url).forEach { link ->
-                    callback.invoke(link)
+            for (extractor in extractorApis) {
+                if (url.startsWith(extractor.mainUrl)) {
+                    extractor.getSafeUrl(url, data)?.forEach {
+                        callback(it)
+                    }
                 }
-            } else {
-                loadExtractor(url, mainUrl, callback)
             }
         }
         return true

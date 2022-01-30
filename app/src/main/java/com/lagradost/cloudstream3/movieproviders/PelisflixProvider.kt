@@ -172,7 +172,7 @@ class PelisflixProvider:MainAPI() {
         subtitleCallback: (SubtitleFile) -> Unit,
         callback: (ExtractorLink) -> Unit
     ): Boolean {
-        app.get(data).document.select("li button.Button.sgty").forEach {
+        app.get(data).document.select("li button.Button.sgty").apmap {
             val movieID = it.attr("data-id")
             val serverID = it.attr("data-key")
             val type = if (data.contains("pelicula")) 1 else 2

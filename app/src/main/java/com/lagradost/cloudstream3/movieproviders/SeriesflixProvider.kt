@@ -171,7 +171,7 @@ class SeriesflixProvider:MainAPI() {
         subtitleCallback: (SubtitleFile) -> Unit,
         callback: (ExtractorLink) -> Unit
     ): Boolean {
-        app.get(data).document.select("ul.ListOptions li").forEach {
+        app.get(data).document.select("ul.ListOptions li").apmap {
             val movieID = it.attr("data-id")
             val serverID = it.attr("data-key")
             val type = if (data.contains("movies")) 1 else 2

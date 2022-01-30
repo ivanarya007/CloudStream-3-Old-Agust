@@ -12,7 +12,7 @@ open class Videobin : ExtractorApi() {
     override val mainUrl = "https://videobin.co"
     override val requiresReferer = false
 
-    private val linkRegex =
+    open val linkRegex =
         Regex("""(https:\/\/.*?\.m3u8)""")
 
     override suspend fun getUrl(url: String, referer: String?): List<ExtractorLink>? {
