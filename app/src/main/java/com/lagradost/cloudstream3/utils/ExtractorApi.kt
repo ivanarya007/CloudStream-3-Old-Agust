@@ -116,6 +116,7 @@ val extractorApis: Array<ExtractorApi> = arrayOf(
     Evoload1(),
     VoeExtractor(),
     UpstreamExtractor(),
+    Jawcloud(),
 
     // dood extractors
     DoodToExtractor(),
