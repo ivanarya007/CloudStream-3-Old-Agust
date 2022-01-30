@@ -148,7 +148,7 @@ class CinecalidadProvider:MainAPI() {
             val url = it.attr("data-option")
             if (url.startsWith("https://evoload.io")) {
                 val extractor = Evoload()
-                extractor.getUrl(url.replace("https://streamtape.com/v/","https://streamtape.com/e/")).forEach { link ->
+                extractor.getUrl(url).forEach { link ->
                     callback.invoke(link)
                 }
             } else {
@@ -159,7 +159,7 @@ class CinecalidadProvider:MainAPI() {
             val url = it.attr("data-option")
             if (url.startsWith("https://evoload.io")) {
                 val extractor = Evoload()
-                extractor.getUrl(url.replace("https://streamtape.com/v/","https://streamtape.com/e/")).forEach { link ->
+                extractor.getUrl(url).forEach { link ->
                     link.name += " Castellano"
                     callback.invoke(link)
                 }

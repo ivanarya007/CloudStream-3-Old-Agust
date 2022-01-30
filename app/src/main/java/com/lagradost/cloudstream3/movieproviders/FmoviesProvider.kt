@@ -228,7 +228,7 @@ class FmoviesProvider : MainAPI() {
             }
         } ?: tryParseJson<List<String>>(data))?.distinct()
 
-        urls?.pmap { url ->
+        urls?.apmap { url ->
             val sources = app.get(
                 url,
                 interceptor = WebViewResolver(

@@ -15,7 +15,7 @@ import org.jsoup.Jsoup
     val name = "SBPlay"
     val requiresReferer = false
 
-    fun getUrl(url: String, referer: String?): List<ExtractorLink> {
+    suspend fun getUrl(url: String, referer: String?): List<ExtractorLink> {
         val response = app.get(url, referer = referer).text
         val document = Jsoup.parse(response)
 

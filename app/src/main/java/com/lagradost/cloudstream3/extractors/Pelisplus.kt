@@ -1,9 +1,12 @@
 package com.lagradost.cloudstream3.extractors
 
+import com.lagradost.cloudstream3.apmap
 import com.lagradost.cloudstream3.app
-import com.lagradost.cloudstream3.pmap
+import com.lagradost.cloudstream3.mvvm.suspendSafeApiCall
 import com.lagradost.cloudstream3.utils.ExtractorLink
 import com.lagradost.cloudstream3.utils.extractorApis
+import com.lagradost.cloudstream3.utils.getQualityFromName
+import com.lagradost.cloudstream3.utils.loadExtractor
 import org.jsoup.Jsoup
 
 /**
@@ -28,9 +31,9 @@ class Pelisplus(val mainUrl: String) {
     private val normalApis = arrayListOf(MultiQuality())
 
     // https://gogo-stream.com/streaming.php?id=MTE3NDg5
-    fun getUrl(id: String, isCasting: Boolean = false, callback: (ExtractorLink) -> Unit): Boolean {
+    suspend fun getUrl(id: String, isCasting: Boolean = false, callback: (ExtractorLink) -> Unit): Boolean {
         try {
-            normalApis.pmap { api ->
+            normalApis.apmap { api ->
                 val url = api.getExtractorUrl(id)
                 val source = api.getSafeUrl(url)
                 source?.forEach {
@@ -48,7 +51,7 @@ class Pelisplus(val mainUrl: String) {
                     //val name = element.text()
 
                     // Matches vidstream links with extractors
-                    extractorApis.filter { !it.requiresReferer || !isCasting }.pmap { api ->
+                    extractorApis.filter { !it.requiresReferer || !isCasting }.apmap { api ->
                         if (link.startsWith(api.mainUrl)) {
                             val extractedLinks = api.getSafeUrl(link, extractorUrl)
                             if (extractedLinks?.isNotEmpty() == true) {
@@ -67,9 +70,9 @@ class Pelisplus(val mainUrl: String) {
         }
     }
 
-    fun getUrl2(id: String, isCasting: Boolean = false, callback: (ExtractorLink) -> Unit): Boolean {
+    suspend fun getUrl2(id: String, isCasting: Boolean = false, callback: (ExtractorLink) -> Unit): Boolean {
         try {
-            normalApis.pmap { api ->
+            normalApis.apmap { api ->
                 val url = api.getExtractorUrl(id)
                 val source = api.getSafeUrl(url)
                 source?.forEach {
@@ -88,7 +91,7 @@ class Pelisplus(val mainUrl: String) {
                     //val name = element.text()
 
                     // Matches vidstream links with extractors
-                    extractorApis.filter { !it.requiresReferer || !isCasting }.pmap { api ->
+                    extractorApis.filter { !it.requiresReferer || !isCasting }.apmap { api ->
                         if (link.startsWith(api.mainUrl)) {
                             val extractedLinks = api.getSafeUrl(link, extractorUrl)
                             if (extractedLinks?.isNotEmpty() == true) {
@@ -108,9 +111,9 @@ class Pelisplus(val mainUrl: String) {
     }
 
 
-    fun getUrl3(id: String, isCasting: Boolean = false, callback: (ExtractorLink) -> Unit): Boolean {
+    suspend fun getUrl3(id: String, isCasting: Boolean = false, callback: (ExtractorLink) -> Unit): Boolean {
         try {
-            normalApis.pmap { api ->
+            normalApis.apmap { api ->
                 val url = api.getExtractorUrl(id)
                 val source = api.getSafeUrl(url)
                 source?.forEach {
@@ -127,7 +130,7 @@ class Pelisplus(val mainUrl: String) {
                     val link = element.attr("data-video")
                     //val name = element.text()
                     // Matches vidstream links with extractors
-                    extractorApis.filter { !it.requiresReferer || !isCasting }.pmap { api ->
+                    extractorApis.filter { !it.requiresReferer || !isCasting }.apmap { api ->
                         if (link.startsWith(api.mainUrl)) {
                             val extractedLinks = api.getSafeUrl(link,extractorUrl)
                             if (extractedLinks?.isNotEmpty() == true) {
