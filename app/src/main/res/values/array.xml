@@ -35,17 +35,15 @@
         <item>None</item>
         <item>Google</item>
         <item>Cloudflare</item>
-<!--        <item>OpenDns</item>-->
+        <!--        <item>OpenDns</item>-->
         <item>AdGuard</item>
-        <item>Quad9</item>
     </array>
     <array name="dns_pref_values">
         <item>0</item>
         <item>1</item>
         <item>2</item>
-<!--        <item>3</item>-->
+        <!--        <item>3</item>-->
         <item>4</item>
-        <item>5</item>
     </array>
 
     <array name="media_type_pref">
@@ -109,7 +107,7 @@
         <item>Normal</item>
         <item>Blue</item>
         <item>Red</item>
-         <item>Purple</item>
+        <item>Purple</item>
         <item>Green</item>
         <item>GreenApple</item>
         <item>Banana</item>

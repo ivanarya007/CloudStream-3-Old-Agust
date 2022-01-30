@@ -230,12 +230,10 @@ open class Requests {
                 )
             ).apply {
                 when (dns) {
-                    0 -> null
                     1 -> addGoogleDns()
                     2 -> addCloudFlareDns()
 //                3 -> addOpenDns()
                     4 -> addAdGuardDns()
-                    5 -> addQuad9Dns()
                 }
             }
             // Needs to be build as otherwise the other builders will change this object
