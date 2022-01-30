@@ -100,6 +100,12 @@ val extractorApis: Array<ExtractorApi> = arrayOf(
     StreamSB(),
     Streamhub(),
 
+    Solidfiles(),
+    Solidfiles1(),
+
+    Sendvid(),
+    Sendvid1(),
+
     FEmbed(),
     Femax20(),
     FeHD(),
@@ -116,7 +122,13 @@ val extractorApis: Array<ExtractorApi> = arrayOf(
     Evoload1(),
     VoeExtractor(),
     UpstreamExtractor(),
+
+
     Jawcloud(),
+    Jawcloud1(),
+
+    Videobin(),
+    Videobin1(),
 
     // dood extractors
     DoodToExtractor(),
@@ -125,6 +137,8 @@ val extractorApis: Array<ExtractorApi> = arrayOf(
     DoodWsExtractor(),
 
     AsianLoad(),
+
+    YourUpload(),
 
 
 )

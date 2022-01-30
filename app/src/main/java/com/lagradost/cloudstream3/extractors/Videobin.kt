@@ -3,27 +3,26 @@ package com.lagradost.cloudstream3.extractors
 import com.lagradost.cloudstream3.utils.*
 import com.lagradost.cloudstream3.app
 
-class Jawcloud1: Jawcloud() {
-    override val mainUrl: String = "https://www.jawcloud.co"
+class Videobin1: Videobin() {
+    override val mainUrl: String = "https://www.videobin.co"
 }
 
-open class Jawcloud : ExtractorApi() {
-    override val name = "Jawcloud m3u8"
-    override val mainUrl = "https://jawcloud.co"
+open class Videobin : ExtractorApi() {
+    override val name = "Videobin m3u8"
+    override val mainUrl = "https://videobin.co"
     override val requiresReferer = false
 
     private val linkRegex =
-        Regex("""(source src="https:\/\/.*?\.m3u8)""")
+        Regex("""(https:\/\/.*?\.m3u8)""")
 
     override suspend fun getUrl(url: String, referer: String?): List<ExtractorLink>? {
         with(app.get(url)) {
             linkRegex.find(this.text)?.let { link ->
-                val extractedlink = link.value.replace("source src=\"","")
                 return listOf(
                     ExtractorLink(
                         name,
                         name,
-                        extractedlink,
+                        link.value,
                         url,
                         Qualities.Unknown.value,
                         isM3u8 = true

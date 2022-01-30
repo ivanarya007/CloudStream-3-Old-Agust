@@ -45,7 +45,7 @@
      <string name="downloaded">Descargada</string>
      <string name="downloading">Descargando</string>
      <string name="download_paused">Descarga Pausada</string>
-     <string name="download_started">Obteniendo enlaces…</string>
+     <string name="download_started">Descarga iniciada</string>
      <string name="download_failed">Descarga Fallida</string>
      <string name="download_canceled">Descarga Cancelada</string>
      <string name="download_done">Descarga Terminada</string>

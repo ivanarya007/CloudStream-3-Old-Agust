@@ -153,6 +153,7 @@ class MonoschinosProvider : MainAPI() {
             val encodedurl = it.select("p").attr("data-player")
             val urlDecoded = base64Decode(encodedurl)
             val url = (urlDecoded).replace("https://monoschinos2.com/reproductor?url=", "")
+                .replace("https://repro.monoschinos2.com/aqua/sv?url=","")
             if (url.startsWith("https://www.fembed.com")) {
                 val extractor = FEmbed()
                 extractor.getUrl(url).forEach { link ->
