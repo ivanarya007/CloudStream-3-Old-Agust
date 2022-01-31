@@ -7,11 +7,11 @@ import com.lagradost.cloudstream3.extractors.StreamTape
 import com.lagradost.cloudstream3.utils.*
 import java.util.*
 
-class CinecalidadProvider:MainAPI() {
+class EntrepeliculasyseriesProvider:MainAPI() {
     override val mainUrl: String
-        get() = "https://cinecalidad.lol"
+        get() = "https://entrepeliculasyseries.nu"
     override val name: String
-        get() = "Cinecalidad"
+        get() = "EntrePeliculasySeries"
     override val lang = "es"
     override val hasMainPage = true
     override val hasChromecastSupport = true
@@ -25,23 +25,23 @@ class CinecalidadProvider:MainAPI() {
     override suspend fun getMainPage(): HomePageResponse {
         val items = ArrayList<HomePageList>()
         val urls = listOf(
-            Pair("$mainUrl/ver-serie/", "Series"),
-            Pair("$mainUrl/", "Peliculas"),
-            Pair("$mainUrl/genero-de-la-pelicula/peliculas-en-calidad-4k/", "4K UHD"),
+            Pair("$mainUrl/series//", "Series"),
+            Pair("$mainUrl/peliculas/", "Peliculas"),
+            Pair("$mainUrl/anime/", "Animes"),
         )
 
         for (i in urls) {
             try {
                 val soup = app.get(i.first).document
-                val home = soup.select(".item.movies").map {
-                    val title = it.selectFirst("div.in_title").text()
+                val home = soup.select("ul.list-movie li").map {
+                    val title = it.selectFirst("a.link-title h2").text()
                     val link = it.selectFirst("a").attr("href")
                     TvSeriesSearchResponse(
                         title,
                         link,
                         this.name,
-                        if (link.contains("/ver-pelicula/")) TvType.Movie else TvType.TvSeries,
-                        it.selectFirst(".poster.custom img").attr("data-src"),
+                        if (link.contains("/pelicula/")) TvType.Movie else TvType.TvSeries,
+                        it.selectFirst("a.poster img").attr("src"),
                         null,
                         null,
                     )
@@ -61,11 +61,11 @@ class CinecalidadProvider:MainAPI() {
         val url = "$mainUrl/?s=${query}"
         val document = app.get(url).document
 
-        return document.select("article").map {
-            val title = it.selectFirst("div.in_title").text()
+        return document.select("li.xxx.TPostMv").map {
+            val title = it.selectFirst("h2.Title").text()
             val href = it.selectFirst("a").attr("href")
-            val image = it.selectFirst(".poster.custom img").attr("data-src")
-            val isMovie = href.contains("/ver-pelicula/")
+            val image = it.selectFirst("img.lazy").attr("data-src")
+            val isMovie = href.contains("/pelicula/")
 
             if (isMovie) {
                 MovieSearchResponse(
@@ -94,13 +94,20 @@ class CinecalidadProvider:MainAPI() {
     override suspend fun load(url: String): LoadResponse? {
         val soup = app.get(url, timeout = 120).document
 
-        val title = soup.selectFirst(".single_left h1").text()
-        val description = soup.selectFirst("div.single_left table tbody tr td p")?.text()?.trim()
-        val poster: String? = soup.selectFirst(".alignnone").attr("data-src")
-        val episodes = soup.select("div.se-c div.se-a ul.episodios li").map { li ->
-            val href = li.selectFirst("a").attr("href")
-            val epThumb = li.selectFirst("div.imagen img").attr("src")
-            val name = li.selectFirst(".episodiotitle a").text()
+        val title = soup.selectFirst("h1.title-post").text()
+        val description = soup.selectFirst("p.text-content:nth-child(3)")?.text()?.trim()
+        val poster: String? = soup.selectFirst("article.TPost img.lazy").attr("data-src")
+        val episodes = soup.select(".TPostMv article").map { li ->
+            val href = try {
+                li.select("a").attr("href")
+            } catch (e: Exception) {
+                li.select(".C a").attr("href")
+            } catch (e: Exception) {
+                li.select("article a").attr("href")
+            }
+
+            val epThumb = li.selectFirst("div.Image img").attr("data-src")
+            val name = li.selectFirst("h2.Title").text()
             TvSeriesEpisode(
                 name,
                 null,
@@ -109,7 +116,7 @@ class CinecalidadProvider:MainAPI() {
                 epThumb
             )
         }
-        return when (val tvType = if (url.contains("/ver-pelicula/")) TvType.Movie else TvType.TvSeries) {
+        return when (val tvType = if (url.contains("/pelicula/")) TvType.Movie else TvType.TvSeries) {
             TvType.TvSeries -> {
                 TvSeriesLoadResponse(
                     title,
@@ -138,33 +145,45 @@ class CinecalidadProvider:MainAPI() {
         }
     }
 
+
     override suspend fun loadLinks(
         data: String,
         isCasting: Boolean,
         subtitleCallback: (SubtitleFile) -> Unit,
         callback: (ExtractorLink) -> Unit
     ): Boolean {
-        app.get(data).document.select(".dooplay_player_option").apmap {
-            val url = it.attr("data-option")
-            if (url.startsWith("https://evoload.io")) {
-                val extractor = Evoload()
-                extractor.getUrl(url).forEach { link ->
-                    callback.invoke(link)
+        app.get(data).document.select(".video ul.dropdown-menu li").apmap {
+            val servers = it.attr("data-link")
+            val doc = app.get(servers).document
+            val postkey = doc.selectFirst("input").attr("value")
+            val server = app.post("https://entrepeliculasyseries.nu/r.php",
+                headers = mapOf("Host" to "entrepeliculasyseries.nu",
+                    "User-Agent" to USER_AGENT,
+                    "Accept" to "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+                    "Accept-Language" to "en-US,en;q=0.5",
+                    "Content-Type" to "application/x-www-form-urlencoded",
+                    "Content-Length" to "90",
+                    "Origin" to "https://entrepeliculasyseries.nu",
+                    "DNT" to "1",
+                    "Connection" to "keep-alive",
+                    "Referer" to servers,
+                    "Upgrade-Insecure-Requests" to "1",
+                    "Sec-Fetch-Dest" to "document",
+                    "Sec-Fetch-Mode" to "navigate",
+                    "Sec-Fetch-Site" to "same-origin",
+                    "Sec-Fetch-User" to "?1",),
+                //params = mapOf(Pair("h", postkey)),
+                data =  mapOf(Pair("h", postkey)),
+                allowRedirects = false
+            ).response.headers.values("location")
+            for (link in server) {
+                for (extractor in extractorApis) {
+                    if (link.startsWith(extractor.mainUrl)) {
+                        extractor.getSafeUrl(link, data)?.forEach {
+                            callback(it)
+                        }
+                    }
                 }
-            } else {
-                loadExtractor(url, mainUrl, callback)
-            }
-        }
-        if ((app.get(data).text.contains("en castellano"))) app.get("$data?ref=es").document.select(".dooplay_player_option").apmap {
-            val url = it.attr("data-option")
-            if (url.startsWith("https://evoload.io")) {
-                val extractor = Evoload()
-                extractor.getUrl(url).forEach { link ->
-                    link.name += " Castellano"
-                    callback.invoke(link)
-                }
-            } else {
-                loadExtractor(url, mainUrl, callback)
             }
         }
         return true
