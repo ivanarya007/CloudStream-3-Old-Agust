@@ -11,12 +11,12 @@ open class YourUpload : ExtractorApi() {
     override val requiresReferer = false
 
     private val linkRegex =
-        Regex("""(file.*https:\/\/.*?\.mp4)""")
+        Regex("""(video" content="https:\/\/.*?\.mp4)""")
 
     override suspend fun getUrl(url: String, referer: String?): List<ExtractorLink>? {
         with(app.get(url)) {
             linkRegex.find(this.text)?.let { link ->
-                val extractedlink = link.value.replace("file: '","")
+                val extractedlink = link.value.replace("video\" content=\"","")
                 return listOf(
                     ExtractorLink(
                         name,

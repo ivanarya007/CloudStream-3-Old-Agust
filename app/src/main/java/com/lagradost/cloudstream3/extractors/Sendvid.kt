@@ -14,17 +14,16 @@ open class Sendvid : ExtractorApi() {
     override val requiresReferer = false
 
     private val linkRegex =
-        Regex("""(https:\/\/.*?\.m3u8.*")""")
+        Regex("""("og:video" content="https:\/\/.*?\.m3u8.*")""")
 
     override suspend fun getUrl(url: String, referer: String?): List<ExtractorLink>? {
         with(app.get(url)) {
             linkRegex.find(this.text)?.let { link ->
-                val extractedlink = URLDecoder.decode(link.value,"UTF-8")
                 return listOf(
                     ExtractorLink(
                         name,
                         name,
-                        link.value.replace("\"",""),
+                        link.value.replace("\"og:video\" content=\"","").replace("\"",""),
                         url,
                         Qualities.Unknown.value,
                         isM3u8 = true

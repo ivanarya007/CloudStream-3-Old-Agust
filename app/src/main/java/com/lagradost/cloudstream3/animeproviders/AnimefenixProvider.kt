@@ -1,14 +1,19 @@
 package com.lagradost.cloudstream3.animeproviders
 
 import com.lagradost.cloudstream3.*
+import com.lagradost.cloudstream3.extractors.*
 import com.lagradost.cloudstream3.utils.ExtractorLink
+import com.lagradost.cloudstream3.utils.Qualities
 import com.lagradost.cloudstream3.utils.extractorApis
+import com.lagradost.cloudstream3.utils.httpsify
 import org.jsoup.Jsoup
+import java.net.URLDecoder
 import java.util.*
 import kotlin.collections.ArrayList
 
 
 class AnimefenixProvider:MainAPI() {
+
 
     override val mainUrl: String
         get() = "https://animefenix.com"
@@ -79,7 +84,7 @@ class AnimefenixProvider:MainAPI() {
         return ArrayList(search)
     }
 
-    override suspend fun load(url: String): LoadResponse {
+    override suspend fun load(url: String): LoadResponse? {
         val doc = Jsoup.parse(app.get(url, timeout = 120).text)
         val poster = doc.selectFirst(".image > img").attr("src")
         val title = doc.selectFirst("h1.title.has-text-orange").text()
@@ -95,12 +100,36 @@ class AnimefenixProvider:MainAPI() {
             val link = it.selectFirst("a").attr("href")
             AnimeEpisode(link, name)
         }.reversed()
-        return newAnimeLoadResponse(title, url, TvType.Anime) {
-            posterUrl = poster
-            addEpisodes(DubStatus.Subbed, episodes)
-            showStatus = status
-            plot = description
-            tags = genres
+
+        val href= doc.selectFirst(".anime-page__episode-list li")
+        val hrefmovie = href.selectFirst("a").attr("href")
+        val type = if (doc.selectFirst("ul.has-text-light").text().contains("Película") && episodes.size == 1) TvType.AnimeMovie else TvType.Anime
+
+        return when (type) {
+            TvType.Anime -> {
+                return newAnimeLoadResponse(title, url, type) {
+                    japName = null
+                    engName = title
+                    posterUrl = poster
+                    addEpisodes(DubStatus.Subbed, episodes)
+                    plot = description
+                }
+            }
+            TvType.AnimeMovie -> {
+                MovieLoadResponse(
+                    title,
+                    url,
+                    this.name,
+                    type,
+                    hrefmovie,
+                    poster,
+                    null,
+                    description,
+                    null,
+                    null,
+                )
+            }
+            else -> null
         }
     }
 
@@ -110,33 +139,82 @@ class AnimefenixProvider:MainAPI() {
         subtitleCallback: (SubtitleFile) -> Unit,
         callback: (ExtractorLink) -> Unit
     ): Boolean {
-        //Just this two servers can be extracted for now
-        val selector = app.get(data).document.select("div.player-container script").toString()
+        app.get(data).document.select(".player-container script").apmap {
         val feRegex = Regex("player=2&amp;code(.*)&")
-        val link1 = feRegex.findAll(selector).map {
-            "https://www.fembed.com/v/"+(it.value).replace("player=2&amp;code=","").replace("&","")
-        }.toList() // --> https://www.fembed.com/v/jt47bkh307jl
-        for (link in link1) {
+        val link1 = feRegex.findAll(it.toString()).map {
+            "https://embedsito.com/v/"+(it.value).replace("player=2&amp;code=","").replace("&","")
+        }.toList().first() // --> https://embesito.com/v/jt47bkh307jl
             for (extractor in extractorApis) {
-                if (link.startsWith(extractor.mainUrl)) {
-                    extractor.getSafeUrl(link, data)?.forEach {
+                if (link1.startsWith(extractor.mainUrl)) {
+                    extractor.getSafeUrl(link1, data)?.apmap {
                         callback(it)
                     }
                 }
+            }
+
+        val mp4Regex = Regex("player=3&amp;code=(.*)&")
+        val link2 = mp4Regex.findAll(it.toString()).map {
+            "https://www.mp4upload.com/embed-"+(it.value).replace("player=3&amp;code=","").replace("&","")+".html"
+        }.toList().first() // --> https://www.mp4upload.com/embed-g4yu7p4u.html
+            for (extractor in extractorApis) {
+                if (link2.startsWith(extractor.mainUrl)) {
+                    extractor.getSafeUrl(link2, data)?.apmap {
+                        callback(it)
+                    }
+                }
+            }
+        val youruploadRegex = Regex("player=6&amp;code=(.*)&")
+        val link3 = youruploadRegex.findAll(it.toString()).map {
+            "https://www.yourupload.com/embed/"+(it.value).replace("player=6&amp;code=","").replace("&","")
+        }.toList().first() // --> https://www.yourupload.com/embed/g4yu7p4u
+            for (extractor in extractorApis) {
+                if (link3.startsWith(extractor.mainUrl)) {
+                    extractor.getSafeUrl(link3, data)?.apmap {
+                        callback(it)
+                    }
+                }
+            }
+        val okruRegex = Regex("player=12&amp;code=(.*)&")
+        val link4 = okruRegex.findAll(it.toString()).map {
+            "https://ok.ru/videoembed/"+(it.value).replace("player=12&amp;code=","").replace("&","")
+        }.toList().first() // --> https://ok.ru/videoembed/3276668340777
+            for (extractor in extractorApis) {
+                if (link4.startsWith(extractor.mainUrl)) {
+                    extractor.getSafeUrl(link4, data)?.apmap {
+                        callback(it)
+                    }
+                }
+            }
+        val sendvidRegex = Regex("player=4&amp;code=(.*)&")
+        val link5 = sendvidRegex.findAll(it.toString()).map {
+            "https://sendvid.com/"+(it.value).replace("player=4&amp;code=","").replace("&","")
+        }.toList().first() // --> https://sendvid.com/embed/ny8fzfd8
+            for (extractor in extractorApis) {
+                if (link5.startsWith(extractor.mainUrl)) {
+                    extractor.getSafeUrl(link5, data)?.apmap {
+                        callback(it)
+                    }
+                }
+            }
+        val fireloadRegex = Regex("player=22&amp;code=(.*)&")
+        val link6 = fireloadRegex.findAll(it.toString()).map {
+            "https://www.animefenix.com/stream/fl.php?v="+URLDecoder.decode((it.value).replace("player=22&amp;code=","").replace("&",""), "UTF-8")
+        }.toList().first()
+        val directlinkRegex = Regex("(file\":\".*.mp4.*\",\"t)")
+        with(app.get(link6, allowRedirects = false)) {
+            directlinkRegex.find(this.text)?.let { link ->
+                callback(
+                    ExtractorLink(
+                        "Fireload",
+                        "Fireload",
+                        ("https://"+link.value).replace("file\":\"","").replace("\",\"t",""),
+                        "",
+                        Qualities.Unknown.value,
+                        isM3u8 = false
+                    )
+                )
             }
         }
-        val mp4Regex = Regex("player=3&amp;code=(.*)&amp")
-        val link2 = mp4Regex.findAll(selector).map {
-            "https://www.mp4upload.com/embed-"+(it.value).replace("player=3&amp;code=","").replace("&amp","")+".html"
-        }.toList() // --> https://www.mp4upload.com/embed-g4yu7p4u.html
-        for (link in link2) {
-            for (extractor in extractorApis) {
-                if (link.startsWith(extractor.mainUrl)) {
-                    extractor.getSafeUrl(link, data)?.forEach {
-                        callback(it)
-                    }
-                }
-            }
         }
         return true
     }
