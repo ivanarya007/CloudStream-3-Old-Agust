@@ -440,7 +440,7 @@ class HomeFragment : Fragment() {
                     val d = data.value
 
                     currentHomePage = d
-                    (home_master_recycler?.adapter as ParentItemAdapter?)?.items =
+                    (home_master_recycler?.adapter as ParentItemAdapter?)?.updateList(
                         d?.items?.mapNotNull {
                             try {
                                 HomePageList(it.name, it.list.filterSearchResponse())
@@ -448,9 +448,7 @@ class HomeFragment : Fragment() {
                                 logError(e)
                                 null
                             }
-                        } ?: listOf()
-
-                    home_master_recycler?.adapter?.notifyDataSetChanged()
+                        } ?: listOf())
 
                     home_loading?.isVisible = false
                     home_loading_error?.isVisible = false
@@ -472,9 +470,13 @@ class HomeFragment : Fragment() {
                                 api.name
                             )
                         }) {
-                            val i = Intent(Intent.ACTION_VIEW)
-                            i.data = Uri.parse(validAPIs[itemId].mainUrl)
-                            startActivity(i)
+                            try {
+                                val i = Intent(Intent.ACTION_VIEW)
+                                i.data = Uri.parse(validAPIs[itemId].mainUrl)
+                                startActivity(i)
+                            } catch (e: Exception) {
+                                logError(e)
+                            }
                         }
                     }
 
@@ -491,9 +493,8 @@ class HomeFragment : Fragment() {
             }
         }
 
-
         val adapter: RecyclerView.Adapter<RecyclerView.ViewHolder> =
-            ParentItemAdapter(listOf(), { callback ->
+            ParentItemAdapter(mutableListOf(), { callback ->
                 homeHandleSearch(callback)
             }, { item ->
                 activity?.loadHomepageList(item)
