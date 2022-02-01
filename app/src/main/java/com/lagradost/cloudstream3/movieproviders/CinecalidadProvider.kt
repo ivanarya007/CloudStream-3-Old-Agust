@@ -1,10 +1,14 @@
 package com.lagradost.cloudstream3.movieproviders
 
+import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.module.kotlin.readValue
 import com.lagradost.cloudstream3.*
+import com.lagradost.cloudstream3.animeproviders.AllAnimeProvider
 import com.lagradost.cloudstream3.extractors.Evoload
 import com.lagradost.cloudstream3.extractors.FEmbed
 import com.lagradost.cloudstream3.extractors.StreamTape
 import com.lagradost.cloudstream3.utils.*
+import java.net.URLDecoder
 import java.util.*
 
 class CinecalidadProvider:MainAPI() {
@@ -138,12 +142,37 @@ class CinecalidadProvider:MainAPI() {
         }
     }
 
+
+    data class cinestart (
+        @JsonProperty("status") val status: Int,
+        @JsonProperty("file") val file: String
+    )
+
+
     override suspend fun loadLinks(
         data: String,
         isCasting: Boolean,
         subtitleCallback: (SubtitleFile) -> Unit,
         callback: (ExtractorLink) -> Unit
     ): Boolean {
+        val cinestart = Regex("(https:\\/\\/cinestart.net\\/embed.html.*\"> Cine)")
+        val cinecss = app.get(data).document.select(".ajax_mode").toString()
+        cinestart.findAll(cinecss).map {
+            it.value.replace("\"> Cine","").replace("https://cinestart.net/embed.html#","https://cinestart.net/vr.php?v=")
+        }.toList().apmap { url ->
+            val server = app.get(url).text
+            val json = mapper.readValue<cinestart>(server)
+            callback(
+                ExtractorLink(
+                    "Cinestart",
+                    "Cinestart",
+                    json.file,
+                    "",
+                    Qualities.Unknown.value,
+                    isM3u8 = false
+                )
+            )
+        }
         app.get(data).document.select(".dooplay_player_option").apmap {
             val url = it.attr("data-option")
             if (url.startsWith("https://evoload.io")) {
