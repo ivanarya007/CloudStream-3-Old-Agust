@@ -25,7 +25,7 @@ class AnimefenixProvider:MainAPI() {
     override val hasDownloadSupport = true
     override val supportedTypes = setOf(
         TvType.AnimeMovie,
-        TvType.ONA,
+        TvType.OVA,
         TvType.Anime,
     )
 
@@ -113,6 +113,9 @@ class AnimefenixProvider:MainAPI() {
                     posterUrl = poster
                     addEpisodes(DubStatus.Subbed, episodes)
                     plot = description
+                    tags = genres
+                    showStatus = status
+
                 }
             }
             TvType.AnimeMovie -> {
@@ -127,6 +130,7 @@ class AnimefenixProvider:MainAPI() {
                     description,
                     null,
                     null,
+                    genres,
                 )
             }
             else -> null
@@ -139,82 +143,94 @@ class AnimefenixProvider:MainAPI() {
         subtitleCallback: (SubtitleFile) -> Unit,
         callback: (ExtractorLink) -> Unit
     ): Boolean {
-        app.get(data).document.select(".player-container script").apmap {
-        val feRegex = Regex("player=2&amp;code(.*)&")
-        val link1 = feRegex.findAll(it.toString()).map {
-            "https://embedsito.com/v/"+(it.value).replace("player=2&amp;code=","").replace("&","")
-        }.toList().first() // --> https://embesito.com/v/jt47bkh307jl
-            for (extractor in extractorApis) {
-                if (link1.startsWith(extractor.mainUrl)) {
-                    extractor.getSafeUrl(link1, data)?.apmap {
-                        callback(it)
+        app.get(data).document.select(".player-container script").apmap { script ->
+            if (script.data().contains("var tabsArray =")) {
+                val html = app.get(data).text
+                val feRegex = Regex("player=2&amp;code(.*)&")
+                val link1 = feRegex.findAll(html).map {
+                    "https://embedsito.com/v/"+(it.value).replace("player=2&amp;code=","").replace("&","")
+                }.toList() // --> https://embesito.com/v/jt47bkh307jl
+                for (link in link1) {
+                    for (extractor in extractorApis) {
+                        if (link.startsWith(extractor.mainUrl)) {
+                            extractor.getSafeUrl(link, data)?.apmap {
+                                callback(it)
+                            }
+                        }
+                    }
+                }
+                val mp4Regex = Regex("player=3&amp;code=(.*)&")
+                val link2 = mp4Regex.findAll(html).map {
+                    "https://www.mp4upload.com/embed-"+(it.value).replace("player=3&amp;code=","").replace("&","")+".html"
+                }.toList() // --> https://www.mp4upload.com/embed-g4yu7p4u.html
+                for (link in link2) {
+                    for (extractor in extractorApis) {
+                        if (link.startsWith(extractor.mainUrl)) {
+                            extractor.getSafeUrl(link, data)?.apmap {
+                                callback(it)
+                            }
+                        }
+                    }
+                }
+                val youruploadRegex = Regex("player=6&amp;code=(.*)&")
+                val link3 = youruploadRegex.findAll(html).map {
+                    "https://www.yourupload.com/embed/"+(it.value).replace("player=6&amp;code=","").replace("&","")
+                }.toList() // --> https://www.yourupload.com/embed/g4yu7p4u
+                for (link in link3) {
+                    for (extractor in extractorApis) {
+                        if (link.startsWith(extractor.mainUrl)) {
+                            extractor.getSafeUrl(link, data)?.apmap {
+                                callback(it)
+                            }
+                        }
+                    }
+                }
+                val okruRegex = Regex("player=12&amp;code=(.*)&")
+                val link4 = okruRegex.findAll(html).map {
+                    "https://ok.ru/videoembed/"+(it.value).replace("player=12&amp;code=","").replace("&","")
+                }.toList() // --> https://ok.ru/videoembed/3276668340777
+                for (link in link4) {
+                    for (extractor in extractorApis) {
+                        if (link.startsWith(extractor.mainUrl)) {
+                            extractor.getSafeUrl(link, data)?.apmap {
+                                callback(it)
+                            }
+                        }
+                    }
+                }
+                val sendvidRegex = Regex("player=4&amp;code=(.*)&")
+                val link5 = sendvidRegex.findAll(html).map {
+                    "https://sendvid.com/"+(it.value).replace("player=4&amp;code=","").replace("&","")
+                }.toList() // --> https://sendvid.com/embed/ny8fzfd8
+                for (link in link5) {
+                    for (extractor in extractorApis) {
+                        if (link.startsWith(extractor.mainUrl)) {
+                            extractor.getSafeUrl(link, data)?.apmap {
+                                callback(it)
+                            }
+                        }
+                    }
+                }
+                val fireloadRegex = Regex("player=22&amp;code=(.*)&")
+                val link6 = fireloadRegex.findAll(html).map {
+                    "https://www.animefenix.com/stream/fl.php?v="+URLDecoder.decode((it.value).replace("player=22&amp;code=","").replace("&",""), "UTF-8")
+                }.toList().first()
+                val directlinkRegex = Regex("(file\":\".*.mp4.*\",\"t)")
+                with(app.get(link6, allowRedirects = false)) {
+                    directlinkRegex.find(this.text)?.let { link ->
+                        callback(
+                            ExtractorLink(
+                                "Fireload",
+                                "Fireload",
+                                ("https://"+link.value).replace("file\":\"","").replace("\",\"t",""),
+                                "",
+                                Qualities.Unknown.value,
+                                isM3u8 = false
+                            )
+                        )
                     }
                 }
             }
-
-        val mp4Regex = Regex("player=3&amp;code=(.*)&")
-        val link2 = mp4Regex.findAll(it.toString()).map {
-            "https://www.mp4upload.com/embed-"+(it.value).replace("player=3&amp;code=","").replace("&","")+".html"
-        }.toList().first() // --> https://www.mp4upload.com/embed-g4yu7p4u.html
-            for (extractor in extractorApis) {
-                if (link2.startsWith(extractor.mainUrl)) {
-                    extractor.getSafeUrl(link2, data)?.apmap {
-                        callback(it)
-                    }
-                }
-            }
-        val youruploadRegex = Regex("player=6&amp;code=(.*)&")
-        val link3 = youruploadRegex.findAll(it.toString()).map {
-            "https://www.yourupload.com/embed/"+(it.value).replace("player=6&amp;code=","").replace("&","")
-        }.toList().first() // --> https://www.yourupload.com/embed/g4yu7p4u
-            for (extractor in extractorApis) {
-                if (link3.startsWith(extractor.mainUrl)) {
-                    extractor.getSafeUrl(link3, data)?.apmap {
-                        callback(it)
-                    }
-                }
-            }
-        val okruRegex = Regex("player=12&amp;code=(.*)&")
-        val link4 = okruRegex.findAll(it.toString()).map {
-            "https://ok.ru/videoembed/"+(it.value).replace("player=12&amp;code=","").replace("&","")
-        }.toList().first() // --> https://ok.ru/videoembed/3276668340777
-            for (extractor in extractorApis) {
-                if (link4.startsWith(extractor.mainUrl)) {
-                    extractor.getSafeUrl(link4, data)?.apmap {
-                        callback(it)
-                    }
-                }
-            }
-        val sendvidRegex = Regex("player=4&amp;code=(.*)&")
-        val link5 = sendvidRegex.findAll(it.toString()).map {
-            "https://sendvid.com/"+(it.value).replace("player=4&amp;code=","").replace("&","")
-        }.toList().first() // --> https://sendvid.com/embed/ny8fzfd8
-            for (extractor in extractorApis) {
-                if (link5.startsWith(extractor.mainUrl)) {
-                    extractor.getSafeUrl(link5, data)?.apmap {
-                        callback(it)
-                    }
-                }
-            }
-        val fireloadRegex = Regex("player=22&amp;code=(.*)&")
-        val link6 = fireloadRegex.findAll(it.toString()).map {
-            "https://www.animefenix.com/stream/fl.php?v="+URLDecoder.decode((it.value).replace("player=22&amp;code=","").replace("&",""), "UTF-8")
-        }.toList().first()
-        val directlinkRegex = Regex("(file\":\".*.mp4.*\",\"t)")
-        with(app.get(link6, allowRedirects = false)) {
-            directlinkRegex.find(this.text)?.let { link ->
-                callback(
-                    ExtractorLink(
-                        "Fireload",
-                        "Fireload",
-                        ("https://"+link.value).replace("file\":\"","").replace("\",\"t",""),
-                        "",
-                        Qualities.Unknown.value,
-                        isM3u8 = false
-                    )
-                )
-            }
-        }
         }
         return true
     }

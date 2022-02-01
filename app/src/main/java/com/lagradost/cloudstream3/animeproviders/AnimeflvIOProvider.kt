@@ -18,7 +18,7 @@ class AnimeflvIOProvider:MainAPI() {
     override val hasDownloadSupport = true
     override val supportedTypes = setOf(
         TvType.AnimeMovie,
-        TvType.ONA,
+        TvType.OVA,
         TvType.Anime,
     )
 
@@ -182,7 +182,7 @@ class AnimeflvIOProvider:MainAPI() {
             val url = it.attr("data-video")
             for (extractor in extractorApis) {
                 if (url.startsWith(extractor.mainUrl)) {
-                    extractor.getSafeUrl(url, data)?.forEach {
+                    extractor.getSafeUrl(url, data)?.apmap {
                         callback(it)
                     }
                 }

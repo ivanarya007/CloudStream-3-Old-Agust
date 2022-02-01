@@ -118,25 +118,26 @@ class AnimeflvnetProvider:MainAPI() {
         subtitleCallback: (SubtitleFile) -> Unit,
         callback: (ExtractorLink) -> Unit
     ): Boolean {
-        //There might be a better way to do this, but this one works
-        val html = app.get(data).text
-        val linkRegex = Regex("""(https:.*?\.html.*)""")
-        val videos = linkRegex.findAll(html).map {
-            it.value.replace("\\/", "/")
-        }.toList()
-        val serversRegex = Regex("(https?:\\/\\/(www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b([-a-zA-Z0-9()@:%_\\+.~#?&\\/\\/=]*))")
-        val links = serversRegex.findAll(videos.toString()).map {
-            it.value.replace("https://embedsb.com","https://watchsb.com")
-        }.toList()
-        for (link in links) {
-            for (extractor in extractorApis) {
-                if (link.startsWith(extractor.mainUrl)) {
-                    extractor.getSafeUrl(link, data)?.forEach {
-                        callback(it)
+        app.get(data).document.select("script").apmap { script ->
+            if (script.data().contains("var videos = {")) {
+                val linkRegex = Regex("""(https:.*?\.html.*)""")
+                val videos = linkRegex.findAll(app.get(data).text).map {
+                    it.value.replace("\\/", "/")
+                }.toList()
+                val serversRegex = Regex("(https?:\\/\\/(www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b([-a-zA-Z0-9()@:%_\\+.~#?&\\/\\/=]*))")
+                val links = serversRegex.findAll(videos.toString()).map {
+                    it.value.replace("https://embedsb.com","https://watchsb.com")
+                }.toList()
+                for (link in links) {
+                    for (extractor in extractorApis) {
+                        if (link.startsWith(extractor.mainUrl)) {
+                            extractor.getSafeUrl(link, data)?.apmap {
+                                callback(it)
+                            }
+                        }
                     }
                 }
             }
-
         }
         return true
     }

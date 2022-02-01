@@ -164,12 +164,12 @@
      <string name="anime">Anime</string>
      <string name="torrent">Torrent</string>
      <string name="documentaries">Documentales</string>
-     <string name="movies_singular">Pelis</string>
-     <string name="tv_series_singular">Series</string>
-     <string name="cartoons_singular">Caricaturas</string>
+     <string name="movies_singular">Película</string>
+     <string name="tv_series_singular">Serie</string>
+     <string name="cartoons_singular">Caricatura</string>
      <string name="anime_singular">@string/anime</string>
      <string name="torrent_singular">Torrent</string>
- <string name="documentaries_singular">Documentales</string>     <string name="source_error">Error de fuente</string>
+ <string name="documentaries_singular">Documental</string>     <string name="source_error">Error de fuente</string>
      <string name="remote_error">Error remoto</string>
      <string name="render_error">Error de Renderizador</string>
      <string name="unexpected_error">Error de reproductor inesperado</string>

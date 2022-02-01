@@ -216,7 +216,6 @@ class PelisplusSOProvider:MainAPI() {
                 }
             }
         }
-
         app.get(data).document.select(".server-item-0 li.tab-video").apmap {
             val url = it.attr("data-video")
             for (extractor in extractorApis) {
@@ -228,7 +227,6 @@ class PelisplusSOProvider:MainAPI() {
                 }
             }
         }
-
         app.get(data).document.select(".server-item-2 li.tab-video").apmap {
             val url = it.attr("data-video")
             for (extractor in extractorApis) {

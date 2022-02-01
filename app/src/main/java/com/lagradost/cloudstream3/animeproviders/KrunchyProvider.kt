@@ -72,7 +72,7 @@ class KrunchyProvider : MainAPI() {
         get() = setOf(
             TvType.AnimeMovie,
             TvType.Anime,
-            TvType.ONA
+            TvType.OVA
         )
 
     override suspend fun getMainPage(): HomePageResponse {

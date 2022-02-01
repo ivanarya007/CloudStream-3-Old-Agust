@@ -3,6 +3,7 @@ package com.lagradost.cloudstream3.animeproviders
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.extractors.FEmbed
 import com.lagradost.cloudstream3.utils.ExtractorLink
+import com.lagradost.cloudstream3.utils.extractorApis
 import com.lagradost.cloudstream3.utils.loadExtractor
 import java.util.*
 import kotlin.collections.ArrayList
@@ -157,13 +158,13 @@ class DoramasYTProvider : MainAPI() {
             val encodedurl = it.select("p").attr("data-player")
             val urlDecoded = base64Decode(encodedurl)
             val url = (urlDecoded).replace("https://doramasyt.com/reproductor?url=", "")
-            if (url.startsWith("https://www.fembed.com")) {
-                val extractor = FEmbed()
-                extractor.getUrl(url).forEach { link ->
-                    callback.invoke(link)
+                .replace("https://repro.monoschinos2.com/aqua/sv?url=","")
+            for (extractor in extractorApis) {
+                if (url.startsWith(extractor.mainUrl)) {
+                    extractor.getSafeUrl(url, data)?.apmap {
+                        callback(it)
+                    }
                 }
-            } else {
-                loadExtractor(url, mainUrl, callback)
             }
         }
         return true

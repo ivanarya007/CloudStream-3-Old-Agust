@@ -25,7 +25,7 @@ class EntrepeliculasyseriesProvider:MainAPI() {
     override suspend fun getMainPage(): HomePageResponse {
         val items = ArrayList<HomePageList>()
         val urls = listOf(
-            Pair("$mainUrl/series//", "Series"),
+            Pair("$mainUrl/series/", "Series"),
             Pair("$mainUrl/peliculas/", "Peliculas"),
             Pair("$mainUrl/anime/", "Animes"),
         )

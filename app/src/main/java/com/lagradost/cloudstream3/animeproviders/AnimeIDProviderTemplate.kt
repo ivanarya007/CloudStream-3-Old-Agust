@@ -211,16 +211,17 @@ open class AnimeIDProviderTemplate : MainAPI() {
         subtitleCallback: (SubtitleFile) -> Unit,
         callback: (ExtractorLink) -> Unit
     ): Boolean {
-        // "?: return" is a very useful statement which returns if the iframe link isn't found.
-        val iframeLink = Jsoup.parse(app.get(data).text).selectFirst("iframe")?.attr("src") ?: return false
-
-        // In this case the video player is a vidstream clone and can be handled by the vidstream extractor.
-        // This case is a both unorthodox and you normally do not call extractors as they detect the url returned and does the rest.
-        val vidstreamObject = Vidstream(animeidExtractorUrl ?: mainUrl)
-        // https://vidembed.cc/streaming.php?id=MzUwNTY2&... -> MzUwNTY2
-        val id = Regex("""id=([^&]*)""").find(iframeLink)?.groupValues?.get(1)
-        if (id != null) {
-            vidstreamObject.getUrl(id, isCasting, callback)
+        val doc = app.get(data).document
+        val iframe = fixUrl(doc.selectFirst("div.play-video iframe").attr("src"))
+         app.get(iframe).document.select("ul.list-server-items li").apmap {
+            val url = it.attr("data-video")
+            for (extractor in extractorApis) {
+                if (url.startsWith(extractor.mainUrl)) {
+                    extractor.getSafeUrl(url, data)?.apmap {
+                        callback(it)
+                    }
+                }
+            }
         }
         return true
     }

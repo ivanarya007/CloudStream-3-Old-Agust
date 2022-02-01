@@ -13,9 +13,8 @@ open class Solidfiles : ExtractorApi() {
     override val requiresReferer = false
 
     private val linkRegex =
-        Regex("""(streamUrl("):"(https|http):\/\/.*?\.mp4)""")
+        Regex("""(streamUrl":"(https|http):\/\/.*?\.mp4)""")
     //Regex("""(downloadUrl("):"(https|http):\/\/.*?\.mp4)""") also works, don't know which one is faster
-
     override suspend fun getUrl(url: String, referer: String?): List<ExtractorLink>? {
         with(app.get(url)) {
             linkRegex.find(this.text)?.let { link ->

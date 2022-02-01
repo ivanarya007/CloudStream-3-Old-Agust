@@ -129,8 +129,6 @@ val extractorApis: Array<ExtractorApi> = arrayOf(
 
     OkRu(),
     Okru1(),
-    Mailru(),
-    Mailru1(),
 
     Videobin(),
     Videobin1(),

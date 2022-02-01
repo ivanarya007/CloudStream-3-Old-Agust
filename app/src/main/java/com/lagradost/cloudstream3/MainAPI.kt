@@ -28,60 +28,54 @@ object APIHolder {
     private const val defProvider = 0
 
     val apis = arrayListOf(
-// MeloMovieProvider(), // Captcha for links
-//AnimePaheProvider(), //ddos guard
-//LookMovieProvider(), // RECAPTCHA (Please allow up to 5 seconds...)
-//ShiroProvider(), // v2 fucked me
-//TmdbProvider(),
+        // HenaojaraProvider(), removed due to scraping providers that are already implemented
         AkwamProvider(),
         AllAnimeProvider(),
         AllMoviesForYouProvider(),
-        AnimeonlineProvider(),
-        AnimeFlickProvider(),
         AnimefenixProvider(),
-        AnimeIDProvider(),
+        AnimeFlickProvider(),
         AnimeflvIOProvider(),
         AnimeflvnetProvider(),
+        AnimeIDProvider(),
+        AnimeonlineProvider(),
         AsianLoadProvider(),
         CinecalidadProvider(),
-        DramaSeeProvider(),
         DoramasYTProvider(),
+        DramaSeeProvider(),
         DubbedAnimeProvider(),
         ElifilmsProvider(),
         EntrepeliculasyseriesProvider(),
         FilmanProvider(),
+        FmoviesProvider(), //Sflix mirror
         FrenchStreamProvider(),
         GogoanimeProvider(),
         IHaveNoTvProvider(), // Documentaries provider
         KdramaHoodProvider(),
         KrunchyProvider(),
         MonoschinosProvider(),
-        PelisplusHDProvider(),
-        PeliSmartProvider(),
         PelisflixProvider(),
-        SeriesflixProvider(),
-       // HenaojaraProvider(), removed due to scraping providers that are already implemented
-
+        PeliSmartProvider(),
+        PelisplusHDProvider(),
         PelisplusSOProvider(),
         PinoyHDXyzProvider(),
         PinoyMoviePediaProvider(),
         PinoyMoviesEsProvider(),
+        SeriesflixProvider(),
         SflixProvider("https://dopebox.to", "Dopebox"),
         SflixProvider("https://sflix.to", "Sflix"),
-        YesMoviesProviders("https://hdtoday.tv", "HDToday"), //Sflix mirror
-        YesMoviesProviders("https://yesmovies.mn", "YesMovies"), //Sflix mirror
-        YesMoviesProviders("https://moviesjoy.to", "Moviesjoy"), //Sflix mirror
-        YesMoviesProviders("https://myflixertv.to", "MyFlixer"), //Sflix mirror
-        FmoviesProvider(), //Sflix mirror
         TenshiProvider(),
         TrailersTwoProvider(),
-        VMoveeProvider(),
         VfFilmProvider(),
         VfSerieProvider(),
         VidEmbedProvider(),
+        VMoveeProvider(),
         WatchAsianProvider(),
         WatchCartoonOnlineProvider(),
         WcoProvider(),
+        YesMoviesProviders("https://hdtoday.tv", "HDToday"), //Sflix mirror
+        YesMoviesProviders("https://moviesjoy.to", "Moviesjoy"), //Sflix mirror
+        YesMoviesProviders("https://myflixertv.to", "MyFlixer"), //Sflix mirror
+        YesMoviesProviders("https://yesmovies.mn", "YesMovies"), //Sflix mirror
         ZoroProvider(),
     )
 
@@ -93,7 +87,7 @@ object APIHolder {
     )
 
     private val backwardsCompatibleProviders = arrayListOf(
-        KawaiifuProvider(),  // removed due to cloudflare
+        KawaiifuProvider(), // removed due to cloudflare
         HDMProvider(),// removed due to cloudflare
     )
 
@@ -164,7 +158,7 @@ object APIHolder {
     fun Context.getApiProviderLangSettings(): HashSet<String> {
         val settingsManager = PreferenceManager.getDefaultSharedPreferences(this)
         val hashSet = HashSet<String>()
-        hashSet.add("es") // def is only en
+        hashSet.add("en") // def is only en
         val list = settingsManager.getStringSet(
             this.getString(R.string.provider_lang_key),
             hashSet.toMutableSet()
@@ -202,7 +196,7 @@ object APIHolder {
             allApis
         } else {
             // Filter API depending on preferred media type
-            val listEnumAnime = listOf(TvType.Anime, TvType.AnimeMovie, TvType.ONA)
+            val listEnumAnime = listOf(TvType.Anime, TvType.AnimeMovie, TvType.OVA)
             val listEnumMovieTv = listOf(TvType.Movie, TvType.TvSeries, TvType.Cartoon)
             val mediaTypeList = if (currentPrefMedia == 1) listEnumMovieTv else listEnumAnime
 
@@ -240,7 +234,7 @@ abstract class MainAPI {
         TvType.TvSeries,
         TvType.Cartoon,
         TvType.Anime,
-        TvType.ONA,
+        TvType.OVA,
         TvType.Mirror
     )
 
@@ -395,7 +389,7 @@ enum class TvType {
     TvSeries,
     Cartoon,
     Anime,
-    ONA,
+    OVA,
     Torrent,
     Documentary,
     Mirror,
@@ -408,7 +402,7 @@ fun TvType.isMovieType(): Boolean {
 
 // returns if the type has an anime opening
 fun TvType.isAnimeOp(): Boolean {
-    return this == TvType.Anime || this == TvType.ONA
+    return this == TvType.Anime || this == TvType.OVA
 }
 
 data class SubtitleFile(val lang: String, val url: String)
@@ -488,7 +482,7 @@ interface LoadResponse {
     val posterUrl: String?
     val year: Int?
     val plot: String?
-    val rating: Int? // 0-100
+    val rating: Int? // 1-1000
     val tags: List<String>?
     var duration: Int? // in minutes
     val trailerUrl: String?
@@ -502,7 +496,7 @@ fun LoadResponse?.isEpisodeBased(): Boolean {
 
 fun LoadResponse?.isAnimeBased(): Boolean {
     if (this == null) return false
-    return (this.type == TvType.Anime || this.type == TvType.ONA) // && (this is AnimeLoadResponse)
+    return (this.type == TvType.Anime || this.type == TvType.OVA) // && (this is AnimeLoadResponse)
 }
 
 fun TvType?.isEpisodeBased(): Boolean {

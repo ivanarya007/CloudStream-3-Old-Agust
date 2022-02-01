@@ -18,7 +18,7 @@ class HenaojaraProvider: MainAPI() {
     override val hasDownloadSupport = true
     override val supportedTypes = setOf(
         TvType.AnimeMovie,
-        TvType.ONA,
+        TvType.OVA,
         TvType.Anime,
     )
 

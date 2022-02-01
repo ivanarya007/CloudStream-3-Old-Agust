@@ -1350,6 +1350,7 @@ class ResultFragment : Fragment() {
                                 TvType.Documentary -> R.string.documentaries_singular
                                 TvType.Movie -> R.string.movies_singular
                                 TvType.Torrent -> R.string.torrent_singular
+                                TvType.Mirror -> R.string.mirror_singular
                             }
                         )?.let {
                             result_meta_type?.text = it

@@ -157,7 +157,7 @@ class MonoschinosProvider : MainAPI() {
                 .replace("https://repro.monoschinos2.com/aqua/sv?url=","")
             for (extractor in extractorApis) {
                 if (url.startsWith(extractor.mainUrl)) {
-                    extractor.getSafeUrl(url, data)?.forEach {
+                    extractor.getSafeUrl(url, data)?.apmap {
                         callback(it)
                     }
                 }

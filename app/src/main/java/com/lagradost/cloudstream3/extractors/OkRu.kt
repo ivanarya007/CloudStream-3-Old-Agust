@@ -3,15 +3,6 @@ package com.lagradost.cloudstream3.extractors
 import com.lagradost.cloudstream3.utils.*
 import com.lagradost.cloudstream3.app
 
-
-class Mailru : OkRu() {
-    override val mainUrl = "https://mail.ru"
-}
-
-class Mailru1 : OkRu() {
-    override val mainUrl = "http://mail.ru"
-}
-
 class Okru1 : OkRu() {
     override val mainUrl = "https://ok.ru"
 }
@@ -33,7 +24,7 @@ open class OkRu : ExtractorApi() {
                 .replace("\\\\u0026", "&")
             val Quality = it.uppercase().substringBefore("\\\"")
 
-            return listOf(
+          if (extractedUrl.isNotBlank())  return listOf(
                 ExtractorLink(
                     name,
                     "$name ${Quality}",

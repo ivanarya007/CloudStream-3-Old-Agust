@@ -24,5 +24,5 @@ class AnimeIDProvider : AnimeIDProviderTemplate() {
     // This is just extra metadata about what type of movies the provider has.
     // Needed for search functionality.
     override val supportedTypes: Set<TvType>
-        get() = setOf(TvType.Anime, TvType.AnimeMovie, TvType.ONA)
+        get() = setOf(TvType.Anime, TvType.AnimeMovie, TvType.OVA)
 }
