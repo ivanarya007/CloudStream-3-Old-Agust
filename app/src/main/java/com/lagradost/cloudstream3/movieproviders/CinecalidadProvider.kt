@@ -156,25 +156,25 @@ class CinecalidadProvider:MainAPI() {
         callback: (ExtractorLink) -> Unit
     ): Boolean {
         // disabled due to alliance4creativity took down the mirror (just moments after completed it lmao)
-        //    app.get(data).document.select(".ajax_mode").apmap {
-        //                val cinestart = Regex("(https:\\/\\/cinestart.net\\/embed.html.*\"> Cine)")
-        //         cinestart.findAll(it.toString()).map {
-        //            it.value.replace("\"> Cine","").replace("https://cinestart.net/embed.html#","https://cinestart.net/vr.php?v=")
-        //        }.toList().apmap { url ->
-        //           val server = app.get(url).text
-        //          val json = mapper.readValue<cinestart>(server)
-        //        if (json.file.isNotBlank()) callback(
-        //             ExtractorLink(
-        //                 "Cinestart",
-        //                 "Cinestart",
-        //                 json.file,
-        //                "",
-        //                 Qualities.Unknown.value,
-        //                isM3u8 = false
-        //             )
-        //          )
-        //      }
-        //   }
+            app.get(data).document.select(".ajax_mode").apmap {
+                        val cinestart = Regex("(https:\\/\\/cinestart.net\\/embed.html.*\"> Cine)")
+                 cinestart.findAll(it.toString()).map {
+                   it.value.replace("\"> Cine","").replace("https://cinestart.net/embed.html#","https://cinestart.net/vr.php?v=")
+               }.toList().apmap { url ->
+                   val server = app.get(url).text
+                  val json = mapper.readValue<cinestart>(server)
+               if (json.file.isNotBlank()) callback(
+                     ExtractorLink(
+                         "Cinestart",
+                         "Cinestart",
+                         json.file,
+                        "",
+                         Qualities.Unknown.value,
+                        isM3u8 = false
+                     )
+                  )
+              }
+           }
         app.get(data).document.select(".dooplay_player_option").apmap {
             val url = it.attr("data-option")
             if (url.startsWith("https://evoload.io")) {
