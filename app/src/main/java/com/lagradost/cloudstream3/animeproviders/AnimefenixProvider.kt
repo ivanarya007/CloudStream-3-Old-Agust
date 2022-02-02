@@ -14,11 +14,8 @@ import kotlin.collections.ArrayList
 
 class AnimefenixProvider:MainAPI() {
 
-
-    override val mainUrl: String
-        get() = "https://animefenix.com"
-    override val name: String
-        get() = "Animefenix"
+    override val mainUrl = "https://animefenix.com"
+    override val name = "Animefenix"
     override val lang = "es"
     override val hasMainPage = true
     override val hasChromecastSupport = true

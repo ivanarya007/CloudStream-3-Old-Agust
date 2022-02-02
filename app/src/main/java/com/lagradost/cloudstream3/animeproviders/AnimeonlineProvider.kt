@@ -8,10 +8,8 @@ import java.util.*
 import kotlin.collections.ArrayList
 
 class AnimeonlineProvider:MainAPI() {
-    override val mainUrl: String
-        get() = "https://animeonline1.ninja"
-    override val name: String
-        get() = "Animeonline"
+    override val mainUrl = "https://animeonline1.ninja"
+    override val name = "Animeonline"
     override val lang = "es"
     override val hasMainPage = true
     override val hasChromecastSupport = true

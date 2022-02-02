@@ -2,19 +2,14 @@ package com.lagradost.cloudstream3.movieproviders
 
 
 import com.lagradost.cloudstream3.*
-import com.lagradost.cloudstream3.extractors.FEmbed
-import com.lagradost.cloudstream3.extractors.FeHD
 import com.lagradost.cloudstream3.utils.ExtractorLink
 import com.lagradost.cloudstream3.utils.extractorApis
-import com.lagradost.cloudstream3.utils.loadExtractor
 import org.jsoup.Jsoup
 import java.util.*
 
 class PelisplusSOProvider:MainAPI() {
-    override val mainUrl: String
-        get() = "https://pelisplus.so"
-    override val name: String
-        get() = "Pelisplus.so" //Also scrapes from Pelisplus.icu
+    override val mainUrl = "https://pelisplus.so"
+    override val name = "Pelisplus.so"
     override val lang = "es"
     override val hasMainPage = true
     override val hasChromecastSupport = true

@@ -2,6 +2,9 @@ package com.lagradost.cloudstream3.movieproviders
 
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.utils.*
+import com.lagradost.cloudstream3.utils.AppUtils.toJson
+import org.jsoup.Jsoup
+import org.jsoup.nodes.Document
 import kotlin.collections.ArrayList
 
 class SeriesflixProvider:MainAPI() {
@@ -81,87 +84,95 @@ class SeriesflixProvider:MainAPI() {
         return ArrayList(search)
     }
 
+
+
     override suspend fun load(url: String): LoadResponse? {
-        val doc = app.get(url, timeout = 120).document
-        val title = doc.selectFirst("h1.Title").text()
-        val desc = doc.selectFirst("div.Description").text()
-        val tags = doc.select("p.Genre a")
-            .map { it?.text()?.trim().toString() }
-        val postercss = doc.selectFirst("head").toString()
+        val type = if (url.contains("/movies/")) TvType.Movie else TvType.TvSeries
+
+        val document = app.get(url).document
+
+        val title = document.selectFirst("h1.Title").text()
+        val descRegex = Regex("(Recuerda.*Seriesflix.)")
+        val descipt = document.selectFirst("div.Description > p").text().replace(descRegex,"")
+        val rating =
+            document.selectFirst("div.Vote > div.post-ratings > span")?.text()?.toFloatOrNull()
+                ?.times(1000)?.toInt()
+        val year = document.selectFirst("span.Date")?.text()
+        val duration = document.selectFirst("span.Time").text()
+        val postercss = document.selectFirst("head").toString()
         val posterRegex = Regex("(\"og:image\" content=\"https:\\/\\/seriesflix.video\\/wp-content\\/uploads\\/(\\d+)\\/(\\d+)\\/?.*.jpg)")
         val poster = try {
             posterRegex.findAll(postercss).map {
                 it.value.replace("\"og:image\" content=\"","")
             }.toList().first()
         } catch (e: Exception) {
-            doc.select(".TPostBg").attr("src")
+            document.select(".TPostBg").attr("src")
         }
-        val seasonsDocument = app.get(url).document
-        val episodes = arrayListOf<TvSeriesEpisode>()
-        val year = doc.selectFirst("div.TPMvCn div.Info span.Date").text().toIntOrNull()
 
-        seasonsDocument.select(".episodes-load")
-            .forEachIndexed { season, element ->
-                val seasonId = element.select("a").attr("href")
-                if (seasonId.isNullOrEmpty()) return@forEachIndexed
+        if (type == TvType.TvSeries) {
+            val list = ArrayList<Pair<Int, String>>()
 
-                var episode = 0
-                app.get(seasonId).document
-                    .select("tbody tr.Viewed")
-                    .forEach {
-                        val episodeImg = it.select("img") ?: return@forEach
-                        val episodeTitle = it.selectFirst(".MvTbTtl > a").text()?: return@forEach
-                        val episodePosterUrl = episodeImg.attr("src") ?: return@forEach
-                        val episodeData = it.selectFirst("td.MvTbTtl a").attr("href") ?: return@forEach
+            document.select("main > section.SeasonBx > div > div.Title > a").apmap { element ->
+                val season = element.selectFirst("> span")?.text()?.toIntOrNull()
+                val href = element.attr("href")
+                if (season != null && season > 0 && !href.isNullOrBlank()) {
+                    list.add(Pair(season, fixUrl(href)))
+                }
+            }
+            if (list.isEmpty()) throw ErrorLoadingException("No Seasons Found")
 
-                        episode++
-                        val epnum = it.selectFirst("tr.Viewed span.Num").text().toIntOrNull()
-                        episodes.add(
+            val episodeList = ArrayList<TvSeriesEpisode>()
+
+            for (season in list) {
+                val seasonDocument = app.get(season.second).document
+                val episodes = seasonDocument.select("table > tbody > tr")
+                if (episodes.isNotEmpty()) {
+                    episodes.apmap { episode ->
+                        val epNum = episode.selectFirst("> td > span.Num")?.text()?.toIntOrNull()
+                        val epthumb = episode.selectFirst("img")?.attr("src")
+                        val aName = episode.selectFirst("> td.MvTbTtl > a")
+                        val name = aName.text()
+                        val href = aName.attr("href")
+                        val date = episode.selectFirst("> td.MvTbTtl > span")?.text()
+                        episodeList.add(
                             TvSeriesEpisode(
-                                episodeTitle,
-                                season + 1,
-                                epnum,
-                                episodeData,
-                                fixUrl(episodePosterUrl)
+                                name,
+                                season.first,
+                                epNum,
+                                href,
+                                fixUrlNull(epthumb),
+                                date
                             )
                         )
                     }
+                }
             }
-
-        val tvType = if (url.contains("/movies/")) TvType.Movie else TvType.TvSeries
-        return when (tvType) {
-            TvType.TvSeries -> {
-                TvSeriesLoadResponse(
-                    title,
-                    url,
-                    this.name,
-                    tvType,
-                    episodes,
-                    poster,
-                    year,
-                    desc,
-                    ShowStatus.Ongoing,
-                    null,
-                    null,
-                    tags,
-                )
+            return TvSeriesLoadResponse(
+                title,
+                url,
+                this.name,
+                type,
+                episodeList,
+                fixUrlNull(poster),
+                year?.toIntOrNull(),
+                descipt,
+                null,
+                null,
+                rating
+            )
+        } else {
+            return newMovieLoadResponse(
+                title,
+                url,
+                type,
+                url
+            ) {
+                posterUrl = fixUrlNull(poster)
+                this.year = year?.toIntOrNull()
+                this.plot = descipt
+                this.rating = rating
+                setDuration(duration)
             }
-            TvType.Movie -> {
-                MovieLoadResponse(
-                    title,
-                    url,
-                    this.name,
-                    tvType,
-                    url,
-                    poster,
-                    year,
-                    desc,
-                    null,
-                    null,
-                    tags,
-                )
-            }
-            else -> null
         }
     }
 
@@ -177,37 +188,41 @@ class SeriesflixProvider:MainAPI() {
             val type = if (data.contains("movies")) 1 else 2
             val url = "$mainUrl/?trembed=$serverID&trid=$movieID&trtype=$type" //This is to get the POST key value
             val doc1 = app.get(url).document
-            val select1 = doc1.selectFirst("div.Video iframe").attr("src")
-            val postkey = select1.replace("https://sc.seriesflix.video/index.php?h=","") // this obtains
-            // djNIdHNCR2lKTGpnc3YwK3pyRCs3L2xkQmljSUZ4ai9ibTcza0JRODNMcmFIZ0hPejdlYW0yanJIL2prQ1JCZA POST KEY
-            val server = app.post("https://sc.seriesflix.video/r.php",
-                headers = mapOf("Host" to "sc.seriesflix.video",
-                    "User-Agent" to USER_AGENT,
-                    "Accept" to "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-                    "Accept-Language" to "en-US,en;q=0.5",
-                    "Content-Type" to "application/x-www-form-urlencoded",
-                    "Content-Length" to "88",
-                    "Origin" to "null",
-                    "DNT" to "1",
-                    "Alt-Used" to "sc.seriesflix.video",
-                    "Connection" to "keep-alive",
-                    "Upgrade-Insecure-Requests" to "1",
-                    "Sec-Fetch-Dest" to "iframe",
-                    "Sec-Fetch-Mode" to "navigate",
-                    "Sec-Fetch-Site" to "same-origin",
-                    "Sec-Fetch-User" to "?1",),
-                params = mapOf(Pair("h", postkey)),
-                data =  mapOf(Pair("h", postkey)),
-                allowRedirects = false
-            ).response.headers.values("location").apmap {
-                for (extractor in extractorApis) {
-                    if (it.startsWith(extractor.mainUrl)) {
-                        extractor.getSafeUrl(it, data)?.apmap {
-                            callback(it)
+            doc1.select("div.Video iframe").apmap {
+                val iframe = it.attr("src")
+                val postkey = iframe.replace("https://sc.seriesflix.video/index.php?h=","") // this obtains
+                // djNIdHNCR2lKTGpnc3YwK3pyRCs3L2xkQmljSUZ4ai9ibTcza0JRODNMcmFIZ0hPejdlYW0yanJIL2prQ1JCZA POST KEY
+                app.post("https://sc.seriesflix.video/r.php",
+                    headers = mapOf("Host" to "sc.seriesflix.video",
+                        "User-Agent" to USER_AGENT,
+                        "Accept" to "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+                        "Accept-Language" to "en-US,en;q=0.5",
+                        "Content-Type" to "application/x-www-form-urlencoded",
+                        "Content-Length" to "88",
+                        "Origin" to "null",
+                        "DNT" to "1",
+                        "Alt-Used" to "sc.seriesflix.video",
+                        "Connection" to "keep-alive",
+                        "Upgrade-Insecure-Requests" to "1",
+                        "Sec-Fetch-Dest" to "iframe",
+                        "Sec-Fetch-Mode" to "navigate",
+                        "Sec-Fetch-Site" to "same-origin",
+                        "Sec-Fetch-User" to "?1",),
+                    params = mapOf(Pair("h", postkey)),
+                    data =  mapOf(Pair("h", postkey)),
+                    allowRedirects = false
+                ).response.headers.values("location").apmap {link ->
+                    val url1 = link.replace("#bu","")
+                    for (extractor in extractorApis) {
+                        if (url1.startsWith(extractor.mainUrl)) {
+                            extractor.getSafeUrl(url1, data)?.apmap {
+                                callback(it)
+                            }
                         }
                     }
                 }
             }
+
         }
         return true
     }

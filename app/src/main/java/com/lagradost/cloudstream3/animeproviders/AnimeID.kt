@@ -8,12 +8,10 @@ import com.lagradost.cloudstream3.TvType
 class AnimeIDProvider : AnimeIDProviderTemplate() {
     override val lang = "es"
     // mainUrl is good to have as a holder for the url to make future changes easier.
-    override val mainUrl: String
-        get() = "https://animeid.to"
+    override val mainUrl = "https://animeid.to"
 
     // name is for how the provider will be named which is visible in the UI, no real rules for this.
-    override val name: String
-        get() = "AnimeID"
+    override val name = "AnimeID"
 
     override val homePageUrlList: List<String> = listOf(
         "$mainUrl/movies",

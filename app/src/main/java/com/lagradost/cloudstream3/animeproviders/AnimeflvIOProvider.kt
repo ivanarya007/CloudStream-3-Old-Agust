@@ -8,10 +8,8 @@ import java.util.*
 import kotlin.collections.ArrayList
 
 class AnimeflvIOProvider:MainAPI() {
-    override val mainUrl: String
-        get() = "https://animeflv.io"
-    override val name: String
-        get() = "Animeflv.io"
+    override val mainUrl = "https://animeflv.io"
+    override val name = "Animeflv.io"
     override val lang = "es"
     override val hasMainPage = true
     override val hasChromecastSupport = true
@@ -21,7 +19,6 @@ class AnimeflvIOProvider:MainAPI() {
         TvType.OVA,
         TvType.Anime,
     )
-
     override suspend fun getMainPage(): HomePageResponse {
         val items = ArrayList<HomePageList>()
         val urls = listOf(

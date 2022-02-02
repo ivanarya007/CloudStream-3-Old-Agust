@@ -2,13 +2,13 @@ package com.lagradost.cloudstream3.movieproviders
 
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.utils.*
+import com.lagradost.cloudstream3.utils.AppUtils.toJson
+import org.jsoup.nodes.Document
 import kotlin.collections.ArrayList
 
 class PelisflixProvider:MainAPI() {
-    override val mainUrl: String
-        get() = "https://pelisflix.li"
-    override val name: String
-        get() = "Pelisflix"
+    override val mainUrl = "https://pelisflix.li"
+    override val name = "Pelisflix"
     override val lang = "es"
     override val hasMainPage = true
     override val hasChromecastSupport = true
@@ -81,88 +81,100 @@ class PelisflixProvider:MainAPI() {
     }
 
     override suspend fun load(url: String): LoadResponse? {
-        val doc = app.get(url, timeout = 120).document
-        val title = doc.selectFirst("h1.Title").text()
+        val type = if (url.contains("/pelicula/")) TvType.Movie else TvType.TvSeries
 
-        val postercss = doc.selectFirst("head").toString()
-        val posterRegex = Regex("(\"og:image\" content=\"https:\\/\\/pelisflix.li\\/wp-content\\/uploads\\/(\\d+)\\/(\\d+)\\/.*.jpg)")
+        val document = app.get(url).document
+
+        val title = document.selectFirst("h1.Title").text()
+        val descRegex = Regex("(.Recuerda.*Pelisflix.+)")
+        val descRegex2 = Regex("(Actualmente.*.)")
+        val descRegex3 = Regex("(.*Director:.*)")
+        val descRegex4 = Regex("(.*Actores:.*)")
+        val descRegex5 = Regex("(Ver.*(\\)|)((\\d+).))")
+        val descipt = document.selectFirst("div.Description").text().replace(descRegex, "")
+            .replace(descRegex2, "").replace(descRegex3, "")
+            .replace(descRegex4, "").replace(descRegex5, "")
+        val desc2Regex = Regex("(G(e|é)nero:.*..)")
+        val descipt2 = document.selectFirst("div.Description").text().replace(desc2Regex,"")
+        val rating =
+            document.selectFirst("div.rating-content button.like-mov span.vot_cl")?.text()?.toFloatOrNull()
+                ?.times(0)?.toInt()
+        val year = document.selectFirst("span.Date")?.text()
+        val duration = if (type == TvType.Movie) document.selectFirst(".Container .Container  span.Time").text() else null
+        val postercss = document.selectFirst("head").toString()
+        val posterRegex = Regex("(\"og:image\" content=\"https:\\/\\/seriesflix.video\\/wp-content\\/uploads\\/(\\d+)\\/(\\d+)\\/?.*.jpg)")
         val poster = try {
             posterRegex.findAll(postercss).map {
                 it.value.replace("\"og:image\" content=\"","")
             }.toList().first()
         } catch (e: Exception) {
-            doc.select(".TPostBg").attr("src")
+            document.select(".TPostBg").attr("src")
         }
-        val desc = if (url.contains("pelicula")) doc.selectFirst("div.Description strong").text() else doc.selectFirst("div.Description").text()
-        val tags = doc.select("p.Genre a")
-            .map { it?.text()?.trim().toString() }
-        val seasonsDocument = app.get(url).document
-        val episodes = arrayListOf<TvSeriesEpisode>()
-        val year = doc.selectFirst("div.TPMvCn div.Info span.Date").text().toIntOrNull()
+        if (type == TvType.TvSeries) {
+            val list = ArrayList<Pair<Int, String>>()
 
-        seasonsDocument.select(".episodes-load")
-            .forEachIndexed { season, element ->
-                val seasonId = element.select("a").attr("href")
-                if (seasonId.isNullOrEmpty()) return@forEachIndexed
+            document.select("main > section.SeasonBx > div > div.Title > a").apmap { element ->
+                val season = element.selectFirst("> span")?.text()?.toIntOrNull()
+                val href = element.attr("href")
+                if (season != null && season > 0 && !href.isNullOrBlank()) {
+                    list.add(Pair(season, fixUrl(href)))
+                }
+            }
+            if (list.isEmpty()) throw ErrorLoadingException("No Seasons Found")
 
-                var episode = 0
-                app.get(seasonId).document
-                    .select("tbody tr.Viewed")
-                    .forEach {
-                        val episodeImg = it.select("img") ?: return@forEach
-                        val episodeTitle = it.selectFirst(".MvTbTtl > a").text()?: return@forEach
-                        val episodePosterUrl = episodeImg.attr("src") ?: return@forEach
-                        val episodeData = it.selectFirst("td.MvTbTtl a").attr("href") ?: return@forEach
+            val episodeList = ArrayList<TvSeriesEpisode>()
 
-                        episode++
-
-                        val epnum = it.selectFirst("tr.Viewed span.Num").text().toIntOrNull()
-
-                        episodes.add(
+            for (season in list) {
+                val seasonDocument = app.get(season.second).document
+                val episodes = seasonDocument.select("table > tbody > tr")
+                if (episodes.isNotEmpty()) {
+                    episodes.apmap { episode ->
+                        val epNum = episode.selectFirst("> td > span.Num")?.text()?.toIntOrNull()
+                        val epthumb = episode.selectFirst("img")?.attr("src")
+                        val aName = episode.selectFirst("> td.MvTbTtl > a")
+                        val name = aName.text()
+                        val href = aName.attr("href")
+                        val date = episode.selectFirst("> td.MvTbTtl > span")?.text()
+                        episodeList.add(
                             TvSeriesEpisode(
-                                episodeTitle,
-                                season + 1,
-                                epnum,
-                                episodeData,
-                                fixUrl(episodePosterUrl)
+                                name,
+                                season.first,
+                                epNum,
+                                href,
+                                fixUrlNull(epthumb),
+                                date
                             )
                         )
                     }
+                }
             }
+            return TvSeriesLoadResponse(
+                title,
+                url,
+                this.name,
+                type,
+                episodeList,
+                fixUrlNull(poster),
+                year?.toIntOrNull(),
+                descipt2,
+                null,
+                null,
+                rating
+            )
+        } else {
 
-        return when (val tvType = if (episodes.isEmpty() && url.contains("pelicula")) TvType.Movie else TvType.TvSeries) {
-            TvType.TvSeries -> {
-                TvSeriesLoadResponse(
-                    title,
-                    url,
-                    this.name,
-                    tvType,
-                    episodes,
-                    poster,
-                    year,
-                    desc,
-                    ShowStatus.Ongoing,
-                    null,
-                    null,
-                    tags,
-                )
+            return newMovieLoadResponse(
+                title,
+                url,
+                type,
+                url
+            ) {
+                posterUrl = fixUrlNull(poster)
+                this.year = year?.toIntOrNull()
+                this.plot = descipt
+                this.rating = rating
+                setDuration(duration)
             }
-            TvType.Movie -> {
-                MovieLoadResponse(
-                    title,
-                    url,
-                    this.name,
-                    tvType,
-                    url,
-                    poster,
-                    year,
-                    desc,
-                    null,
-                    null,
-                    tags,
-                )
-            }
-            else -> null
         }
     }
 
@@ -178,35 +190,38 @@ class PelisflixProvider:MainAPI() {
             val type = if (data.contains("pelicula")) 1 else 2
             val url = "$mainUrl/?trembed=$serverID&trid=$movieID&trtype=$type" //This is to get the POST key value
             val doc1 = app.get(url).document
-            val select1 = doc1.selectFirst("div.Video iframe").attr("src")
-            val postkey = select1.replace("/stream/index.php?h=","") // this obtains
-        // djNIdHNCR2lKTGpnc3YwK3pyRCs3L2xkQmljSUZ4ai9ibTcza0JRODNMcmFIZ0hPejdlYW0yanJIL2prQ1JCZA POST KEY
-            val server = app.post("https://pelisflix.li/stream/r.php",
-                headers = mapOf("Host" to "pelisflix.li",
-                    "User-Agent" to USER_AGENT,
-                    "Accept" to "ext/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-                    "Accept-Language" to "en-US,en;q=0.5",
-                    "Content-Type" to "application/x-www-form-urlencoded",
-                    "Content-Length" to "88",
-                    "Origin" to "null",
-                    "DNT" to "1",
-                    "Connection" to "keep-alive",
-                    "Upgrade-Insecure-Requests" to "1",
-                    "Sec-Fetch-Dest" to "iframe",
-                    "Sec-Fetch-Mode" to "navigate",
-                    "Sec-Fetch-Site" to "same-origin",
-                    "Sec-Fetch-User" to "?1",
-                    "Pragma" to "no-cache",
-                    "Cache-Control" to "no-cache",
-                    "TE" to "trailers"),
-                params = mapOf(Pair("h", postkey)),
-                data =  mapOf(Pair("h", postkey)),
-                allowRedirects = false
-            ).response.headers.values("location").apmap {
-                for (extractor in extractorApis) {
-                    if (it.startsWith(extractor.mainUrl)) {
-                        extractor.getSafeUrl(it, data)?.apmap {
-                            callback(it)
+            doc1.select("div.Video iframe").apmap {
+                val iframe = it.attr("src")
+                val postkey = iframe.replace("/stream/index.php?h=","") // this obtains
+                // djNIdHNCR2lKTGpnc3YwK3pyRCs3L2xkQmljSUZ4ai9ibTcza0JRODNMcmFIZ0hPejdlYW0yanJIL2prQ1JCZA POST KEY
+                app.post("https://pelisflix.li/stream/r.php",
+                    headers = mapOf("Host" to "pelisflix.li",
+                        "User-Agent" to USER_AGENT,
+                        "Accept" to "ext/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+                        "Accept-Language" to "en-US,en;q=0.5",
+                        "Content-Type" to "application/x-www-form-urlencoded",
+                        "Content-Length" to "88",
+                        "Origin" to "null",
+                        "DNT" to "1",
+                        "Connection" to "keep-alive",
+                        "Upgrade-Insecure-Requests" to "1",
+                        "Sec-Fetch-Dest" to "iframe",
+                        "Sec-Fetch-Mode" to "navigate",
+                        "Sec-Fetch-Site" to "same-origin",
+                        "Sec-Fetch-User" to "?1",
+                        "Pragma" to "no-cache",
+                        "Cache-Control" to "no-cache",
+                        "TE" to "trailers"),
+                    params = mapOf(Pair("h", postkey)),
+                    data =  mapOf(Pair("h", postkey)),
+                    allowRedirects = false
+                ).response.headers.values("location").apmap { link ->
+                    val url1 = link.replace("#bu","")
+                    for (extractor in extractorApis) {
+                        if (url1.startsWith(extractor.mainUrl)) {
+                            extractor.getSafeUrl(url1, data)?.apmap {
+                                callback(it)
+                            }
                         }
                     }
                 }
