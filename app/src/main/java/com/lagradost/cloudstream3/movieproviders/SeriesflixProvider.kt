@@ -93,7 +93,11 @@ class SeriesflixProvider:MainAPI() {
             document.selectFirst("div.Vote > div.post-ratings > span")?.text()?.toFloatOrNull()
                 ?.times(1000)?.toInt()
         val year = document.selectFirst("span.Date")?.text()
-        val duration = document.selectFirst("span.Time").text() ?: null
+        val duration = try {
+            document.selectFirst("span.Time").text()
+        } catch (e: Exception) {
+            null
+        }
         val postercss = document.selectFirst("head").toString()
         val posterRegex = Regex("(\"og:image\" content=\"https:\\/\\/seriesflix.video\\/wp-content\\/uploads\\/(\\d+)\\/(\\d+)\\/?.*.jpg)")
         val poster = try {
@@ -193,7 +197,6 @@ class SeriesflixProvider:MainAPI() {
                         "Accept" to "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
                         "Accept-Language" to "en-US,en;q=0.5",
                         "Content-Type" to "application/x-www-form-urlencoded",
-                        "Content-Length" to "88",
                         "Origin" to "null",
                         "DNT" to "1",
                         "Alt-Used" to "sc.seriesflix.video",
