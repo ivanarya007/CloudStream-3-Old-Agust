@@ -152,11 +152,10 @@ class PelisplusHDProvider:MainAPI() {
             val links = linkRegex.findAll(it.toString()).map {
                 it.value.replace("https://pelisplushd.net/fembed.php?url=","https://www.fembed.com/v/")
                     .replace("https://pelistop.co/","https://watchsb.com/")
-            }.toList()
-            for (link in links) {
+            }.toList().apmap {
                 for (extractor in extractorApis) {
-                    if (link.startsWith(extractor.mainUrl)) {
-                        extractor.getSafeUrl(link, data)?.apmap {
+                    if (it.startsWith(extractor.mainUrl)) {
+                        extractor.getSafeUrl(it, data)?.apmap {
                             callback(it)
                         }
                     }

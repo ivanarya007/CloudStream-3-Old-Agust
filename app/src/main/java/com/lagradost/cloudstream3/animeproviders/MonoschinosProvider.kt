@@ -129,7 +129,7 @@ class MonoschinosProvider : MainAPI() {
             "Finalizado" -> ShowStatus.Completed
             else -> null
         }
-        val episodes = doc.select("div.col-item").map {
+        val episodes = doc.select("div.heroarea2 div.heromain2 div.allanimes div.row.jpage.row-cols-md-6 div.col-item").map {
             val name = it.selectFirst("p.animetitles").text()
             val link = it.selectFirst("a").attr("href")
             val epThumb = it.selectFirst(".animeimghv").attr("data-src")

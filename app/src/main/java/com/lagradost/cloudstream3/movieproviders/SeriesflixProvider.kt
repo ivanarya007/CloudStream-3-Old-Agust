@@ -199,11 +199,10 @@ class SeriesflixProvider:MainAPI() {
                 params = mapOf(Pair("h", postkey)),
                 data =  mapOf(Pair("h", postkey)),
                 allowRedirects = false
-            ).response.headers.values("location")
-            for (link in server) {
+            ).response.headers.values("location").apmap {
                 for (extractor in extractorApis) {
-                    if (link.replace("#bu","").startsWith(extractor.mainUrl)) {
-                        extractor.getSafeUrl(link, data)?.forEach {
+                    if (it.startsWith(extractor.mainUrl)) {
+                        extractor.getSafeUrl(it, data)?.apmap {
                             callback(it)
                         }
                     }

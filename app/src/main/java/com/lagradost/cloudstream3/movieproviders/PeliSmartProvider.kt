@@ -146,11 +146,10 @@ class PeliSmartProvider: MainAPI() {
                 .replace("https://pelismarthd.com/p/1.php?v=","https://evoload.io/e/")
                 .replace("https://pelismarthd.com/p/2.php?v=","https://streamtape.com/e/")
                 .replace("https://pelismarthd.com/p/4.php?v=","https://dood.to/e/")
-        }.toList()
-        for (link in link1) {
+        }.toList().apmap {
             for (extractor in extractorApis) {
-                if (link.startsWith(extractor.mainUrl)) {
-                    extractor.getSafeUrl(link, data)?.forEach {
+                if (it.startsWith(extractor.mainUrl)) {
+                    extractor.getSafeUrl(it, data)?.apmap {
                         callback(it)
                     }
                 }

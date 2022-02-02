@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.animeproviders.AllAnimeProvider
+import com.lagradost.cloudstream3.extractors.Cinestart
 import com.lagradost.cloudstream3.extractors.Evoload
 import com.lagradost.cloudstream3.extractors.FEmbed
 import com.lagradost.cloudstream3.extractors.StreamTape
@@ -149,36 +150,17 @@ class CinecalidadProvider:MainAPI() {
     )
 
 
+
     override suspend fun loadLinks(
         data: String,
         isCasting: Boolean,
         subtitleCallback: (SubtitleFile) -> Unit,
         callback: (ExtractorLink) -> Unit
     ): Boolean {
-        // disabled due to alliance4creativity took down the mirror (just moments after completed it lmao)
-            app.get(data).document.select(".ajax_mode").apmap {
-                        val cinestart = Regex("(https:\\/\\/cinestart.net\\/embed.html.*\"> Cine)")
-                 cinestart.findAll(it.toString()).map {
-                   it.value.replace("\"> Cine","").replace("https://cinestart.net/embed.html#","https://cinestart.net/vr.php?v=")
-               }.toList().apmap { url ->
-                   val server = app.get(url).text
-                  val json = mapper.readValue<cinestart>(server)
-               if (json.file.isNotBlank()) callback(
-                     ExtractorLink(
-                         "Cinestart",
-                         "Cinestart",
-                         json.file,
-                        "",
-                         Qualities.Unknown.value,
-                        isM3u8 = false
-                     )
-                  )
-              }
-           }
         app.get(data).document.select(".dooplay_player_option").apmap {
             val url = it.attr("data-option")
-            if (url.startsWith("https://evoload.io")) {
-                val extractor = Evoload()
+            if (url.startsWith("https://cinestart.net")) {
+                val extractor = Cinestart()
                 extractor.getSafeUrl(url)?.forEach { link ->
                     callback.invoke(link)
                 }
@@ -188,8 +170,8 @@ class CinecalidadProvider:MainAPI() {
         }
         if ((app.get(data).text.contains("en castellano"))) app.get("$data?ref=es").document.select(".dooplay_player_option").apmap {
             val url = it.attr("data-option")
-            if (url.startsWith("https://evoload.io")) {
-                val extractor = Evoload()
+            if (url.startsWith("https://cinestart.net")) {
+                val extractor = Cinestart()
                 extractor.getSafeUrl(url)?.forEach { link ->
                     link.name += " Castellano"
                     callback.invoke(link)

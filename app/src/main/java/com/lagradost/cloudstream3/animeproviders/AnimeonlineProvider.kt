@@ -159,39 +159,55 @@ class AnimeonlineProvider:MainAPI() {
         callback: (ExtractorLink) -> Unit
     ): Boolean {
       val doc = app.get(data).document
-      val epID = doc.selectFirst("ul .dooplay_player_option").attr("data-post")
-      val multiserver = app.get("$mainUrl/wp-json/dooplayer/v1/post/$epID?type=tv&source=1").text //I'll fix this thing later
-      val serversRegex = Regex("(https?:\\/\\/(www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b([-a-zA-Z0-9()@:%_\\+.~#?&\\/\\/=]*))")
-      val json = mapper.readValue<Saidourl>(multiserver)
-      val docu = app.get(json.embedUrl).document
-      val subselect = docu.selectFirst("div.OD.OD_SUB").toString()
-      val links = serversRegex.findAll(subselect).map {
-            it.value
-        }.toList()
-        for (link in links) {
-            for (extractor in extractorApis) {
-                if (link.startsWith(extractor.mainUrl)) {
-                    extractor.getSafeUrl(link, data)?.forEach {
-                        it.name += " Subtitulado"
-                        callback(it)
-                    }
-                }
-            }
-        }
-        val latselect = docu.selectFirst("div.OD.OD_LAT").toString()
-        val links2 = serversRegex.findAll(latselect).map {
-            it.value
-        }.toList()
-        for (url in links2) {
-            for (extractor in extractorApis) {
-                if (url.startsWith(extractor.mainUrl)) {
-                    extractor.getSafeUrl(url, data)?.forEach {
-                        it.name += " Latino"
-                        callback(it)
-                    }
-                }
-            }
-        }
+      doc.select("ul .dooplay_player_option").apmap {
+          val epID = it.attr("data-post")
+          val serverID = it.attr("data-nume")
+          val servermirror = "$mainUrl/wp-json/dooplayer/v1/post/$epID?type=tv&source=$serverID"
+          val multiserver = app.get(servermirror).text
+          val json1 = mapper.readValue<Saidourl>(multiserver)
+          val saidomatch = json1.embedUrl
+          if(saidomatch.contains("saidochesto") ) {
+              val saidoserver = app.get("$mainUrl/wp-json/dooplayer/v1/post/$epID?type=tv&source=$serverID").text
+              val serversRegex = Regex("(https?:\\/\\/(www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b([-a-zA-Z0-9()@:%_\\+.~#?&\\/\\/=]*))")
+              val json = mapper.readValue<Saidourl>(saidoserver)
+              val docu = app.get(json.embedUrl).document
+              val subselect = docu.selectFirst("div.OD.OD_SUB").toString()
+             serversRegex.findAll(subselect).map {
+                  it.value
+              }.toList().apmap {
+                  for (extractor in extractorApis) {
+                      if (it.startsWith(extractor.mainUrl)) {
+                          extractor.getSafeUrl(it, data)?.apmap {
+                              it.name += " Subtitulado"
+                              callback(it)
+                          }
+                      }
+                  }
+              }
+              val latselect = docu.selectFirst("div.OD.OD_LAT").toString()
+              serversRegex.findAll(latselect).map {
+                  it.value
+              }.toList().apmap {
+                  for (extractor in extractorApis) {
+                      if (it.startsWith(extractor.mainUrl)) {
+                          extractor.getSafeUrl(it, data)?.apmap {
+                              it.name += " Latino"
+                              callback(it)
+                          }
+                      }
+                  }
+              }
+          }
+         val json = mapper.readValue<Saidourl>(multiserver)
+         val test = json.embedUrl
+          for (extractor in extractorApis) {
+              if (test.startsWith(extractor.mainUrl)) {
+                  extractor.getSafeUrl(test, data)?.forEach {
+                      callback(it)
+                  }
+              }
+          }
+      }
         return true
     }
 }

@@ -125,13 +125,12 @@ class AnimeflvnetProvider:MainAPI() {
                     it.value.replace("\\/", "/")
                 }.toList()
                 val serversRegex = Regex("(https?:\\/\\/(www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b([-a-zA-Z0-9()@:%_\\+.~#?&\\/\\/=]*))")
-                val links = serversRegex.findAll(videos.toString()).map {
+                serversRegex.findAll(videos.toString()).map {
                     it.value.replace("https://embedsb.com","https://watchsb.com")
-                }.toList()
-                for (link in links) {
+                }.toList().apmap {
                     for (extractor in extractorApis) {
-                        if (link.startsWith(extractor.mainUrl)) {
-                            extractor.getSafeUrl(link, data)?.apmap {
+                        if (it.startsWith(extractor.mainUrl)) {
+                            extractor.getSafeUrl(it, data)?.apmap {
                                 callback(it)
                             }
                         }
@@ -141,5 +140,4 @@ class AnimeflvnetProvider:MainAPI() {
         }
         return true
     }
-
 }

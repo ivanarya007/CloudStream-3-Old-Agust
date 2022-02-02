@@ -195,6 +195,7 @@
      <string name="dont_show_again">No mostrar de nuevo</string>
      <string name="update">Actualizar</string>
      <string name="watch_quality_pref">Calidad Preferida</string>
+    <string name="video_cache_settings">Tamaño del caché de video</string>
      <string name="dns_pref">DNS mediante HTTPS</string>
      <string name="dns_pref_summary">Útil para evitar bloqueos de ISP</string>
      <string name="display_subbed_dubbed_settings">Mostrar Anime Doblado/Subtitulado</string>
@@ -203,6 +204,7 @@
      <string name="automatic">Automática</string>
      <string name="tv_layout">De TV</string>
      <string name="phone_layout">De Celular</string>
+     <string name="none">Ninguno</string>
      <string name="preferred_media_settings">¿Qué prefieries ver?</string>
      <array name="media_type_pref">
      <item>Todo</item>

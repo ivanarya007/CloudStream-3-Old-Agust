@@ -7,11 +7,11 @@ import com.lagradost.cloudstream3.extractors.StreamTape
 import com.lagradost.cloudstream3.utils.*
 import java.util.*
 
-class EntrepeliculasyseriesProvider:MainAPI() {
+class CuevanathreeProvider:MainAPI() {
     override val mainUrl: String
-        get() = "https://entrepeliculasyseries.nu"
+        get() = "https://cuevana3.io"
     override val name: String
-        get() = "EntrePeliculasySeries"
+        get() = "Cuevana"
     override val lang = "es"
     override val hasMainPage = true
     override val hasChromecastSupport = true
@@ -25,23 +25,22 @@ class EntrepeliculasyseriesProvider:MainAPI() {
     override suspend fun getMainPage(): HomePageResponse {
         val items = ArrayList<HomePageList>()
         val urls = listOf(
-            Pair("$mainUrl/series/", "Series"),
-            Pair("$mainUrl/peliculas/", "Peliculas"),
-            Pair("$mainUrl/anime/", "Animes"),
+            Pair("$mainUrl", "Recientemente actualizadas"),
+            Pair("$mainUrl/estrenos/", "Estrenos"),
         )
 
         for (i in urls) {
             try {
                 val soup = app.get(i.first).document
-                val home = soup.select("ul.list-movie li").map {
-                    val title = it.selectFirst("a.link-title h2").text()
+                val home = soup.select("section li.xxx.TPostMv").map {
+                    val title = it.selectFirst("h2.Title").text()
                     val link = it.selectFirst("a").attr("href")
                     TvSeriesSearchResponse(
                         title,
                         link,
                         this.name,
                         if (link.contains("/pelicula/")) TvType.Movie else TvType.TvSeries,
-                        it.selectFirst("a.poster img").attr("src"),
+                        it.selectFirst("img.lazy").attr("data-src"),
                         null,
                         null,
                     )
@@ -65,18 +64,9 @@ class EntrepeliculasyseriesProvider:MainAPI() {
             val title = it.selectFirst("h2.Title").text()
             val href = it.selectFirst("a").attr("href")
             val image = it.selectFirst("img.lazy").attr("data-src")
-            val isMovie = href.contains("/pelicula/")
+            val isSerie = href.contains("/serie/")
 
-            if (isMovie) {
-                MovieSearchResponse(
-                    title,
-                    href,
-                    this.name,
-                    TvType.Movie,
-                    image,
-                    null
-                )
-            } else {
+            if (isSerie) {
                 TvSeriesSearchResponse(
                     title,
                     href,
@@ -86,37 +76,44 @@ class EntrepeliculasyseriesProvider:MainAPI() {
                     null,
                     null
                 )
+            } else {
+                MovieSearchResponse(
+                    title,
+                    href,
+                    this.name,
+                    TvType.Movie,
+                    image,
+                    null
+                )
             }
         }
     }
 
-
     override suspend fun load(url: String): LoadResponse? {
         val soup = app.get(url, timeout = 120).document
 
-        val title = soup.selectFirst("h1.title-post").text()
-        val description = soup.selectFirst("p.text-content:nth-child(3)")?.text()?.trim()
-        val poster: String? = soup.selectFirst("article.TPost img.lazy").attr("data-src")
+        val title = soup.selectFirst("h1.Title").text()
+        val description = soup.selectFirst(".Description p")?.text()?.trim()
+        val poster: String? = soup.selectFirst(".movtv-info div.Image img").attr("data-src")
         val episodes = soup.select(".TPostMv article").map { li ->
-            val href = try {
-                li.select("a").attr("href")
+            val href = li.select("a").attr("href")
+            val epThumb = try {
+               li.select("img.lazy").attr("src")
             } catch (e: Exception) {
-                li.select(".C a").attr("href")
+                li.select("img.lazy").attr("data-src")
             } catch (e: Exception) {
-                li.select("article a").attr("href")
+                li.select("div.Image img").attr("data-src")
             }
-
-            val epThumb = li.selectFirst("div.Image img").attr("data-src")
             val name = li.selectFirst("h2.Title").text()
             TvSeriesEpisode(
                 name,
                 null,
                 null,
                 href,
-                epThumb
+                fixUrl(epThumb)
             )
         }
-        return when (val tvType = if (url.contains("/pelicula/")) TvType.Movie else TvType.TvSeries) {
+        return when (val tvType = if (episodes.isEmpty()) TvType.Movie else TvType.TvSeries) {
             TvType.TvSeries -> {
                 TvSeriesLoadResponse(
                     title,
@@ -145,46 +142,4 @@ class EntrepeliculasyseriesProvider:MainAPI() {
         }
     }
 
-
-    override suspend fun loadLinks(
-        data: String,
-        isCasting: Boolean,
-        subtitleCallback: (SubtitleFile) -> Unit,
-        callback: (ExtractorLink) -> Unit
-    ): Boolean {
-        app.get(data).document.select(".video ul.dropdown-menu li").apmap {
-            val servers = it.attr("data-link")
-            val doc = app.get(servers).document
-            val postkey = doc.selectFirst("input").attr("value")
-            val server = app.post("https://entrepeliculasyseries.nu/r.php",
-                headers = mapOf("Host" to "entrepeliculasyseries.nu",
-                    "User-Agent" to USER_AGENT,
-                    "Accept" to "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-                    "Accept-Language" to "en-US,en;q=0.5",
-                    "Content-Type" to "application/x-www-form-urlencoded",
-                    "Content-Length" to "90",
-                    "Origin" to "https://entrepeliculasyseries.nu",
-                    "DNT" to "1",
-                    "Connection" to "keep-alive",
-                    "Referer" to servers,
-                    "Upgrade-Insecure-Requests" to "1",
-                    "Sec-Fetch-Dest" to "document",
-                    "Sec-Fetch-Mode" to "navigate",
-                    "Sec-Fetch-Site" to "same-origin",
-                    "Sec-Fetch-User" to "?1",),
-                //params = mapOf(Pair("h", postkey)),
-                data =  mapOf(Pair("h", postkey)),
-                allowRedirects = false
-            ).response.headers.values("location").apmap {
-                for (extractor in extractorApis) {
-                    if (it.startsWith(extractor.mainUrl)) {
-                        extractor.getSafeUrl(it, data)?.apmap {
-                            callback(it)
-                        }
-                    }
-                }
-            }
-        }
-        return true
-    }
 }
