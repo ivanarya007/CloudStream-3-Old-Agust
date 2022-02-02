@@ -100,8 +100,8 @@ val extractorApis: Array<ExtractorApi> = arrayOf(
     StreamSB(),
     Streamhub(),
 
-    Cinestart(),
     Tomatomatela(),
+    Cinestart(),
 
     Solidfiles(),
     Solidfiles1(),

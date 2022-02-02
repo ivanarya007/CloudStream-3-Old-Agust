@@ -1,15 +1,9 @@
 package com.lagradost.cloudstream3.movieproviders
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.module.kotlin.readValue
 import com.lagradost.cloudstream3.*
-import com.lagradost.cloudstream3.animeproviders.AllAnimeProvider
 import com.lagradost.cloudstream3.extractors.Cinestart
-import com.lagradost.cloudstream3.extractors.Evoload
-import com.lagradost.cloudstream3.extractors.FEmbed
-import com.lagradost.cloudstream3.extractors.StreamTape
 import com.lagradost.cloudstream3.utils.*
-import java.net.URLDecoder
 import java.util.*
 
 class CinecalidadProvider:MainAPI() {
@@ -142,14 +136,6 @@ class CinecalidadProvider:MainAPI() {
             else -> null
         }
     }
-
-
-    data class cinestart (
-        @JsonProperty("status") val status: Int,
-        @JsonProperty("file") val file: String
-    )
-
-
 
     override suspend fun loadLinks(
         data: String,

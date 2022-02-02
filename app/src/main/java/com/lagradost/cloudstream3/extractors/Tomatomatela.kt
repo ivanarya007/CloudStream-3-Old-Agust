@@ -7,6 +7,12 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import com.lagradost.cloudstream3.mapper
 
 
+class Cinestart: Tomatomatela() {
+    override val name: String = "Cinestart"
+    override val mainUrl: String = "https://cinestart.net"
+    override val details = "vr.php?v="
+}
+
 open class Tomatomatela : ExtractorApi() {
     override val name = "Tomatomatela"
     override val mainUrl = "https://tomatomatela.com"
@@ -15,8 +21,9 @@ open class Tomatomatela : ExtractorApi() {
         @JsonProperty("status") val status: Int,
         @JsonProperty("file") val file: String
     )
+    open val details = "details.php?v="
     override suspend fun getUrl(url: String, referer: String?): List<ExtractorLink>? {
-        val link = url.replace("https://tomatomatela.com/embed.html#","https://tomatomatela.com/details.php?v=")
+        val link = url.replace("$mainUrl/embed.html#","$mainUrl/$details")
         val server = app.get(link, allowRedirects = false).text
         val json = mapper.readValue<tomato>(server)
         if (json.status == 200) return listOf(

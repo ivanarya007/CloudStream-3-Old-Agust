@@ -2,16 +2,11 @@ package com.lagradost.cloudstream3.movieproviders
 
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.utils.*
-import com.lagradost.cloudstream3.utils.AppUtils.toJson
-import org.jsoup.Jsoup
-import org.jsoup.nodes.Document
 import kotlin.collections.ArrayList
 
 class SeriesflixProvider:MainAPI() {
-    override val mainUrl: String
-        get() = "https://seriesflix.video"
-    override val name: String
-        get() = "Seriesflix"
+    override val mainUrl = "https://seriesflix.video"
+    override val name = "Seriesflix"
     override val lang = "es"
     override val hasMainPage = true
     override val hasChromecastSupport = true
