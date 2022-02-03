@@ -13,22 +13,20 @@ open class Sendvid : ExtractorApi() {
     override val mainUrl = "https://sendvid.com"
     override val requiresReferer = false
 
-    private val linkRegex =
-        Regex("""("og:video" content="https:\/\/.*?\.m3u8.*")""")
-
     override suspend fun getUrl(url: String, referer: String?): List<ExtractorLink>? {
-        with(app.get(url)) {
-            linkRegex.find(this.text)?.let { link ->
-                return listOf(
+        val doc = app.get(url).document
+         doc.select("script").forEach { script ->
+              if (script.data().contains("var video_source =")) {
+              val extractedlink =  script.toString().substringAfter("var video_source = \"").substringBefore("\";")
+              if (extractedlink.isNotBlank())  return listOf(
                     ExtractorLink(
-                        name,
-                        name,
-                        link.value.replace("\"og:video\" content=\"","").replace("\"",""),
-                        url,
-                        Qualities.Unknown.value,
-                        isM3u8 = true
-                    )
-                )
+                    name,
+                    name,
+                    extractedlink,
+                    url,
+                    Qualities.Unknown.value,
+                    true
+                ))
             }
         }
         return null

@@ -7,45 +7,22 @@ import com.lagradost.cloudstream3.utils.ExtractorLink
 import com.lagradost.cloudstream3.utils.M3u8Helper
 import com.lagradost.cloudstream3.utils.getQualityFromName
 
-
-class Watchsb1 : WatchSB() {
-    override val mainUrl = "https://sbplay1.com"
-}
-
-class Watchsb2 : WatchSB() {
-    override val mainUrl = "https://sbplay2.com"
-}
-
-class Watchsb3 : WatchSB() {
-    override val mainUrl = "https://sbplay.one"
-}
-
-class Watchsb4 : WatchSB() {
-    override val mainUrl = "https://cloudemb.com"
-}
-
-
-class ZplayerV2 : WatchSB() {
-    override val name = "Zplayer V2"
-    override val mainUrl = "https://v2.zplayer.live"
-}
-
-open class WatchSB : ExtractorApi() {
-    override val name = "WatchSB"
-    override val mainUrl = "https://watchsb.com"
+open class Zplayer : ExtractorApi() {
+    override val name = "Zplayer"
+    override val mainUrl = "https://zplayer.live"
     override val requiresReferer = false
 
     override suspend fun getUrl(url: String, referer: String?): List<ExtractorLink> {
-        val response = app.get(
-            url, interceptor = WebViewResolver(
+        val response = app.get(url)
+        val response2 = app.get(
+            response.url, interceptor = WebViewResolver(
                 Regex("""master\.m3u8""")
             )
         )
-
         return M3u8Helper().m3u8Generation(
             M3u8Helper.M3u8Stream(
-                response.url,
-                headers = response.headers.toMap()
+                response2.url,
+                headers = response2.headers.toMap()
             ), true
         )
             .map { stream ->

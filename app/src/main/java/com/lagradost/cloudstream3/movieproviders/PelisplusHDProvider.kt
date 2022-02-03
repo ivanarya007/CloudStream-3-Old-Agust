@@ -2,6 +2,7 @@ package com.lagradost.cloudstream3.movieproviders
 
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.utils.*
+import org.jsoup.nodes.Element
 import java.util.*
 
 class PelisplusHDProvider:MainAPI() {
@@ -18,37 +19,48 @@ class PelisplusHDProvider:MainAPI() {
     )
     override suspend fun getMainPage(): HomePageResponse {
         val items = ArrayList<HomePageList>()
-        val urls = listOf(
-            Pair("$mainUrl/peliculas", "Peliculas"),
-            Pair("$mainUrl/series", "Series"),
-            Pair("$mainUrl/generos/dorama", "Doramas"),
-            Pair("$mainUrl/animes", "Animes"),
+        val document = app.get(mainUrl).document
+        val map = mapOf(
+            "Películas" to "#default-tab-1",
+            "Series" to "#default-tab-2",
+            "Anime" to "#default-tab-3",
+            "Doramas" to "#default-tab-4",
         )
-        for (i in urls) {
-            try {
-                val soup = app.get(i.first).document
-                val home = soup.select("a.Posters-link").map {
-                    val title = it.selectFirst(".listing-content p").text()
-                    val link = it.selectFirst("a").attr("href")
-                    TvSeriesSearchResponse(
-                        title,
-                        link,
-                        this.name,
-                        if (link.contains("/pelicula/")) TvType.Movie else TvType.TvSeries,
-                        it.selectFirst(".Posters-img").attr("src"),
-                        null,
-                        null,
-                    )
+        map.forEach {
+            items.add(HomePageList(
+                it.key,
+                document.select(it.value).select("a.Posters-link").map { element ->
+                    element.toSearchResult()
                 }
-
-                items.add(HomePageList(i.second, home))
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
+            ))
         }
-
-        if (items.size <= 0) throw ErrorLoadingException()
         return HomePageResponse(items)
+    }
+    private fun Element.toSearchResult(): SearchResponse {
+        val title = this.select(".listing-content p").text()
+        val href = this.select("a").attr("href")
+        val posterUrl = this.select(".Posters-img").attr("src")
+        val isMovie = href.contains("/pelicula/")
+        return if (isMovie) {
+            MovieSearchResponse(
+                title,
+                href,
+                name,
+                TvType.Movie,
+                posterUrl,
+                null
+            )
+        } else {
+            TvSeriesSearchResponse(
+                title,
+                href,
+                name,
+                TvType.Movie,
+                posterUrl,
+                null,
+                null
+            )
+        }
     }
 
     override suspend fun search(query: String): List<SearchResponse> {
@@ -81,7 +93,7 @@ class PelisplusHDProvider:MainAPI() {
                     null
                 )
             }
-        }
+        }.toList()
     }
 
     override suspend fun load(url: String): LoadResponse? {

@@ -134,7 +134,8 @@ val extractorApis: Array<ExtractorApi> = arrayOf(
 
     Videobin(),
     Videobin1(),
-
+    ZplayerV2(),
+    Zplayer(),
 
     // dood extractors
     DoodToExtractor(),

@@ -23,6 +23,24 @@ class CuevanathreeProvider:MainAPI() {
             Pair(mainUrl, "Recientemente actualizadas"),
             Pair("$mainUrl/estrenos/", "Estrenos"),
         )
+        items.add(
+            HomePageList(
+                "Series",
+                app.get("$mainUrl/serie", timeout = 120).document.select("section.home-series li").map {
+                    val title = it.selectFirst("h2.Title").text()
+                    val poster = it.selectFirst("img.lazy").attr("data-src")
+                    val url = it.selectFirst("a").attr("href")
+                    TvSeriesSearchResponse(
+                        title,
+                        url,
+                        this.name,
+                        TvType.Anime,
+                        poster,
+                        null,
+                        null,
+                    )
+                })
+        )
         for (i in urls) {
             try {
                 val soup = app.get(i.first).document
