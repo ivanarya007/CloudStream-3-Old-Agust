@@ -231,6 +231,7 @@ class ResultFragment : Fragment() {
                 TvType.Cartoon -> "Cartoons/$titleName"
                 TvType.Torrent -> "Torrent"
                 TvType.Documentary -> "Documentaries"
+                TvType.Mirror -> "Mirror"
             }
 
             val src = "$DOWNLOAD_NAVIGATE_TO/$parentId" // url ?: return@let
@@ -695,7 +696,7 @@ class ResultFragment : Fragment() {
                 if (!skipLoading && displayLoading) {
                     val builder =
                         AlertDialog.Builder(requireContext(), R.style.AlertDialogCustomTransparent)
-                    val customLayout = layoutInflater.inflate(R.layout.dialog_loading, null)
+                    val customLayout = layoutInflater.inflate(R.layout.dialog_loading_links, null)
                     builder.setView(customLayout)
 
                     loadingDialog = builder.create()
@@ -734,7 +735,7 @@ class ResultFragment : Fragment() {
                 ACTION_SHOW_TOAST -> true
                 ACTION_DOWNLOAD_EPISODE -> {
                     showToast(activity, R.string.download_started, Toast.LENGTH_SHORT)
-                    requireLinks(false, false)
+                    requireLinks(false, true)
                 }
                 ACTION_CHROME_CAST_EPISODE -> requireLinks(true)
                 ACTION_CHROME_CAST_MIRROR -> requireLinks(true)
@@ -1425,6 +1426,7 @@ class ResultFragment : Fragment() {
                                 TvType.Documentary -> R.string.documentaries_singular
                                 TvType.Movie -> R.string.movies_singular
                                 TvType.Torrent -> R.string.torrent_singular
+                                TvType.Mirror -> R.string.mirror_singular
                             }
                         )?.let {
                             result_meta_type?.text = it
