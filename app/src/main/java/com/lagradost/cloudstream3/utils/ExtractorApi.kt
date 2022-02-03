@@ -124,8 +124,7 @@ val extractorApis: Array<ExtractorApi> = arrayOf(
     Evoload(),
     Evoload1(),
     VoeExtractor(),
-    UpstreamExtractor(),
-
+    // UpstreamExtractor(), deactivated cause doesnt work
 
     Jawcloud(),
     Jawcloud1(),
