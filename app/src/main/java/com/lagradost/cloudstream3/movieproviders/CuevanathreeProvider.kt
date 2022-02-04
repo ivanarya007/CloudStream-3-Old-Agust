@@ -106,9 +106,10 @@ class CuevanathreeProvider:MainAPI() {
         val poster: String? = soup.selectFirst(".movtv-info div.Image img").attr("data-src")
         val year1 = soup.selectFirst("footer p.meta").toString()
         val yearRegex = Regex("(\\d+)<\\/span>")
-        val year =  yearRegex.findAll(year1).map {
+        val yearf =  yearRegex.findAll(year1).map {
             it.value.replace("</span>","")
-        }.toList().first().toIntOrNull()
+        }.toList()
+        val year = if (yearf.isEmpty()) null else yearf.first().toIntOrNull()
         val episodes = soup.select(".all-episodes li.TPostMv article").map { li ->
             val href = li.select("a").attr("href")
             val epThumb =

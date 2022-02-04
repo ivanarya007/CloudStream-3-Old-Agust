@@ -1,11 +1,10 @@
 package com.lagradost.cloudstream3.animeproviders
 
+import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.module.kotlin.readValue
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.extractors.*
-import com.lagradost.cloudstream3.utils.ExtractorLink
-import com.lagradost.cloudstream3.utils.Qualities
-import com.lagradost.cloudstream3.utils.extractorApis
-import com.lagradost.cloudstream3.utils.httpsify
+import com.lagradost.cloudstream3.utils.*
 import org.jsoup.Jsoup
 import java.net.URLDecoder
 import java.util.*
@@ -28,10 +27,10 @@ class AnimefenixProvider:MainAPI() {
 
     override suspend fun getMainPage(): HomePageResponse {
         val urls = listOf(
-            Pair("$mainUrl/", "Últimos animes agregados",),
-            Pair("$mainUrl/animes?estado[]=2", "Animes finalizados",),
-            Pair("$mainUrl/animes?type[]=movie&order=default", "Peliculas",),
-            Pair("$mainUrl/animes?type[]=ova&order=default", "OVA's",),
+            Pair("$mainUrl/", "Últimos animes agregados", ),
+            Pair("$mainUrl/animes?estado[]=2", "Animes finalizados", ),
+            Pair("$mainUrl/animes?type[]=movie&order=default", "Peliculas", ),
+            Pair("$mainUrl/animes?type[]=ova&order=default", "OVA's", ),
         )
 
         val items = ArrayList<HomePageList>()
@@ -64,20 +63,22 @@ class AnimefenixProvider:MainAPI() {
     }
 
     override suspend fun search(query: String): ArrayList<SearchResponse> {
-        val search = Jsoup.parse(app.get("$mainUrl/animes?q=$query", timeout = 120).text).select(".list-series article").map {
-            val title = it.selectFirst("h3 a").text()
-            val href = it.selectFirst("a").attr("href")
-            val image = it.selectFirst("figure img").attr("src")
-            AnimeSearchResponse(
-                title,
-                href,
-                this.name,
-                TvType.Anime,
-                fixUrl(image),
-                null,
-                if (title.contains("Latino") || title.contains("Castellano")) EnumSet.of(DubStatus.Dubbed) else EnumSet.of(DubStatus.Subbed),
-            )
-        }
+        val search =
+            Jsoup.parse(app.get("$mainUrl/animes?q=$query", timeout = 120).text).select(".list-series article").map {
+                val title = it.selectFirst("h3 a").text()
+                val href = it.selectFirst("a").attr("href")
+                val image = it.selectFirst("figure img").attr("src")
+                AnimeSearchResponse(
+                    title,
+                    href,
+                    this.name,
+                    TvType.Anime,
+                    fixUrl(image),
+                    null,
+                    if (title.contains("Latino") || title.contains("Castellano")) EnumSet.of(DubStatus.Dubbed) else EnumSet.of(
+                        DubStatus.Subbed),
+                )
+            }
         return ArrayList(search)
     }
 
@@ -98,9 +99,11 @@ class AnimefenixProvider:MainAPI() {
             AnimeEpisode(link, name)
         }.reversed()
 
-        val href= doc.selectFirst(".anime-page__episode-list li")
+        val href = doc.selectFirst(".anime-page__episode-list li")
         val hrefmovie = href.selectFirst("a").attr("href")
-        val type = if (doc.selectFirst("ul.has-text-light").text().contains("Película") && episodes.size == 1) TvType.AnimeMovie else TvType.Anime
+        val type = if (doc.selectFirst("ul.has-text-light").text()
+                .contains("Película") && episodes.size == 1
+        ) TvType.AnimeMovie else TvType.Anime
 
         return when (type) {
             TvType.Anime -> {
@@ -144,87 +147,103 @@ class AnimefenixProvider:MainAPI() {
             if (script.data().contains("var tabsArray =")) {
                 val html = app.get(data).text
                 val feRegex = Regex("player=2&amp;code(.*)&")
-                val link1 = feRegex.findAll(html).map {
+                feRegex.findAll(html).map {
                     "https://embedsito.com/v/"+(it.value).replace("player=2&amp;code=","").replace("&","")
-                }.toList() // --> https://embesito.com/v/jt47bkh307jl
-                for (link in link1) {
-                    for (extractor in extractorApis) {
-                        if (link.startsWith(extractor.mainUrl)) {
-                            extractor.getSafeUrl(link, data)?.apmap {
-                                callback(it)
-                            }
-                        }
-                    }
+                }.toList().apmap {
+                    loadExtractor(it, data, callback)
                 }
                 val mp4Regex = Regex("player=3&amp;code=(.*)&")
-                val link2 = mp4Regex.findAll(html).map {
+                mp4Regex.findAll(html).map {
                     "https://www.mp4upload.com/embed-"+(it.value).replace("player=3&amp;code=","").replace("&","")+".html"
-                }.toList() // --> https://www.mp4upload.com/embed-g4yu7p4u.html
-                for (link in link2) {
-                    for (extractor in extractorApis) {
-                        if (link.startsWith(extractor.mainUrl)) {
-                            extractor.getSafeUrl(link, data)?.apmap {
-                                callback(it)
-                            }
-                        }
-                    }
+                }.toList().apmap {
+                    loadExtractor(it, data, callback)
                 }
                 val youruploadRegex = Regex("player=6&amp;code=(.*)&")
-                val link3 = youruploadRegex.findAll(html).map {
+                youruploadRegex.findAll(html).map {
                     "https://www.yourupload.com/embed/"+(it.value).replace("player=6&amp;code=","").replace("&","")
-                }.toList() // --> https://www.yourupload.com/embed/g4yu7p4u
-                for (link in link3) {
-                    for (extractor in extractorApis) {
-                        if (link.startsWith(extractor.mainUrl)) {
-                            extractor.getSafeUrl(link, data)?.apmap {
-                                callback(it)
-                            }
-                        }
-                    }
+                }.toList().apmap {
+                    loadExtractor(it, data, callback)
                 }
                 val okruRegex = Regex("player=12&amp;code=(.*)&")
-                val link4 = okruRegex.findAll(html).map {
+                okruRegex.findAll(html).map {
                     "https://ok.ru/videoembed/"+(it.value).replace("player=12&amp;code=","").replace("&","")
-                }.toList() // --> https://ok.ru/videoembed/3276668340777
-                for (link in link4) {
-                    for (extractor in extractorApis) {
-                        if (link.startsWith(extractor.mainUrl)) {
-                            extractor.getSafeUrl(link, data)?.apmap {
-                                callback(it)
-                            }
-                        }
-                    }
+                }.toList().apmap {
+                    loadExtractor(it, data, callback)
                 }
                 val sendvidRegex = Regex("player=4&amp;code=(.*)&")
-                val link5 = sendvidRegex.findAll(html).map {
+                sendvidRegex.findAll(html).map {
                     "https://sendvid.com/"+(it.value).replace("player=4&amp;code=","").replace("&","")
-                }.toList() // --> https://sendvid.com/embed/ny8fzfd8
-                for (link in link5) {
-                    for (extractor in extractorApis) {
-                        if (link.startsWith(extractor.mainUrl)) {
-                            extractor.getSafeUrl(link, data)?.apmap {
-                                callback(it)
-                            }
-                        }
-                    }
+                }.toList().apmap {
+                    loadExtractor(it, data, callback)
                 }
                 val fireloadRegex = Regex("player=22&amp;code=(.*)&")
                 val link6 = fireloadRegex.findAll(html).map {
                     "https://www.animefenix.com/stream/fl.php?v="+URLDecoder.decode((it.value).replace("player=22&amp;code=","").replace("&",""), "UTF-8")
-                }.toList().first()
-                val directlinkRegex = Regex("(file\":\".*.mp4.*\",\"t)")
-                with(app.get(link6, allowRedirects = false)) {
-                    directlinkRegex.find(this.text)?.let { link ->
-                        callback(
-                            ExtractorLink(
-                                "Fireload",
-                                "Fireload",
-                                ("https://"+link.value).replace("file\":\"","").replace("\",\"t",""),
-                                "",
-                                Qualities.Unknown.value,
-                                isM3u8 = false
+                }.toList()
+                if (link6.isNotEmpty()) {
+                    link6.apmap {
+                        val fireload = app.get(it).text
+                        val extractedlink = fireload.substringAfter("{\"file\":\"").substringBefore("\",\"type")
+                            .replace("\\/", "/")
+                        val quality = fireload.substringAfter("\"label\":\"").substringBefore("\"}")
+                        val testlink = app.get("https://$extractedlink")
+                        if (testlink.url.contains("error")) null else
+                            callback(
+                                ExtractorLink(
+                                    "Fireload",
+                                    "Fireload $quality",
+                                    "https://$extractedlink",
+                                    "",
+                                    Qualities.Unknown.value,
+                                    isM3u8 = false
+                                )
                             )
-                        )
+                    }
+                }
+                val amazonRegex = Regex("player=9&amp;code=(.*)&")
+                val link7 = amazonRegex.findAll(html).map {
+                    "https://www.animefenix.com/stream/amz.php?v="+(it.value).replace("player=9&amp;code=","").replace("&","")
+                }.toList()
+                if (link7.isNotEmpty()) {
+                    link7.apmap {
+                        val amazon = app.get(it).text
+                        val extractedlink = amazon.substringAfter("{\"file\":\"").substringBefore("\",\"type")
+                            .replace("\\/", "/")
+                        val quality = amazon.substringAfter("\"label\":\"").substringBefore("\"}")
+                        if (extractedlink.contains("amazon"))
+                            callback(
+                                ExtractorLink(
+                                    "Amazon",
+                                    "Amazon $quality",
+                                    extractedlink,
+                                    "",
+                                    Qualities.Unknown.value,
+                                    isM3u8 = false
+                                )
+                            )
+                    }
+                }
+                val amazonesRegex = Regex("player=11&amp;code=(.*)&")
+                val link8 = amazonesRegex.findAll(html).map {
+                    "https://www.animefenix.com/stream/amz.php?v="+(it.value).replace("player=11&amp;code=","").replace("&","")
+                }.toList()
+                if (link8.isNotEmpty()) {
+                    link8.apmap {
+                        val amazones = app.get("$it&ext=es").text
+                        val extractedlink = amazones.substringAfter("{\"file\":\"").substringBefore("\",\"type")
+                            .replace("\\/", "/")
+                        val quality = amazones.substringAfter("\"label\":\"").substringBefore("\"}")
+                        if (extractedlink.contains("amazon"))
+                            callback(
+                                ExtractorLink(
+                                    "AmazonES",
+                                    "AmazonES $quality",
+                                    extractedlink,
+                                    "",
+                                    Qualities.Unknown.value,
+                                    isM3u8 = false
+                                )
+                            )
                     }
                 }
             }

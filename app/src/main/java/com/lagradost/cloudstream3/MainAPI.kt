@@ -38,6 +38,7 @@ object APIHolder {
         AnimeflvnetProvider(),
         AnimeIDProvider(),
         AnimeonlineProvider(),
+        AnimePaheProvider(),
         AsianLoadProvider(),
         CinecalidadProvider(),
         CuevanathreeProvider(),
