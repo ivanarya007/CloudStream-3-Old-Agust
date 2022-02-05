@@ -47,6 +47,7 @@ object APIHolder {
         DubbedAnimeProvider(),
         ElifilmsProvider(),
         EntrepeliculasyseriesProvider(),
+        EstrenosDoramasProvider(),
         FilmanProvider(),
         FmoviesProvider(), //Sflix mirror
         FrenchStreamProvider(),

@@ -144,7 +144,8 @@
      <string name="pause">Pausar</string>
      <string name="resume">Reanudar</string>
      <string name="delete_message">Esto borrará %s permanentemente\n¿Seguro?</string>
-     <string name="status_ongoing">En Curso</string>
+     <string name="resume_time_left" formatted="true">Tiempo restante:\n%dm</string>
+     <string name="status_ongoing">En Emisión</string>
      <string name="status_completed">Completada</string>
      <string name="status">Estado</string>
      <string name="year">Año</string>
