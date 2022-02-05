@@ -9,6 +9,7 @@ import android.content.Intent
 import android.content.Intent.*
 import android.content.res.ColorStateList
 import android.content.res.Configuration
+import android.graphics.Rect
 import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -29,6 +30,8 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.discord.panels.OverlappingPanelsLayout
+import com.discord.panels.PanelsChildGestureRegionObserver
 import com.google.android.gms.cast.framework.CastButtonFactory
 import com.google.android.gms.cast.framework.CastContext
 import com.google.android.gms.cast.framework.CastState
@@ -85,6 +88,7 @@ import com.lagradost.cloudstream3.utils.UIHelper.setImage
 import com.lagradost.cloudstream3.utils.UIHelper.setImageBlur
 import com.lagradost.cloudstream3.utils.VideoDownloadManager.sanitizeFilename
 import kotlinx.android.synthetic.main.fragment_result.*
+import kotlinx.android.synthetic.main.fragment_result_swipe.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.withContext
@@ -175,7 +179,7 @@ fun ResultEpisode.getWatchProgress(): Float {
     return (getDisplayPosition() / 1000).toFloat() / (duration / 1000).toFloat()
 }
 
-class ResultFragment : Fragment() {
+class ResultFragment : Fragment(), PanelsChildGestureRegionObserver.GestureRegionsListener {
     companion object {
         fun newInstance(
             url: String,
@@ -376,7 +380,7 @@ class ResultFragment : Fragment() {
     ): View? {
         viewModel =
             ViewModelProvider(this)[ResultViewModel::class.java]
-        return inflater.inflate(R.layout.fragment_result, container, false)
+        return inflater.inflate(R.layout.fragment_result_swipe, container, false)
     }
 
     override fun onDestroyView() {
@@ -389,10 +393,6 @@ class ResultFragment : Fragment() {
         downloadButton?.dispose()
         updateUIListener = null
         super.onDestroy()
-        activity?.let {
-            it.window?.navigationBarColor =
-                it.colorFromAttribute(R.attr.primaryGrayBackground)
-        }
     }
 
     override fun onResume() {
@@ -492,19 +492,27 @@ class ResultFragment : Fragment() {
     }
 
     private fun setRecommendations(rec: List<SearchResponse>?) {
-        return
-        result_recommendations?.isGone = rec.isNullOrEmpty()
-        rec?.let { list ->
-            (result_recommendations?.adapter as SearchAdapter?)?.apply {
-                cardList = list
-                notifyDataSetChanged()
+        val isInvalid = rec.isNullOrEmpty()
+        result_recommendations?.isGone = isInvalid
+        result_recommendations_btt?.isGone = isInvalid
+        result_recommendations_btt?.setOnClickListener {
+            if (result_overlapping_panels?.getSelectedPanel()?.ordinal == 1) {
+                result_overlapping_panels?.openEndPanel()
+            } else {
+                result_overlapping_panels?.closePanels()
+            }
+        }
+        result_overlapping_panels?.setEndPanelLockState(if (isInvalid) OverlappingPanelsLayout.LockState.CLOSE else OverlappingPanelsLayout.LockState.UNLOCKED)
+        result_recommendations.post {
+            rec?.let { list ->
+                (result_recommendations?.adapter as SearchAdapter?)?.updateList(list)
             }
         }
     }
 
     private fun fixGrid() {
-        activity?.getSpanCount()?.let { count ->
-            result_recommendations?.spanCount = count
+        activity?.getSpanCount()?.let { _ ->
+            //result_recommendations?.spanCount = count // this is due to discord not changing size with rotation
         }
     }
 
@@ -532,7 +540,11 @@ class ResultFragment : Fragment() {
     @SuppressLint("SetTextI18n")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
         fixGrid()
+        result_recommendations?.spanCount = 3
+        result_overlapping_panels?.setStartPanelLockState(OverlappingPanelsLayout.LockState.CLOSE)
+        result_overlapping_panels?.setEndPanelLockState(OverlappingPanelsLayout.LockState.CLOSE)
 
         updateUIListener = ::updateUI
 
@@ -545,7 +557,7 @@ class ResultFragment : Fragment() {
         hideKeyboard()
         activity?.loadCache()
 
-        activity?.fixPaddingStatusbar(result_scroll)
+        activity?.fixPaddingStatusbar(result_top_bar)
         //activity?.fixPaddingStatusbar(result_barstatus)
 
         /* val backParameter = result_back.layoutParams as FrameLayout.LayoutParams
@@ -937,7 +949,6 @@ class ResultFragment : Fragment() {
                     viewModel.loadEpisode(episodeClick.data, false)
                 }
 
-
                 ACTION_DOWNLOAD_MIRROR -> {
                     acquireSingleExtractorLink(
                         sortUrls(
@@ -1021,6 +1032,32 @@ class ResultFragment : Fragment() {
 
         observe(viewModel.episodes) { episodeList ->
             lateFixDownloadButton(episodeList.size <= 1) // movies can have multible parts but still be *movies* this will fix this
+            var isSeriesVisible = false
+            DataStoreHelper.getLastWatched(currentId)?.let { resume ->
+                if (currentIsMovie == false && episodeList.size >= 3) {
+                    isSeriesVisible = true
+                    result_resume_series_button?.setOnClickListener {
+                        episodeList.firstOrNull { it.id == resume.episodeId }?.let {
+                            handleAction(EpisodeClickEvent(ACTION_PLAY_EPISODE_IN_PLAYER, it))
+                        }
+                    }
+                    result_resume_series_title?.text =
+                        if (resume.season == null)
+                            "${getString(R.string.episode)} ${resume.episode}"
+                        else
+                            " \"${getString(R.string.season_short)}${resume.season}:${getString(R.string.episode_short)}${resume.episode}\""
+
+                    getViewPos(resume.episodeId)?.let { viewPos ->
+                        result_resume_series_progress?.apply {
+                            max = (viewPos.duration / 1000).toInt()
+                            progress = (viewPos.position / 1000).toInt()
+                        }
+                        result_resume_series_progress_text?.text =
+                            getString(R.string.resume_time_left).format((viewPos.duration - viewPos.position) / (60_000))
+                    }
+                }
+            }
+            result_series_parent?.isVisible = isSeriesVisible
 
             when (startAction) {
                 START_ACTION_RESUME_LATEST -> {
@@ -1502,5 +1539,9 @@ class ResultFragment : Fragment() {
                 }
             }
         }
+    }
+
+    override fun onGestureRegionsUpdate(gestureRegions: List<Rect>) {
+        result_overlapping_panels?.setChildGestureRegions(gestureRegions)
     }
 }
