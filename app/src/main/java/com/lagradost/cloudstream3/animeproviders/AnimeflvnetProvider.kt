@@ -31,12 +31,36 @@ class AnimeflvnetProvider:MainAPI() {
 
     override suspend fun getMainPage(): HomePageResponse {
         val urls = listOf(
-            Pair("$mainUrl/browse?type[]=movie&order=updated", "Peliculas actualizadas"),
-            Pair("$mainUrl/browse?order=updated", "Animes recientemente actualizados"),
-            Pair("$mainUrl/browse?status[]=2&order=default", "Animes finalizados"),
+            Pair("$mainUrl/browse?type[]=movie&order=updated", "Películas"),
+            Pair("$mainUrl/browse?status[]=2&order=default", "Animes"),
             Pair("$mainUrl/browse?status[]=1&order=rating", "En emision"),
         )
         val items = ArrayList<HomePageList>()
+        items.add(
+            HomePageList(
+                "Últimos episodios",
+                app.get("https://www3.animeflv.net/").document.select("main.Main ul.ListEpisodios li").map {
+                    val title = it.selectFirst("strong.Title").text()
+                    val poster = it.selectFirst("span img").attr("src")
+                    val epRegex = Regex("(-(\\d+)\$)")
+                    val url = it.selectFirst("a").attr("href").replace(epRegex,"")
+                        .replace("ver/","anime/")
+                    val epNum = it.selectFirst("span.Capi").text().replace("Episodio ","").toIntOrNull()
+                    AnimeSearchResponse(
+                        title,
+                        fixUrl(url),
+                        this.name,
+                        TvType.Anime,
+                        fixUrl(poster),
+                        null,
+                        if (title.contains("Latino") || title.contains("Castellano")) EnumSet.of(
+                            DubStatus.Dubbed
+                        ) else EnumSet.of(DubStatus.Subbed),
+                        subEpisodes = epNum,
+                        dubEpisodes = epNum,
+                    )
+                })
+        )
         for (i in urls) {
             try {
                 val doc = app.get(i.first).document

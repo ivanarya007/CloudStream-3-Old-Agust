@@ -99,12 +99,8 @@ class PelisflixProvider:MainAPI() {
                 ?.times(0)?.toInt()
         val year = document.selectFirst("span.Date")?.text()
         val duration = if (type == TvType.Movie) document.selectFirst(".Container .Container  span.Time").text() else null
-        val postercss = document.selectFirst("head").toString()
-        val posterRegex = Regex("(\"og:image\" content=\"https:\\/\\/seriesflix.video\\/wp-content\\/uploads\\/(\\d+)\\/(\\d+)\\/?.*.jpg)")
         val poster = try {
-            posterRegex.findAll(postercss).map {
-                it.value.replace("\"og:image\" content=\"","")
-            }.toList().first()
+            document.selectFirst("head meta[property=og:image]").attr("content")
         } catch (e: Exception) {
             document.select(".TPostBg").attr("src")
         }

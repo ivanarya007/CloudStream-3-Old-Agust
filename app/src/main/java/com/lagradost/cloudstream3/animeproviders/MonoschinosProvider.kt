@@ -44,7 +44,7 @@ class MonoschinosProvider : MainAPI() {
 
         items.add(
             HomePageList(
-                "Capítulos actualizados",
+                "Últimos episodios",
                 app.get(mainUrl, timeout = 120).document.select(".col-6").map {
                     val title = it.selectFirst("p.animetitles").text()
                     val poster = it.selectFirst(".animeimghv").attr("data-src")

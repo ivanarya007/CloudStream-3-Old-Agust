@@ -98,12 +98,8 @@ class SeriesflixProvider:MainAPI() {
         } catch (e: Exception) {
             null
         }
-        val postercss = document.selectFirst("head").toString()
-        val posterRegex = Regex("(\"og:image\" content=\"https:\\/\\/seriesflix.video\\/wp-content\\/uploads\\/(\\d+)\\/(\\d+)\\/?.*.jpg)")
         val poster = try {
-            posterRegex.findAll(postercss).map {
-                it.value.replace("\"og:image\" content=\"","")
-            }.toList().first()
+            document.selectFirst("head meta[property=og:image]").attr("content")
         } catch (e: Exception) {
             document.select(".TPostBg").attr("src")
         }
@@ -118,7 +114,7 @@ class SeriesflixProvider:MainAPI() {
                     list.add(Pair(season, fixUrl(href)))
                 }
             }
-            if (list.isEmpty()) throw ErrorLoadingException("No Seasons Found")
+            if (list.isEmpty()) throw ErrorLoadingException("No se ha encontrado temporadas")
 
             val episodeList = ArrayList<TvSeriesEpisode>()
 

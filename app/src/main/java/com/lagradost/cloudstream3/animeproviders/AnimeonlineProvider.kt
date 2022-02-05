@@ -26,7 +26,31 @@ class AnimeonlineProvider:MainAPI() {
             Pair("$mainUrl/genero/sin-censura/", "Sin censura",),
         )
         val items = ArrayList<HomePageList>()
-
+        items.add(
+            HomePageList(
+                "Últimos episodios",
+                app.get(mainUrl).document.select(".items article.episodes").map {
+                    val title = it.selectFirst("h3").text()
+                    val poster = it.selectFirst("img").attr("data-src")
+                    val epRegex = Regex("(-cap-(\\d+)|\\/\$)")
+                    val url = it.selectFirst("a").attr("href").replace(epRegex,"")
+                        .replace("episodio/","online/")
+                    val epNum = it.selectFirst("h4").text().replace("Episodio ","").toIntOrNull()
+                    AnimeSearchResponse(
+                        title,
+                        url,
+                        this.name,
+                        TvType.Anime,
+                        poster,
+                        null,
+                        if (title.contains("Latino") || title.contains("Castellano")) EnumSet.of(
+                            DubStatus.Dubbed
+                        ) else EnumSet.of(DubStatus.Subbed),
+                        subEpisodes = epNum,
+                        dubEpisodes = epNum,
+                    )
+                })
+        )
         items.add(HomePageList("Películas", app.get("$mainUrl/pelicula", timeout = 120).document.select(".animation-2.items .item.movies").map{
             val title = it.selectFirst("div.title h4").text()
             val poster = it.selectFirst("div.poster img").attr("data-src")

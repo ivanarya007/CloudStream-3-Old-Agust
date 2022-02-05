@@ -27,13 +27,39 @@ class AnimefenixProvider:MainAPI() {
 
     override suspend fun getMainPage(): HomePageResponse {
         val urls = listOf(
-            Pair("$mainUrl/", "Últimos animes agregados", ),
-            Pair("$mainUrl/animes?estado[]=2", "Animes finalizados", ),
+            Pair("$mainUrl/", "Animes"),
             Pair("$mainUrl/animes?type[]=movie&order=default", "Peliculas", ),
             Pair("$mainUrl/animes?type[]=ova&order=default", "OVA's", ),
         )
 
         val items = ArrayList<HomePageList>()
+
+        items.add(
+            HomePageList(
+                "Últimos episodios",
+                app.get(mainUrl).document.select(".capitulos-grid div.item").map {
+                    val title = it.selectFirst("div.overtitle").text()
+                    val poster = it.selectFirst("a img").attr("src")
+                    val epRegex = Regex("(-(\\d+)\$)")
+                    val url = it.selectFirst("a").attr("href").replace(epRegex,"")
+                        .replace("/ver/","/")
+                    val epNum = it.selectFirst(".is-size-7").text().replace("Episodio ","").toIntOrNull()
+                    AnimeSearchResponse(
+                        title,
+                        url,
+                        this.name,
+                        TvType.Anime,
+                        poster,
+                        null,
+                        if (title.contains("Latino") || title.contains("Castellano")) EnumSet.of(
+                            DubStatus.Dubbed
+                        ) else EnumSet.of(DubStatus.Subbed),
+                        subEpisodes = epNum,
+                        dubEpisodes = epNum,
+                    )
+                })
+        )
+
         for (i in urls) {
             try {
                 val response = app.get(i.first)
