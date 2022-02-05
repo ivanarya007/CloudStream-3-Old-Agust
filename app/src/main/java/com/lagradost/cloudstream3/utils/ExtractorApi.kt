@@ -137,6 +137,10 @@ val extractorApis: Array<ExtractorApi> = arrayOf(
     ZplayerV2(),
     Zplayer(),
 
+    Tomatomatela(),
+    Cinestart(),
+    OkRu(),
+
     // dood extractors
     DoodToExtractor(),
     DoodSoExtractor(),
