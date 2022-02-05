@@ -63,6 +63,7 @@ It merely scrapes 3rd-party websites that are publicly accessable via any regula
 - [doramasyt.com](https://doramasyt.com) 
 - [dramasee.net](https://dramasee.net) 
 - [bestdubbedanime.com](https://bestdubbedanime.com) 
+- [www23.estrenosdoramas.net](https://www23.estrenosdoramas.net) 
 - [filman.cc](https://filman.cc) 
 - [fmovies.app](https://fmovies.app) 
 - [gogoanime.wiki](https://gogoanime.wiki) 
