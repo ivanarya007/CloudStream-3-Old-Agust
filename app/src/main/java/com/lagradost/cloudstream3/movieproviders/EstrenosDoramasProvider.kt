@@ -40,7 +40,7 @@ class EstrenosDoramasProvider : MainAPI() {
             try {
 
                 val home = app.get(i.first, timeout = 120).document.select("div.clearfix").map {
-                    val title = it.selectFirst("h3 a").text().replace(Regex("[Pp]elicula| "),"")
+                    val title = it.selectFirst("h3 a").text().replace(Regex("[Pp]elicula|[Pp]elicula "),"")
                     val poster = it.selectFirst("img.cate_thumb").attr("src")
                     AnimeSearchResponse(
                         title,
@@ -68,7 +68,7 @@ class EstrenosDoramasProvider : MainAPI() {
     override suspend fun search(query: String): ArrayList<SearchResponse> {
         val search =
             app.get("$mainUrl/?s=$query", timeout = 120).document.select("div.clearfix").map {
-                val title = it.selectFirst("h3 a").text().replace(Regex("[Pp]elicula| "),"")
+                val title = it.selectFirst("h3 a").text().replace(Regex("[Pp]elicula|[Pp]elicula"),"")
                 val href = it.selectFirst("a").attr("href")
                 val image = it.selectFirst("img.cate_thumb").attr("src")
                 AnimeSearchResponse(
