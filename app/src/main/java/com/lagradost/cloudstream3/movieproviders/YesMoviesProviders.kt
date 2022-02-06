@@ -2,6 +2,7 @@ package com.lagradost.cloudstream3.movieproviders
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.lagradost.cloudstream3.*
+import com.lagradost.cloudstream3.LoadResponse.Companion.setDuration
 import com.lagradost.cloudstream3.movieproviders.SflixProvider.Companion.isValidServer
 import com.lagradost.cloudstream3.network.WebViewResolver
 import com.lagradost.cloudstream3.utils.AppUtils.parseJson
@@ -118,6 +119,23 @@ class YesMoviesProviders(providerUrl: String, providerName: String) : MainAPI() 
                 ?: throw RuntimeException("Unable to get id from '$url'")
         else dataId
 
+        val recommendations =
+            document.select("div.film_list-wrap > div.flw-item")?.mapNotNull { element ->
+                val titleHeader =
+                    element.select("div.film-detail > .film-name > a") ?: return@mapNotNull null
+                val recUrl = fixUrlNull(titleHeader.attr("href")) ?: return@mapNotNull null
+                val recTitle = titleHeader.text() ?: return@mapNotNull null
+                val poster = element.select("div.film-poster > img")?.attr("data-src")
+                MovieSearchResponse(
+                    recTitle,
+                    recUrl,
+                    this.name,
+                    if (recUrl.contains("/movie/")) TvType.Movie else TvType.TvSeries,
+                    poster,
+                    year = null
+                )
+            }
+
         if (isMovie) {
             // Movies
             val episodesUrl = "$mainUrl/ajax/movie/episodes/$id"
@@ -138,6 +156,7 @@ class YesMoviesProviders(providerUrl: String, providerName: String) : MainAPI() 
                 this.posterUrl = posterUrl
                 this.plot = plot
                 setDuration(duration)
+                this.recommendations = recommendations
             }
         } else {
             val seasonsDocument = app.get("$mainUrl/ajax/v2/tv/seasons/$id").document

@@ -221,6 +221,6 @@
      <string name="download_path_pref">Ruta de descarga</string>
      <string name="downloaded_file">Archivo descargado</string>
      <string name="subtitles_example_text">Jovencillo emponzoñado de whisky, qué mala figurota exhibes.</string>
-
+     <string name="home_source">Fuente</string>
 
 </resources>

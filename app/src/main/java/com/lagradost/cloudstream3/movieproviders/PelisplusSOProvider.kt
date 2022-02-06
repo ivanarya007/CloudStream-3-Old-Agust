@@ -17,7 +17,6 @@ class PelisplusSOProvider:MainAPI() {
     override val supportedTypes = setOf(
         TvType.Movie,
         TvType.TvSeries,
-        TvType.Anime,
     )
     override suspend fun getMainPage(): HomePageResponse? {
         val items = ArrayList<HomePageList>()
