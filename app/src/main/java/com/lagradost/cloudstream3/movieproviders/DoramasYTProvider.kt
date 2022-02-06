@@ -123,7 +123,7 @@ class DoramasYTProvider : MainAPI() {
 
     override suspend fun load(url: String): LoadResponse {
         val doc = app.get(url, timeout = 120).document
-        val poster = doc.selectFirst("div.flimimg img.img1").attr("src")
+        val poster = doc.selectFirst("head meta[property=og:image]").attr("content") ?: doc.selectFirst("div.flimimg img.img1").attr("src")
         val title = doc.selectFirst("h1").text()
         val type = doc.selectFirst("h4").text()
         val description = doc.selectFirst("p.textComplete").text().replace("Ver menos", "")
