@@ -392,6 +392,10 @@ class ResultFragment : Fragment(), PanelsChildGestureRegionObserver.GestureRegio
         //requireActivity().viewModelStore.clear() // REMEMBER THE CLEAR
         downloadButton?.dispose()
         updateUIListener = null
+        result_cast_items?.let {
+            PanelsChildGestureRegionObserver.Provider.get().unregister(it)
+        }
+
         super.onDestroy()
     }
 
@@ -483,12 +487,49 @@ class ResultFragment : Fragment(), PanelsChildGestureRegionObserver.GestureRegio
         setFormatText(result_meta_duration, R.string.duration_format, duration)
     }
 
+    private fun setShow(showStatus: ShowStatus?) {
+        val status = when (showStatus) {
+            null -> null
+            ShowStatus.Ongoing -> R.string.status_ongoing
+            ShowStatus.Completed -> R.string.status_completed
+        }
+
+        if (status == null) {
+            result_meta_status?.isVisible = false
+        } else {
+            context?.getString(status)?.let {
+                result_meta_status?.text = it
+            }
+        }
+    }
+
     private fun setYear(year: Int?) {
         setFormatText(result_meta_year, R.string.year_format, year)
     }
 
     private fun setRating(rating: Int?) {
         setFormatText(result_meta_rating, R.string.rating_format, rating?.div(1000f))
+    }
+
+    private fun setActors(actors: List<ActorData>?) {
+        if (actors.isNullOrEmpty()) {
+            result_cast_text?.isVisible = false
+            result_cast_items?.isVisible = false
+        } else {
+            val isImage = actors.first().actor.image != null
+            if (isImage) {
+                (result_cast_items?.adapter as ActorAdaptor?)?.apply {
+                    updateList(actors)
+                }
+                result_cast_text?.isVisible = false
+                result_cast_items?.isVisible = true
+            } else {
+                result_cast_text?.isVisible = true
+                result_cast_items?.isVisible = false
+                setFormatText(result_cast_text, R.string.cast_format,
+                    actors.joinToString { it.actor.name })
+            }
+        }
     }
 
     private fun setRecommendations(rec: List<SearchResponse>?) {
@@ -541,6 +582,10 @@ class ResultFragment : Fragment(), PanelsChildGestureRegionObserver.GestureRegio
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        result_cast_items?.let {
+            PanelsChildGestureRegionObserver.Provider.get().register(it)
+        }
+        result_cast_items?.adapter = ActorAdaptor(mutableListOf())
         fixGrid()
         result_recommendations?.spanCount = 3
         result_overlapping_panels?.setStartPanelLockState(OverlappingPanelsLayout.LockState.CLOSE)
@@ -1033,31 +1078,49 @@ class ResultFragment : Fragment(), PanelsChildGestureRegionObserver.GestureRegio
         observe(viewModel.episodes) { episodeList ->
             lateFixDownloadButton(episodeList.size <= 1) // movies can have multible parts but still be *movies* this will fix this
             var isSeriesVisible = false
+            var isProgressVisible = false
             DataStoreHelper.getLastWatched(currentId)?.let { resume ->
-                if (currentIsMovie == false && episodeList.size >= 3) {
+                if (currentIsMovie == false) {
                     isSeriesVisible = true
+
                     result_resume_series_button?.setOnClickListener {
                         episodeList.firstOrNull { it.id == resume.episodeId }?.let {
                             handleAction(EpisodeClickEvent(ACTION_PLAY_EPISODE_IN_PLAYER, it))
                         }
                     }
+
                     result_resume_series_title?.text =
                         if (resume.season == null)
                             "${getString(R.string.episode)} ${resume.episode}"
                         else
                             " \"${getString(R.string.season_short)}${resume.season}:${getString(R.string.episode_short)}${resume.episode}\""
+                }
 
-                    getViewPos(resume.episodeId)?.let { viewPos ->
+                getViewPos(resume.episodeId)?.let { viewPos ->
+                    if(viewPos.position > 30_000L || currentIsMovie == false) { // first 30s will not show for movies
                         result_resume_series_progress?.apply {
                             max = (viewPos.duration / 1000).toInt()
                             progress = (viewPos.position / 1000).toInt()
                         }
                         result_resume_series_progress_text?.text =
                             getString(R.string.resume_time_left).format((viewPos.duration - viewPos.position) / (60_000))
+                        isProgressVisible = true
+                    } else {
+                        isProgressVisible = false
+                        isSeriesVisible = false
                     }
+                } ?: run {
+                    isProgressVisible = false
+                    isSeriesVisible = false
                 }
             }
+
             result_series_parent?.isVisible = isSeriesVisible
+            result_resume_progress_holder?.isVisible = isProgressVisible
+            context?.getString(if (isProgressVisible) R.string.resume else R.string.play_movie_button)
+                ?.let {
+                    result_play_movie?.text = it
+                }
 
             when (startAction) {
                 START_ACTION_RESUME_LATEST -> {
@@ -1282,22 +1345,17 @@ class ResultFragment : Fragment(), PanelsChildGestureRegionObserver.GestureRegio
                             }
                         }
 
-                        val metadataInfoArray = ArrayList<Pair<Int, String>>()
-                        if (d is AnimeLoadResponse) {
-                            val status = when (d.showStatus) {
-                                null -> null
-                                ShowStatus.Ongoing -> R.string.status_ongoing
-                                ShowStatus.Completed -> R.string.status_completed
-                            }
-                            if (status != null) {
-                                metadataInfoArray.add(Pair(R.string.status, getString(status)))
-                            }
+                        val showStatus = when (d) {
+                            is TvSeriesLoadResponse -> d.showStatus
+                            is AnimeLoadResponse -> d.showStatus
+                            else -> null
                         }
-
+                        setShow(showStatus)
                         setDuration(d.duration)
                         setYear(d.year)
                         setRating(d.rating)
                         setRecommendations(d.recommendations)
+                        setActors(d.actors)
 
                         result_meta_site?.text = d.apiName
 
@@ -1311,10 +1369,10 @@ class ResultFragment : Fragment(), PanelsChildGestureRegionObserver.GestureRegio
 
                         result_poster_holder?.visibility = VISIBLE
 
-                        result_play_movie?.text =
+                        /*result_play_movie?.text =
                             if (d.type == TvType.Torrent) getString(R.string.play_torrent_button) else getString(
                                 R.string.play_movie_button
-                            )
+                            )*/
                         //result_plot_header?.text =
                         //    if (d.type == TvType.Torrent) getString(R.string.torrent_plot) else getString(R.string.result_plot)
                         if (!d.plot.isNullOrEmpty()) {
@@ -1396,12 +1454,15 @@ class ResultFragment : Fragment(), PanelsChildGestureRegionObserver.GestureRegio
                                     )
                                 downloadButton?.dispose()
                                 downloadButton = EasyDownloadButton()
-                                downloadButton?.setUpMaterialButton(
+                                downloadButton?.setUpMoreButton(
                                     file?.fileLength,
                                     file?.totalBytes,
                                     result_movie_progress_downloaded,
+                                    result_movie_download_icon,
+                                    result_movie_download_text,
+                                    result_movie_download_text_precentage,
                                     result_download_movie,
-                                    result_movie_text_progress,
+                                    true,
                                     VideoDownloadHelper.DownloadEpisodeCached(
                                         d.name,
                                         d.posterUrl,
@@ -1448,6 +1509,66 @@ class ResultFragment : Fragment(), PanelsChildGestureRegionObserver.GestureRegio
                                         )
                                     }
                                 }
+
+                                result_download_movie?.setOnLongClickListener {
+                                    val card =
+                                        currentEpisodes?.firstOrNull() ?: return@setOnLongClickListener false
+                                    handleAction(EpisodeClickEvent(ACTION_DOWNLOAD_MIRROR, card))
+                                    return@setOnLongClickListener true
+                                }
+
+                                /*downloadButton?.setUpMaterialButton(
+                                    file?.fileLength,
+                                    file?.totalBytes,
+                                    result_movie_progress_downloaded,
+                                    result_download_movie,
+                                    null, //result_movie_text_progress
+                                    VideoDownloadHelper.DownloadEpisodeCached(
+                                        d.name,
+                                        d.posterUrl,
+                                        0,
+                                        null,
+                                        localId,
+                                        localId,
+                                        d.rating,
+                                        d.plot,
+                                        System.currentTimeMillis(),
+                                    )
+                                ) { downloadClickEvent ->
+                                    if (downloadClickEvent.action == DOWNLOAD_ACTION_DOWNLOAD) {
+                                        currentEpisodes?.firstOrNull()?.let { episode ->
+                                            handleAction(
+                                                EpisodeClickEvent(
+                                                    ACTION_DOWNLOAD_EPISODE,
+                                                    ResultEpisode(
+                                                        d.name,
+                                                        d.name,
+                                                        null,
+                                                        0,
+                                                        null,
+                                                        episode.data,
+                                                        d.apiName,
+                                                        localId,
+                                                        0,
+                                                        0L,
+                                                        0L,
+                                                        null,
+                                                        null,
+                                                        null,
+                                                        d.type,
+                                                        localId,
+                                                    )
+                                                )
+                                            )
+                                        }
+                                    } else {
+                                        handleDownloadClick(
+                                            activity,
+                                            currentHeaderName,
+                                            downloadClickEvent
+                                        )
+                                    }
+                                }*/
                             }
                         } else {
                             lateFixDownloadButton(false)
@@ -1511,7 +1632,7 @@ class ResultFragment : Fragment(), PanelsChildGestureRegionObserver.GestureRegio
 
             val settingsManager = PreferenceManager.getDefaultSharedPreferences(ctx)
             val showFillers =
-                settingsManager.getBoolean(ctx.getString(R.string.show_fillers_key), true)
+                settingsManager.getBoolean(ctx.getString(R.string.show_fillers_key), false)
 
             val tempUrl = url
             if (tempUrl != null) {
@@ -1539,6 +1660,13 @@ class ResultFragment : Fragment(), PanelsChildGestureRegionObserver.GestureRegio
                 }
             }
         }
+
+        PanelsChildGestureRegionObserver.Provider.get().addGestureRegionsUpdateListener(this)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        PanelsChildGestureRegionObserver.Provider.get().addGestureRegionsUpdateListener(this)
     }
 
     override fun onGestureRegionsUpdate(gestureRegions: List<Rect>) {
