@@ -8,7 +8,7 @@ class Jawcloud1: WatchSB() {
 }
 
 open class Jawcloud : ExtractorApi() {
-    override val name = "Jawcloud m3u8"
+    override val name = "Jawcloud"
     override val mainUrl = "https://jawcloud.co"
     override val requiresReferer = false
 

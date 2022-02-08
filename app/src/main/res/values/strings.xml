@@ -262,6 +262,7 @@
     <string name="tv_series">TV Series</string>
     <string name="cartoons">Cartoons</string>
     <string name="anime">Anime</string>
+    <string name="donghua">Donghua</string>
     <string name="torrent">Torrents</string>
     <string name="documentaries">Documentaries</string>
     <string name="mirror">Mirrors</string>
@@ -272,6 +273,7 @@
     <string name="tv_series_singular">Series</string>
     <string name="cartoons_singular">Cartoon</string>
     <string name="anime_singular">@string/anime</string>
+    <string name="donghua_singular">Donghua</string>
     <string name="torrent_singular">Torrent</string>
     <string name="documentaries_singular">Documentary</string>
     <string name="mirror_singular">Mirror</string>

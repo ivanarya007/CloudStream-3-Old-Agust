@@ -6,6 +6,7 @@ import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.utils.*
 import java.util.*
 import kotlin.collections.ArrayList
+import kotlin.math.E
 
 class AnimeonlineProvider:MainAPI() {
     override val mainUrl = "https://animeonline1.ninja"
@@ -36,16 +37,24 @@ class AnimeonlineProvider:MainAPI() {
                     val url = it.selectFirst("a").attr("href").replace(epRegex,"")
                         .replace("episodio/","online/")
                     val epNum = it.selectFirst("h4").text().replace("Episodio ","").toIntOrNull()
+                    val audio = it.selectFirst("div.poster").toString()
+                    var dubstat = if (audio.contains("Latino") || audio.contains("Castellano")) {
+                        EnumSet.of(DubStatus.Dubbed)
+                    } else {
+                        EnumSet.of(DubStatus.Subbed)
+                    }
+                     if (audio.contains("Multi Audio")) {
+                         dubstat = EnumSet.of(DubStatus.Dubbed, DubStatus.Subbed)
+                     }
+                    val type = it.selectFirst("div.epiposter h4").text()
                     AnimeSearchResponse(
                         title,
-                        url,
+                        if (type.contains("Película")) url.replace("/online/","/pelicula/") else url,
                         this.name,
                         TvType.Anime,
                         poster,
                         null,
-                        if (title.contains("Latino") || title.contains("Castellano")) EnumSet.of(
-                            DubStatus.Dubbed
-                        ) else EnumSet.of(DubStatus.Subbed),
+                        dubstat,
                         subEpisodes = epNum,
                         dubEpisodes = epNum,
                     )
@@ -111,7 +120,7 @@ class AnimeonlineProvider:MainAPI() {
     }
     override suspend fun load(url: String): LoadResponse? {
         val soup = app.get(url).document
-        val title = soup.selectFirst("div.data h1").text()
+        val title = soup.selectFirst("div.data > h1").text() ?: soup.selectFirst("div.wp-content h2 a").text()
         val description = soup.selectFirst("div#info.sbox div.wp-content p").text()
         val poster: String? = soup.selectFirst("div.poster img").attr("data-src")
         val episodes = soup.select("div ul.episodios li").map { li ->

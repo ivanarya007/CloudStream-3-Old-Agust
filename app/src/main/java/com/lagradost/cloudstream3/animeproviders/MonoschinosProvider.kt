@@ -45,7 +45,7 @@ class MonoschinosProvider : MainAPI() {
         items.add(
             HomePageList(
                 "Últimos episodios",
-                app.get(mainUrl, timeout = 120).document.select(".col-6").map {
+                app.get(mainUrl).document.select(".col-6").map {
                     val title = it.selectFirst("p.animetitles").text()
                     val poster = it.selectFirst(".animeimghv").attr("data-src")
                     val epRegex = Regex("episodio-(\\d+)")
@@ -70,7 +70,7 @@ class MonoschinosProvider : MainAPI() {
 
         for (i in urls) {
             try {
-                val home = app.get(i.first, timeout = 120).document.select(".col-6").map {
+                val home = app.get(i.first).document.select(".col-6").map {
                     val title = it.selectFirst(".seristitles").text()
                     val poster = it.selectFirst("img.animemainimg").attr("src")
                     AnimeSearchResponse(
@@ -116,18 +116,26 @@ class MonoschinosProvider : MainAPI() {
             }
         return ArrayList(search)
     }
-
     override suspend fun load(url: String): LoadResponse {
         val doc = app.get(url, timeout = 120).document
         val poster = doc.selectFirst(".chapterpic img").attr("src")
         val title = doc.selectFirst(".chapterdetails h1").text()
         val type = doc.selectFirst("div.chapterdetls2").text()
-        val description = doc.selectFirst("p.textComplete").text().replace("Ver menos", "")
+        val description = doc.selectFirst("p.textComplete").text().replace("Ver menos", "").trim()
         val genres = doc.select(".breadcrumb-item a").map { it.text() }
         val status = when (doc.selectFirst("button.btn1")?.text()) {
             "Estreno" -> ShowStatus.Ongoing
             "Finalizado" -> ShowStatus.Completed
             else -> null
+        }
+        val yearregex = Regex("((\\d+)<\\/li)")
+        val yearselector = doc.selectFirst("div.row div.col-lg-12.col-md-9")
+        val year1 = try {
+            yearregex.findAll(yearselector.toString()).map {
+                it.value.replace("</li","")
+            }.toList().first().toIntOrNull()
+        } catch (e: Exception) {
+            null
         }
         val episodes = doc.select("div.heroarea2 div.heromain2 div.allanimes div.row.jpage.row-cols-md-6 div.col-item").map {
             val name = it.selectFirst("p.animetitles").text()
@@ -141,9 +149,9 @@ class MonoschinosProvider : MainAPI() {
             showStatus = status
             plot = description
             tags = genres
+            year = year1
         }
     }
-
     override suspend fun loadLinks(
         data: String,
         isCasting: Boolean,

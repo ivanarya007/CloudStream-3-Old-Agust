@@ -56,6 +56,7 @@ object APIHolder {
         KdramaHoodProvider(),
         KrunchyProvider(),
         MonoschinosProvider(),
+        MundoDonghuaProvider(),
         PelisflixProvider(),
         PeliSmartProvider(),
         PelisplusHDProvider(),
@@ -238,7 +239,8 @@ abstract class MainAPI {
         TvType.Cartoon,
         TvType.Anime,
         TvType.OVA,
-        TvType.Mirror
+        TvType.Mirror,
+        TvType.Donghua
     )
 
     open val vpnStatus = VPNStatus.None
@@ -396,6 +398,7 @@ enum class TvType {
     Torrent,
     Documentary,
     Mirror,
+    Donghua,
 }
 
 // IN CASE OF FUTURE ANIME MOVIE OR SMTH
