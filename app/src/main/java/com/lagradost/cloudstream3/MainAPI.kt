@@ -28,7 +28,7 @@ object APIHolder {
     private const val defProvider = 0
 
     val apis = arrayListOf(
-        // HenaojaraProvider(), removed due to scraping providers that are already implemented
+// HenaojaraProvider(), removed due to scraping providers that are already implemented
         AkwamProvider(),
         AllAnimeProvider(),
         AllMoviesForYouProvider(),
@@ -130,7 +130,6 @@ object APIHolder {
             this.getString(R.string.search_providers_list_key),
             hashSet
         )?.toHashSet() ?: hashSet
-
         val list = HashSet<String>()
         for (name in set) {
             val api = getApiFromNameNull(name) ?: continue
@@ -480,7 +479,7 @@ data class MovieSearchResponse(
     override val type: TvType,
 
     override val posterUrl: String?,
-    val year: Int?,
+    val year: Int? = null,
     override val id: Int? = null,
 ) : SearchResponse
 
@@ -525,6 +524,11 @@ interface LoadResponse {
         @JvmName("addActorsRole")
         fun LoadResponse.addActors(actors: List<Pair<Actor, ActorRole?>>?) {
             this.actors = actors?.map { (actor, role) -> ActorData(actor, role = role) }
+        }
+
+        @JvmName("addActorsOnly")
+        fun LoadResponse.addActors(actors: List<Actor>?) {
+            this.actors = actors?.map { actor -> ActorData(actor) }
         }
 
         fun LoadResponse.setDuration(input: String?) {
