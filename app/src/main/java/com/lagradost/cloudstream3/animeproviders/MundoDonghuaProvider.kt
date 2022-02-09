@@ -1,5 +1,7 @@
 package com.lagradost.cloudstream3.animeproviders
 
+import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.module.kotlin.readValue
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.utils.*
 import java.util.*
@@ -15,9 +17,7 @@ class MundoDonghuaProvider : MainAPI() {
     override val hasChromecastSupport = true
     override val hasDownloadSupport = true
     override val supportedTypes = setOf(
-        TvType.AnimeMovie,
-        TvType.OVA,
-        TvType.Anime,
+        TvType.Donghua,
     )
 
     override suspend fun getMainPage(): HomePageResponse {
@@ -39,7 +39,7 @@ class MundoDonghuaProvider : MainAPI() {
                         title,
                         fixUrl(url),
                         this.name,
-                        TvType.Anime,
+                        TvType.Donghua,
                         fixUrl(poster),
                         null,
                         if (title.contains("Latino") || title.contains("Castellano")) EnumSet.of(
@@ -58,7 +58,7 @@ class MundoDonghuaProvider : MainAPI() {
                         title,
                         fixUrl(it.selectFirst("a").attr("href")),
                         this.name,
-                        TvType.Anime,
+                        TvType.Donghua,
                         fixUrl(poster),
                         null,
                         if (title.contains("Latino") || title.contains("Castellano")) EnumSet.of(
@@ -87,7 +87,7 @@ class MundoDonghuaProvider : MainAPI() {
                     title,
                     href,
                     this.name,
-                    TvType.Anime,
+                    TvType.Donghua,
                     fixUrl(image),
                     null,
                     if (title.contains("Latino") || title.contains("Castellano")) EnumSet.of(
@@ -122,6 +122,13 @@ class MundoDonghuaProvider : MainAPI() {
             tags = genres
         }
     }
+    data class Source (
+        @JsonProperty("file") val file: String,
+        @JsonProperty("label") val label: String,
+        @JsonProperty("type") val type: String,
+        @JsonProperty("default") val default: String
+    )
+
 
     override suspend fun loadLinks(
         data: String,
@@ -130,7 +137,7 @@ class MundoDonghuaProvider : MainAPI() {
         callback: (ExtractorLink) -> Unit
     ): Boolean {
         app.get(data).document.select("script").apmap { script ->
-            if (script.data().contains("eval(function(p,a,c,k,e,d)")) {
+            if (script.data().contains("|fembed_play|")) {
                val fembed = script.toString().substringAfter("append|src|https|")
                    .substringBefore("|width|height|").replace("com|","")
                    .replace("diasfem|this|","").replace("fembed_tab|","")
@@ -164,7 +171,7 @@ class MundoDonghuaProvider : MainAPI() {
                     }
                 }
             }
-            if (script.data().contains("asura")) {
+            if (script.data().contains("|asura_player|jwplayer|")) {
                val asura = script.toString().substringAfter("|thumbnail|image|hls|type|").substringBefore("|replace|file|sources|")
                val extractorLink = "https://www.mdplayer.xyz/nemonicplayer/redirector.php?slug=$asura"
                val testlink = app.get(extractorLink).text
@@ -186,6 +193,38 @@ class MundoDonghuaProvider : MainAPI() {
                                true
                            ))
                        }
+            }
+            if (script.data().contains("|protea_tab|jwplayer|")) {
+                val protea = script.toString().substringAfter("|protea_tab|jwplayer|").substringBefore("|image|")
+                val requestlink = "https://www.mundodonghua.com/api_donghua.php?slug=$protea"
+                val test = app.get(requestlink, headers = mapOf("Host" to "www.mundodonghua.com",
+                    "User-Agent" to "Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0",
+                    "Accept" to "*/*",
+                    "Accept-Language" to "en-US,en;q=0.5",
+                    "Referer" to data,
+                    "X-Requested-With" to "XMLHttpRequest",
+                    "DNT" to "1",
+                    "Connection" to "keep-alive",
+                    "Sec-Fetch-Dest" to "empty",
+                    "Sec-Fetch-Mode" to "no-cors",
+                    "Sec-Fetch-Site" to "same-origin",
+                    "TE" to "trailers",
+                    "Pragma" to "no-cache",
+                    "Cache-Control" to "no-cache",)
+                    ).text
+                val test1 = test.substringAfter("{\"source\":[{\"file\":\"").substringBefore("\",\"label\"")
+                    .replace("\\/", "/")
+                callback(
+                    ExtractorLink(
+                        "Protea",
+                        "Protea",
+                        "https:"+test1,
+                        "",
+                        Qualities.Unknown.value,
+                        isM3u8 = false
+                    )
+                )
+
             }
         }
         return true
