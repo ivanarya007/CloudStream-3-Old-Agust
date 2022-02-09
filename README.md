@@ -71,6 +71,7 @@ It merely scrapes 3rd-party websites that are publicly accessable via any regula
 - [kdramahood.com](https://kdramahood.com) 
 - [crunchyroll.com](http://www.crunchyroll.com) 
 - [monoschinos2.com](https://monoschinos2.com) 
+- [mundodonghua.com](https://www.mundodonghua.com) 
 - [pelismart.com](https://pelismart.com) 
 - [pinoy-hd.xyz](https://www.pinoy-hd.xyz) 
 - [pinoymoviepedia.ru](https://pinoymoviepedia.ru) 
