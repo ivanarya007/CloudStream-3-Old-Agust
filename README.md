@@ -57,6 +57,7 @@ It merely scrapes 3rd-party websites that are publicly accessable via any regula
 <!--SITE LIST START-->
 - [akwam.io](https://akwam.io) 
 - [allanime.site](https://allanime.site) 
+- [animekisa.in](https://animekisa.in) 
 - [allmoviesforyou.net](https://allmoviesforyou.net) 
 - [animeflick.net](https://animeflick.net) 
 - [asianembed.io](https://asianembed.io) 
