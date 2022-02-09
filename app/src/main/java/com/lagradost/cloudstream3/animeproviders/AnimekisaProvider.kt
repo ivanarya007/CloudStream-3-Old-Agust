@@ -37,7 +37,7 @@ class AnimekisaProvider : MainAPI() {
             Pair("$mainUrl/ajax/list/views?type=week", "Trending by week"),
             Pair("$mainUrl/ajax/list/views?type=month", "Trending by month"),
 
-        )
+            )
 
         val items = ArrayList<HomePageList>()
 
@@ -77,22 +77,22 @@ class AnimekisaProvider : MainAPI() {
     }
     override suspend fun search(query: String): List<SearchResponse> {
         return app.get("$mainUrl/search/?keyword=$query").document.select("div.flw-item").map {
-                val title = it.selectFirst("h3 a").text()
-                val url = it.selectFirst("a.film-poster-ahref").attr("href")
-                    .replace("watch/","anime/").replace(Regex("(-episode-(\\d+)\\/\$|-episode-(\\d+)\$|-episode-full)"),"")
-                val poster = it.selectFirst(".film-poster img").attr("data-src")
-                AnimeSearchResponse(
-                    title,
-                    url,
-                    this.name,
-                    TvType.Anime,
-                    poster,
-                    null,
-                    if (title.contains("(DUB)") || title.contains("(Dub)")) EnumSet.of(
-                        DubStatus.Dubbed
-                    ) else EnumSet.of(DubStatus.Subbed),
-                )
-            }.toList()
+            val title = it.selectFirst("h3 a").text()
+            val url = it.selectFirst("a.film-poster-ahref").attr("href")
+                .replace("watch/","anime/").replace(Regex("(-episode-(\\d+)\\/\$|-episode-(\\d+)\$|-episode-full)"),"")
+            val poster = it.selectFirst(".film-poster img").attr("data-src")
+            AnimeSearchResponse(
+                title,
+                url,
+                this.name,
+                TvType.Anime,
+                poster,
+                null,
+                if (title.contains("(DUB)") || title.contains("(Dub)")) EnumSet.of(
+                    DubStatus.Dubbed
+                ) else EnumSet.of(DubStatus.Subbed),
+            )
+        }.toList()
     }
     override suspend fun load(url: String): LoadResponse {
         val doc = app.get(url, timeout = 120).document
@@ -114,6 +114,10 @@ class AnimekisaProvider : MainAPI() {
             tags = genres
         }
     }
+
+    data class Sources (
+        @JsonProperty("file") val file: String
+    )
 
     override suspend fun loadLinks(
         data: String,
@@ -138,15 +142,43 @@ class AnimekisaProvider : MainAPI() {
                 )
                     .map { stream ->
                         val qualityString = if ((stream.quality ?: 0) == 0) "" else "${stream.quality}p"
-                        callback( ExtractorLink(
+                        listOf( callback( ExtractorLink(
                             servername,
                             "$servername $qualityString",
                             stream.streamUrl,
                             data,
                             getQualityFromName(stream.quality.toString()),
                             true
-                        ))
+                        )))
                     }
+        }
+        //When the extracted vidstream link above won't work
+        app.get(data).document.select("div#servers-list ul.nav li a:contains(VidStream)").apmap {
+            val server = it.attr("data-embed")
+            val getserver = app.get(server, referer = data).text
+            val key = getserver.substringAfter("window.skey = '").substringBefore("'")
+            val linkwkey = (server.replace("/e/","/info/")+"&skey=$key")
+            val normallink = app.get(linkwkey, referer = data).text
+            val extractedlink = normallink.substringAfter("},{\"file\":\"").substringBefore("\"}]")
+                .replace("\\/", "/")
+            if (extractedlink.isNotBlank()) M3u8Helper().m3u8Generation(
+                M3u8Helper.M3u8Stream(
+                    extractedlink,
+                    headers = app.get(extractedlink).headers.toMap(),
+                ), true
+            )
+                .map { stream ->
+                    val qualityString = if ((stream.quality ?: 0) == 0) "" else "${stream.quality}p"
+                    callback( ExtractorLink(
+                        "Vidstream 2",
+                        "Vidstream 2 $qualityString",
+                        stream.streamUrl,
+                        data,
+                        getQualityFromName(stream.quality.toString()),
+                        true
+                    ))
+
+                }
         }
         return true
     }
