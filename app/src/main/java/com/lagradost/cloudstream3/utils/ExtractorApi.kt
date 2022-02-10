@@ -91,7 +91,7 @@ suspend fun loadExtractor(url: String, referer: String? = null, callback: (Extra
 
 val extractorApis: Array<ExtractorApi> = arrayOf(
     //AllProvider(),
-    WcoStream(),
+    VidstreamPro(),
     Mp4Upload(),
     StreamTape(),
     MixDrop(),
@@ -150,6 +150,7 @@ val extractorApis: Array<ExtractorApi> = arrayOf(
     AsianLoad(),
 
     YourUpload(),
+    Mcloud(),
 
 
 )

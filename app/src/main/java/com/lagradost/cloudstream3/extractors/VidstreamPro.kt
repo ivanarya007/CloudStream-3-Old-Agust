@@ -2,12 +2,13 @@ package com.lagradost.cloudstream3.extractors
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.module.kotlin.readValue
+import com.lagradost.cloudstream3.apmap
 import com.lagradost.cloudstream3.app
 import com.lagradost.cloudstream3.mapper
 import com.lagradost.cloudstream3.utils.*
 
-class WcoStream : ExtractorApi() {
-    override val name = "WcoStream"
+class VidstreamPro : ExtractorApi() {
+    override val name = "Vidstream"
     override val mainUrl = "https://vidstream.pro"
     override val requiresReferer = false
     private val hlsHelper = M3u8Helper()
@@ -42,7 +43,7 @@ class WcoStream : ExtractorApi() {
         val sources = mutableListOf<ExtractorLink>()
 
         if (mapped.success) {
-            mapped.media.sources.forEach {
+            mapped.media.sources.apmap {
                 if (it.file.contains("m3u8")) {
                     hlsHelper.m3u8Generation(M3u8Helper.M3u8Stream(it.file, null), true).forEach { stream ->
                         val qualityString = if ((stream.quality ?: 0) == 0) "" else "${stream.quality}p"

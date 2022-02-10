@@ -2,11 +2,9 @@ package com.lagradost.cloudstream3.animeproviders
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.lagradost.cloudstream3.*
-import com.lagradost.cloudstream3.network.WebViewResolver
+import com.lagradost.cloudstream3.utils.*
 import com.lagradost.cloudstream3.utils.AppUtils.parseJson
-import com.lagradost.cloudstream3.utils.ExtractorLink
-import com.lagradost.cloudstream3.utils.M3u8Helper
-import com.lagradost.cloudstream3.utils.getQualityFromName
+import org.json.JSONObject
 import org.jsoup.Jsoup
 import java.util.*
 import kotlin.collections.ArrayList
@@ -32,10 +30,10 @@ class AnimekisaProvider : MainAPI() {
 
     override suspend fun getMainPage(): HomePageResponse {
         val urls = listOf(
-            Pair("$mainUrl/ajax/list/views?type=all", "All animes"),
-            Pair("$mainUrl/ajax/list/views?type=day", "Trending now"),
-            Pair("$mainUrl/ajax/list/views?type=week", "Trending by week"),
-            Pair("$mainUrl/ajax/list/views?type=month", "Trending by month"),
+            Pair("$mainUrl/ajax/list/recently_updated?type=tv", "Recently Updated Anime"),
+            Pair("$mainUrl/ajax/list/recently_updated?type=movie", "Recently Updated Movies"),
+            Pair("$mainUrl/ajax/list/recently_added?type=tv", "Recently Added Anime"),
+            Pair("$mainUrl/ajax/list/recently_added?type=movie", "Recently Added Movies"),
 
             )
 
@@ -43,30 +41,29 @@ class AnimekisaProvider : MainAPI() {
 
         for (i in urls) {
             try {
-                val home = Jsoup.parse(
-                    parseJson<Response>(
-                        app.get(
-                            i.first
-                        ).text
-                    ).html
-                ).select("div.flw-item").map {
-                    val title = it.selectFirst("h3.title a").text()
-                    val url = it.selectFirst("a").attr("href")
-                    val poster = it.selectFirst("img.lazyload").attr("data-src")
-                    AnimeSearchResponse(
-                        title,
-                        url,
-                        this.name,
-                        TvType.Anime,
-                        poster,
-                        null,
-                        if (title.contains("(DUB)") || title.contains("(Dub)")) EnumSet.of(
-                            DubStatus.Dubbed
-                        ) else EnumSet.of(DubStatus.Subbed),
-                    )
+                val response = JSONObject(
+                    app.get(
+                        i.first,
+                    ).text
+                ).getString("html") // I won't make a dataclass for this shit
+                val document = Jsoup.parse(response)
+                val results = document.select("div.flw-item").map {
+                    val filmPoster = it.selectFirst("> div.film-poster")
+                    val filmDetail = it.selectFirst("> div.film-detail")
+                    val nameHeader = filmDetail.selectFirst("> h3.film-name > a")
+                    val title = nameHeader.text().replace(" (Dub)", "")
+                    val href =
+                        nameHeader.attr("href").replace("/watch/", "/anime/")
+                            .replace("-episode-.*".toRegex(), "/")
+                    val isDub =
+                        filmPoster.selectFirst("> div.film-poster-quality")?.text()?.contains("DUB")
+                            ?: false
+                    val poster = filmPoster.selectFirst("> img").attr("data-src")
+                    val set: EnumSet<DubStatus> =
+                        EnumSet.of(if (isDub) DubStatus.Dubbed else DubStatus.Subbed)
+                    AnimeSearchResponse(title, href, this.name, TvType.Anime, poster, null, set)
                 }
-
-                items.add(HomePageList(i.second, home))
+                items.add(HomePageList(i.second, results))
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -79,7 +76,7 @@ class AnimekisaProvider : MainAPI() {
         return app.get("$mainUrl/search/?keyword=$query").document.select("div.flw-item").map {
             val title = it.selectFirst("h3 a").text()
             val url = it.selectFirst("a.film-poster-ahref").attr("href")
-                .replace("watch/","anime/").replace(Regex("(-episode-(\\d+)\\/\$|-episode-(\\d+)\$|-episode-full)"),"")
+                .replace("watch/","anime/").replace(Regex("(-episode-(\\d+)\\/\$|-episode-(\\d+)\$|-episode-full|-episode-.*-.(\\/|))"),"")
             val poster = it.selectFirst(".film-poster img").attr("data-src")
             AnimeSearchResponse(
                 title,
@@ -96,7 +93,7 @@ class AnimekisaProvider : MainAPI() {
     }
     override suspend fun load(url: String): LoadResponse {
         val doc = app.get(url, timeout = 120).document
-        val poster = doc.selectFirst(".mb-2 img").attr("src")
+        val poster = doc.selectFirst(".mb-2 img").attr("src") ?: doc.selectFirst("head meta[property=og:image]").attr("content")
         val title = doc.selectFirst("h1.heading-name a").text()
         val description = doc.selectFirst("div.description p").text().trim()
         val genres = doc.select("div.row-line a").map { it.text() }
@@ -115,10 +112,6 @@ class AnimekisaProvider : MainAPI() {
         }
     }
 
-    data class Sources (
-        @JsonProperty("file") val file: String
-    )
-
     override suspend fun loadLinks(
         data: String,
         isCasting: Boolean,
@@ -127,58 +120,7 @@ class AnimekisaProvider : MainAPI() {
     ): Boolean {
         app.get(data).document.select("#servers-list ul.nav li a").apmap {
             val server = it.attr("data-embed")
-            val servername = it.select("span").text()
-            val response = app.get(server, interceptor = WebViewResolver(
-                Regex(".m3u8")
-            ),
-                referer = data
-            )
-            if (response.text.contains("#EXTM3U"))
-                M3u8Helper().m3u8Generation(
-                    M3u8Helper.M3u8Stream(
-                        response.url,
-                        headers = app.get(data).headers.toMap(),
-                    ), true
-                )
-                    .map { stream ->
-                        val qualityString = if ((stream.quality ?: 0) == 0) "" else "${stream.quality}p"
-                        listOf( callback( ExtractorLink(
-                            servername,
-                            "$servername $qualityString",
-                            stream.streamUrl,
-                            data,
-                            getQualityFromName(stream.quality.toString()),
-                            true
-                        )))
-                    }
-        }
-        //When the extracted vidstream link above won't work
-        app.get(data).document.select("div#servers-list ul.nav li a:contains(VidStream)").apmap {
-            val server = it.attr("data-embed")
-            val getserver = app.get(server, referer = data).text
-            val key = getserver.substringAfter("window.skey = '").substringBefore("'")
-            val linkwkey = (server.replace("/e/","/info/")+"&skey=$key")
-            val normallink = app.get(linkwkey, referer = data).text
-            val extractedlink = normallink.substringAfter("},{\"file\":\"").substringBefore("\"}]")
-                .replace("\\/", "/")
-            if (extractedlink.isNotBlank()) M3u8Helper().m3u8Generation(
-                M3u8Helper.M3u8Stream(
-                    extractedlink,
-                    headers = app.get(extractedlink).headers.toMap(),
-                ), true
-            )
-                .map { stream ->
-                    val qualityString = if ((stream.quality ?: 0) == 0) "" else "${stream.quality}p"
-                    callback( ExtractorLink(
-                        "Vidstream 2",
-                        "Vidstream 2 $qualityString",
-                        stream.streamUrl,
-                        data,
-                        getQualityFromName(stream.quality.toString()),
-                        true
-                    ))
-
-                }
+            loadExtractor(server, data, callback)
         }
         return true
     }

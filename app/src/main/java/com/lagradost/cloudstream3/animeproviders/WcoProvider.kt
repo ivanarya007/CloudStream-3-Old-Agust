@@ -1,7 +1,8 @@
 package com.lagradost.cloudstream3.animeproviders
 
 import com.lagradost.cloudstream3.*
-import com.lagradost.cloudstream3.extractors.WcoStream
+import com.lagradost.cloudstream3.extractors.Mcloud
+import com.lagradost.cloudstream3.extractors.VidstreamPro
 import com.lagradost.cloudstream3.utils.ExtractorLink
 import org.json.JSONObject
 import org.jsoup.Jsoup
@@ -241,7 +242,8 @@ class WcoProvider : MainAPI() {
         }
 
         for (server in servers) {
-            WcoStream().getSafeUrl(server["link"].toString(), "")?.forEach(callback)
+            VidstreamPro().getSafeUrl(server["link"].toString(), "")?.forEach(callback)
+            Mcloud().getSafeUrl(server["link"].toString(), "")?.forEach(callback)
         }
         return true
     }
