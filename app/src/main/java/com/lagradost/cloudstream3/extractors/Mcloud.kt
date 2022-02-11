@@ -23,7 +23,7 @@ open class Mcloud : ExtractorApi() {
         "Sec-Fetch-Dest" to "iframe",
         "Sec-Fetch-Mode" to "navigate",
         "Sec-Fetch-Site" to "cross-site",
-        "Referer" to "https://animekisa.in/",
+        "Referer" to "https://animekisa.in/", //Referer works for wco and animekisa, probably with others too
         "Pragma" to "no-cache",
         "Cache-Control" to "no-cache",)
     override suspend fun getUrl(url: String, referer: String?): List<ExtractorLink>? {
@@ -57,16 +57,16 @@ open class Mcloud : ExtractorApi() {
                     )
                         .map { stream ->
                             val qualityString = if ((stream.quality ?: 0) == 0) "" else "${stream.quality}p"
-                           sources.add(
-                               ExtractorLink(
-                                name,
-                                "$name $qualityString",
-                                stream.streamUrl,
-                                url,
-                                getQualityFromName(stream.quality.toString()),
-                                true
+                            sources.add(
+                                ExtractorLink(
+                                    name,
+                                    "$name $qualityString",
+                                    stream.streamUrl,
+                                    url,
+                                    getQualityFromName(stream.quality.toString()),
+                                    true
+                                )
                             )
-                           )
                         }
                 }
             }

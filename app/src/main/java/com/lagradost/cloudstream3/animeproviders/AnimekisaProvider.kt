@@ -2,9 +2,9 @@ package com.lagradost.cloudstream3.animeproviders
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.lagradost.cloudstream3.*
-import com.lagradost.cloudstream3.utils.*
 import com.lagradost.cloudstream3.utils.AppUtils.parseJson
-import org.json.JSONObject
+import com.lagradost.cloudstream3.utils.ExtractorLink
+import com.lagradost.cloudstream3.utils.loadExtractor
 import org.jsoup.Jsoup
 import java.util.*
 import kotlin.collections.ArrayList
@@ -17,7 +17,6 @@ class AnimekisaProvider : MainAPI() {
     override val hasMainPage = true
     override val hasChromecastSupport = true
     override val hasDownloadSupport = true
-    override val usesWebView = true
     override val supportedTypes = setOf(
         TvType.AnimeMovie,
         TvType.OVA,
@@ -30,40 +29,41 @@ class AnimekisaProvider : MainAPI() {
 
     override suspend fun getMainPage(): HomePageResponse {
         val urls = listOf(
-            Pair("$mainUrl/ajax/list/recently_updated?type=tv", "Recently Updated Anime"),
-            Pair("$mainUrl/ajax/list/recently_updated?type=movie", "Recently Updated Movies"),
-            Pair("$mainUrl/ajax/list/recently_added?type=tv", "Recently Added Anime"),
-            Pair("$mainUrl/ajax/list/recently_added?type=movie", "Recently Added Movies"),
+            Pair("$mainUrl/ajax/list/views?type=all", "All animes"),
+            Pair("$mainUrl/ajax/list/views?type=day", "Trending now"),
+            Pair("$mainUrl/ajax/list/views?type=week", "Trending by week"),
+            Pair("$mainUrl/ajax/list/views?type=month", "Trending by month"),
 
             )
 
         val items = ArrayList<HomePageList>()
 
-        for (i in urls) {
+        for ((url, name) in urls) {
             try {
-                val response = JSONObject(
-                    app.get(
-                        i.first,
-                    ).text
-                ).getString("html") // I won't make a dataclass for this shit
-                val document = Jsoup.parse(response)
-                val results = document.select("div.flw-item").map {
-                    val filmPoster = it.selectFirst("> div.film-poster")
-                    val filmDetail = it.selectFirst("> div.film-detail")
-                    val nameHeader = filmDetail.selectFirst("> h3.film-name > a")
-                    val title = nameHeader.text().replace(" (Dub)", "")
-                    val href =
-                        nameHeader.attr("href").replace("/watch/", "/anime/")
-                            .replace("-episode-.*".toRegex(), "/")
-                    val isDub =
-                        filmPoster.selectFirst("> div.film-poster-quality")?.text()?.contains("DUB")
-                            ?: false
-                    val poster = filmPoster.selectFirst("> img").attr("data-src")
-                    val set: EnumSet<DubStatus> =
-                        EnumSet.of(if (isDub) DubStatus.Dubbed else DubStatus.Subbed)
-                    AnimeSearchResponse(title, href, this.name, TvType.Anime, poster, null, set)
+                val home = Jsoup.parse(
+                    parseJson<Response>(
+                        app.get(
+                            url
+                        ).text
+                    ).html
+                ).select("div.flw-item").map {
+                    val title = it.selectFirst("h3.title a").text()
+                    val link = it.selectFirst("a").attr("href")
+                    val poster = it.selectFirst("img.lazyload").attr("data-src")
+                    AnimeSearchResponse(
+                        title,
+                        link,
+                        this.name,
+                        TvType.Anime,
+                        poster,
+                        null,
+                        if (title.contains("(DUB)") || title.contains("(Dub)")) EnumSet.of(
+                            DubStatus.Dubbed
+                        ) else EnumSet.of(DubStatus.Subbed),
+                    )
                 }
-                items.add(HomePageList(i.second, results))
+
+                items.add(HomePageList(name, home))
             } catch (e: Exception) {
                 e.printStackTrace()
             }

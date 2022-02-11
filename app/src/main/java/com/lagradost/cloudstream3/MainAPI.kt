@@ -2,6 +2,7 @@ package com.lagradost.cloudstream3
 
 import android.annotation.SuppressLint
 import android.content.Context
+import androidx.annotation.WorkerThread
 import androidx.preference.PreferenceManager
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.json.JsonMapper
@@ -28,60 +29,60 @@ object APIHolder {
     private const val defProvider = 0
 
     val apis = arrayListOf(
-// HenaojaraProvider(), removed due to scraping providers that are already implemented
-        AkwamProvider(),
+        PelisplusProvider(),
+        PelisplusHDProvider(),
+        PeliSmartProvider(),
+        GogoanimeProvider(),
         AllAnimeProvider(),
         AnimekisaProvider(),
-        AllMoviesForYouProvider(),
-        AnimefenixProvider(),
+        //ShiroProvider(), // v2 fucked me
+        //AnimePaheProvider(), //ddos guard
         AnimeFlickProvider(),
-        AnimeflvIOProvider(),
         AnimeflvnetProvider(),
-        AnimeIDProvider(),
-        AnimeonlineProvider(),
-        AnimePaheProvider(),
-        AsianLoadProvider(),
-        CinecalidadProvider(),
-        CuevanathreeProvider(),
-        DoramasYTProvider(),
-        DramaSeeProvider(),
-        DubbedAnimeProvider(),
-        ElifilmsProvider(),
-        EntrepeliculasyseriesProvider(),
-        EstrenosDoramasProvider(),
-        FilmanProvider(),
-        FmoviesProvider(), //Sflix mirror
-        FrenchStreamProvider(),
-        GogoanimeProvider(),
-        IHaveNoTvProvider(), // Documentaries provider
-        KdramaHoodProvider(),
-        KrunchyProvider(),
-        MonoschinosProvider(),
-        MundoDonghuaProvider(),
-        PelisflixProvider(),
-        PeliSmartProvider(),
-        PelisplusHDProvider(),
-        PelisplusSOProvider(),
-        PinoyHDXyzProvider(),
-        PinoyMoviePediaProvider(),
-        PinoyMoviesEsProvider(),
-        SeriesflixProvider(),
-        SflixProvider("https://dopebox.to", "Dopebox"),
-        SflixProvider("https://sflix.to", "Sflix"),
+
         TenshiProvider(),
-        TrailersTwoProvider(),
+        WcoProvider(),
+        // MeloMovieProvider(), // Captcha for links
+        DubbedAnimeProvider(),
+        DoramasYTProvider(),
+        CinecalidadProvider(),
+        CuevanaProvider(),
+        EntrepeliculasyseriesProvider(),
+        PelisflixProvider(),
+        SeriesflixProvider(),
+        IHaveNoTvProvider(), // Documentaries provider
+        //LookMovieProvider(), // RECAPTCHA (Please allow up to 5 seconds...)
+        VMoveeProvider(),
+        WatchCartoonOnlineProvider(),
+        AllMoviesForYouProvider(),
+
+        MonoschinosProvider(),
+
+        VidEmbedProvider(),
         VfFilmProvider(),
         VfSerieProvider(),
-        VidEmbedProvider(),
-        VMoveeProvider(),
-        WatchAsianProvider(),
-        WatchCartoonOnlineProvider(),
-        WcoProvider(),
-        YesMoviesProviders("https://hdtoday.tv", "HDToday"), //Sflix mirror
-        YesMoviesProviders("https://moviesjoy.to", "Moviesjoy"), //Sflix mirror
-        YesMoviesProviders("https://myflixertv.to", "MyFlixer"), //Sflix mirror
-        YesMoviesProviders("https://yesmovies.mn", "YesMovies"), //Sflix mirror
+        FrenchStreamProvider(),
+
+        AsianLoadProvider(),
+
+        SflixProvider("https://sflix.to", "Sflix"),
+        SflixProvider("https://dopebox.to", "Dopebox"),
+        SflixProvider("https://solarmovie.pe", "Solarmovie"),
+
+        //TmdbProvider(),
+
+        FilmanProvider(),
+
         ZoroProvider(),
+        PinoyMoviePediaProvider(),
+        PinoyHDXyzProvider(),
+        PinoyMoviesEsProvider(),
+        TrailersTwoProvider(),
+        DramaSeeProvider(),
+        WatchAsianProvider(),
+        KdramaHoodProvider(),
+        AkwamProvider(),
+        AnimePaheProvider(),
     )
 
     val restrictedApis = arrayListOf(
@@ -132,6 +133,7 @@ object APIHolder {
             this.getString(R.string.search_providers_list_key),
             hashSet
         )?.toHashSet() ?: hashSet
+
         val list = HashSet<String>()
         for (name in set) {
             val api = getApiFromNameNull(name) ?: continue
@@ -162,7 +164,7 @@ object APIHolder {
     fun Context.getApiProviderLangSettings(): HashSet<String> {
         val settingsManager = PreferenceManager.getDefaultSharedPreferences(this)
         val hashSet = HashSet<String>()
-        hashSet.add("es") // def is only en
+        hashSet.add("en") // def is only en
         val list = settingsManager.getStringSet(
             this.getString(R.string.provider_lang_key),
             hashSet.toMutableSet()
@@ -240,30 +242,48 @@ abstract class MainAPI {
         TvType.Cartoon,
         TvType.Anime,
         TvType.OVA,
-        TvType.Mirror,
-        TvType.Donghua
     )
 
     open val vpnStatus = VPNStatus.None
     open val providerType = ProviderType.DirectProvider
 
+    @WorkerThread
     suspend open fun getMainPage(): HomePageResponse? {
         throw NotImplementedError()
     }
-
+    @WorkerThread
     suspend open fun search(query: String): List<SearchResponse>? {
         throw NotImplementedError()
     }
-
+    @WorkerThread
     suspend open fun quickSearch(query: String): List<SearchResponse>? {
         throw NotImplementedError()
     }
-
+    @WorkerThread
+    /**
+     * Based on data from search() or getMainPage() it generates a LoadResponse,
+     * basically opening the info page from a link.
+     * */
     suspend open fun load(url: String): LoadResponse? {
         throw NotImplementedError()
     }
 
+    /**
+     * Largely redundant feature for most providers.
+     *
+     * This job runs in the background when a link is playing in exoplayer.
+     * First implemented to do polling for sflix to keep the link from getting expired.
+     *
+     * This function might be updated to include exoplayer timestamps etc in the future
+     * if the need arises.
+     * */
+    @WorkerThread
+    suspend open fun extractorVerifierJob(extractorData: String?) {
+        throw NotImplementedError()
+    }
+
     /**Callback is fired once a link is found, will return true if method is executed successfully*/
+    @WorkerThread
     suspend open fun loadLinks(
         data: String,
         isCasting: Boolean,
@@ -398,8 +418,6 @@ enum class TvType {
     OVA,
     Torrent,
     Documentary,
-    Mirror,
-    Donghua,
 }
 
 // IN CASE OF FUTURE ANIME MOVIE OR SMTH
