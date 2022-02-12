@@ -212,15 +212,15 @@ class KrunchyProvider : MainAPI() {
             val seasonName = it.selectFirst("a.season-dropdown")?.text()?.trim()
             it.select(".episode").forEach { ep ->
                 val epTitle = ep.selectFirst(".short-desc")?.text()
-                val epNum = KrunchyProvider.episodeNumRegex.find(ep.selectFirst("span.ellipsis")?.text().toString())?.destructured?.component1()
+
+                val epNum = episodeNumRegex.find(ep.selectFirst("span.ellipsis")?.text().toString())?.destructured?.component1()
                 var poster = ep.selectFirst("img.landscape")?.attr("data-thumbnailurl")
                 val poster2 = ep.selectFirst("img")?.attr("src")
                 if (poster == "") { poster = poster2}
 
                 var epDesc = (if (epNum == null) "" else "Episode $epNum") + (if (!seasonName.isNullOrEmpty()) " - $seasonName" else "")
                 if (poster?.contains("widestar") == true) {
-                    epDesc = "Premium-only episode, unable to load links.\n" +
-                            "Episodio solo premium, no se pueden obtener enlaces."
+                  epDesc =  "★ "+epDesc
                 }
 
                 val epi = AnimeEpisode(
@@ -235,7 +235,7 @@ class KrunchyProvider : MainAPI() {
                 if (seasonName == null) {
                     subEpisodes.add(epi)
                 } else if (seasonName.contains("(HD)")) {
-                    // do nothing (filters our premium eps from one piece)
+                    subEpisodes.add(epi)
                 } else if (seasonName.contains("Dub") || seasonName.contains("Russian")) {
                     dubEpisodes.add(epi)
                 }  else {
@@ -253,7 +253,7 @@ class KrunchyProvider : MainAPI() {
             TvType.Anime,
             poster,
             year,
-            hashMapOf(DubStatus.Subbed to subEpisodes.reversed()), //hashMapOf(DubStatus.Subbed to subEpisodes.reversed(), DubStatus.Dubbed to dubEpisodes.reversed()),
+            hashMapOf(DubStatus.Subbed to subEpisodes.reversed(), DubStatus.Dubbed to dubEpisodes.reversed()),
             null,
             description,
             genres
@@ -297,13 +297,12 @@ class KrunchyProvider : MainAPI() {
         if (!dat.isNullOrEmpty()) {
             val json = mapper.readValue<KrunchyVideo>(dat)
             val streams = ArrayList<Streams>()
-
             for (stream in json.streams) {
                 if (
                     listOf(
                         "adaptive_hls", "adaptive_dash",
                         "multitrack_adaptive_hls_v2",
-                        "vo_adaptive_dash", "vo_adaptive_hls"
+                        "vo_adaptive_dash", "vo_adaptive_hls",
                     ).contains(stream.format)
                 ) {
                     if (stream.audioLang == "jaJP" && (listOf(null).contains(stream.hardsubLang)) && listOf("m3u", "m3u8").contains(hlsHelper.absoluteExtensionDetermination(stream.url))) {
@@ -324,6 +323,73 @@ class KrunchyProvider : MainAPI() {
                     if (stream.audioLang == "jaJP" && (listOf("esLA").contains(stream.hardsubLang)) && listOf("m3u", "m3u8").contains(hlsHelper.absoluteExtensionDetermination(stream.url))) {
                         stream.title = "Hardsub(Latino)"
                         streams.add(stream)
+                    }
+                }
+            }
+
+            for (streampremium in json.streams) {
+                if (
+                    listOf(
+                        "trailer_hls",
+                    ).contains(streampremium.format)
+                ) {
+                    val urllink = streampremium.url
+                        .replace("\\/", "/")
+                        .replace(Regex("\\/clipFrom.*?index.m3u8"), "").replace("'_,'", "'_'")
+                        .replace(streampremium.url.split("/")[2], "fy.v.vrv.co")
+                    if (streampremium.audioLang == "jaJP" && (listOf("esLA").contains(streampremium.hardsubLang))) {
+                        callback(ExtractorLink(
+                            "Crunchyroll",
+                            "Crunchy Hardsub (Latino)",
+                            urllink,
+                            "",
+                            Qualities.Unknown.value,
+                            false
+                        ))
+                    }
+
+                    if (streampremium.audioLang == "jaJP" && (listOf("enUS").contains(streampremium.hardsubLang))) {
+                        callback(ExtractorLink(
+                            "Crunchyroll",
+                            "Crunchyroll Hardsub (US)",
+                            urllink,
+                            "",
+                            Qualities.Unknown.value,
+                            false
+                        ))
+                    }
+
+                    if (streampremium.audioLang == "jaJP" && (listOf(null).contains(streampremium.hardsubLang))) {
+                        callback(ExtractorLink(
+                            "Crunchyroll",
+                            "Crunchyroll RAW",
+                            urllink,
+                            "",
+                            Qualities.Unknown.value,
+                            false
+                        ))
+                    }
+
+                    if (streampremium.audioLang == "esLA" && (listOf(null).contains(streampremium.hardsubLang))) {
+                        callback(ExtractorLink(
+                            "Crunchyroll",
+                            "Crunchyroll Español Latino",
+                            urllink,
+                            "",
+                            Qualities.Unknown.value,
+                            false
+                        ))
+                    }
+
+                    if (streampremium.audioLang!!.contains("US") && (listOf(null).contains(streampremium.hardsubLang))) {
+                        callback(ExtractorLink(
+                            "Crunchyroll",
+                            "Crunchy English",
+                            urllink,
+                            "",
+                            Qualities.Unknown.value,
+                            false
+                        ))
                     }
                 }
             }
