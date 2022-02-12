@@ -104,6 +104,19 @@
                     app:layout_constraintTop_toTopOf="parent" />-->
 
             <FrameLayout
+                    android:id="@+id/player_episode_filler_holder"
+                    android:layout_margin="62dp"
+                    android:layout_gravity="end"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content">
+
+                <com.google.android.material.button.MaterialButton
+                        style="@style/SmallBlackButton2"
+                        android:text="@string/filler"
+                        android:id="@+id/player_episode_filler" />
+            </FrameLayout>
+
+            <FrameLayout
                     android:id="@+id/player_go_back_holder"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"

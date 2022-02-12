@@ -169,8 +169,10 @@
      <string name="tv_series_singular">Serie</string>
      <string name="cartoons_singular">Caricatura</string>
      <string name="anime_singular">@string/anime</string>
+     <string name="anime_fillerlist">Utilizando animefillerlist.com</string>
      <string name="torrent_singular">Torrent</string>
- <string name="documentaries_singular">Documental</string>     <string name="source_error">Error de fuente</string>
+     <string name="documentaries_singular">Documental</string>
+     <string name="source_error">Error de fuente</string>
      <string name="remote_error">Error remoto</string>
      <string name="render_error">Error de Renderizador</string>
      <string name="unexpected_error">Error de reproductor inesperado</string>

@@ -108,7 +108,7 @@
             android:layout_height="wrap_content">
 
         <com.google.android.material.button.MaterialButton
-                style="@style/SmallBlackButton"
+                style="@style/SmallBlackButton2"
                 android:text="@string/filler"
                 android:id="@+id/player_episode_filler" />
     </FrameLayout>

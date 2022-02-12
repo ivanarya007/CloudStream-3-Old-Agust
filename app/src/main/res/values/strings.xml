@@ -273,6 +273,7 @@
     <string name="tv_series_singular">Series</string>
     <string name="cartoons_singular">Cartoon</string>
     <string name="anime_singular">@string/anime</string>
+    <string name="anime_fillerlist">Using animefillerlist.com</string>
     <string name="donghua_singular">Donghua</string>
     <string name="torrent_singular">Torrent</string>
     <string name="documentaries_singular">Documentary</string>
