@@ -46,6 +46,8 @@ data class ExtractorSubtitleLink(
 
 enum class Qualities(var value: Int) {
     Unknown(0),
+    P144(-4), //144p
+    P240(-3), //240p
     P360(-2), // 360p
     P480(-1), // 480p
     P720(1), // 720p
@@ -64,6 +66,14 @@ fun getQualityFromName(qualityName: String): Int {
         "2160" -> Qualities.P2160
         "4k" -> Qualities.P2160
         "4K" -> Qualities.P2160
+        "MOBILE" -> Qualities.P144 //Okru
+        "LOWEST" -> Qualities.P240 //Okru
+        "LOW" -> Qualities.P360 //Okru
+        "SD" -> Qualities.P480 //Okru
+        "HD" -> Qualities.P720 //Okru
+        "FULL" -> Qualities.P1080 //Okru
+        "QUAD" -> Qualities.P1440 //Okru
+        "ULTRA" -> Qualities.P2160 //Okru
         else -> Qualities.Unknown
     }.value
 }
@@ -132,7 +142,6 @@ val extractorApis: Array<ExtractorApi> = arrayOf(
     Jawcloud1(),
 
     OkRu(),
-    Okru1(),
 
     Videobin(),
     Videobin1(),
