@@ -138,21 +138,21 @@ class MundoDonghuaProvider : MainAPI() {
     ): Boolean {
         app.get(data).document.select("script").apmap { script ->
             if (script.data().contains("|fembed_play|")) {
-               val fembed = script.toString().substringAfter("append|src|https|")
+               val fembed = script.data().substringAfter("append|src|https|")
                    .substringBefore("|width|height|").replace("com|","")
                    .replace("diasfem|this|","").replace("fembed_tab|","")
                    .replace("|","-")
-                val fembed2 = script.toString().substringAfter("|nemonic|addClass|view_counter|html5|")
+                val fembed2 = script.data().substringAfter("|nemonic|addClass|view_counter|html5|")
                     .substringBefore("width|height|frameborder")
                     .replace("|","-")
 
-                val fembed3 = script.toString().substringAfter("|nemonic|addClass|view_counter|html5|")
+                val fembed3 = script.data().substringAfter("|nemonic|addClass|view_counter|html5|")
                     .substringBefore("|width|height|")
 
-                val fembed4 = script.toString().substringAfter("|iframe|var|false|femplay|diasfem|this||remove|fembed_play|append|src|https|fembed_tab|com|")
+                val fembed4 = script.data().substringAfter("|iframe|var|false|femplay|diasfem|this||remove|fembed_play|append|src|https|fembed_tab|com|")
                     .substringBefore("|width|height|frameborder|")
 
-                val fembed5 = script.toString().substringAfter("https|console|allowfullscreen|once|frameborder|height||width|")
+                val fembed5 = script.data().substringAfter("https|console|allowfullscreen|once|frameborder|height||width|")
                     .substringBefore("|split|com|").split('|')
                val link = "https://www.fembed.com/v/${fembed}"
                val link2 = "https://www.fembed.com/v/${fembed2}"
@@ -172,7 +172,7 @@ class MundoDonghuaProvider : MainAPI() {
                 }
             }
             if (script.data().contains("|asura_player|jwplayer|")) {
-               val asura = script.toString().substringAfter("|thumbnail|image|hls|type|").substringBefore("|replace|file|sources|")
+               val asura = script.data().substringAfter("|thumbnail|image|hls|type|").substringBefore("|replace|file|sources|")
                val extractorLink = "https://www.mdplayer.xyz/nemonicplayer/redirector.php?slug=$asura"
                val testlink = app.get(extractorLink).text
                if (testlink.contains("#EXTM3U"))
@@ -195,7 +195,7 @@ class MundoDonghuaProvider : MainAPI() {
                        }
             }
             if (script.data().contains("|protea_tab|jwplayer|")) {
-                val protea = script.toString().substringAfter("|protea_tab|jwplayer|").substringBefore("|image|")
+                val protea = script.data().substringAfter("|protea_tab|jwplayer|").substringBefore("|image|")
                 val requestlink = "https://www.mundodonghua.com/api_donghua.php?slug=$protea"
                 val test = app.get(requestlink, headers = mapOf("Host" to "www.mundodonghua.com",
                     "User-Agent" to "Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0",
@@ -224,7 +224,6 @@ class MundoDonghuaProvider : MainAPI() {
                         isM3u8 = false
                     )
                 )
-
             }
         }
         return true

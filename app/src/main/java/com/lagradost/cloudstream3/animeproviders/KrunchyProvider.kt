@@ -220,7 +220,7 @@ class KrunchyProvider : MainAPI() {
 
                 var epDesc = (if (epNum == null) "" else "Episode $epNum") + (if (!seasonName.isNullOrEmpty()) " - $seasonName" else "")
                 if (poster?.contains("widestar") == true) {
-                  epDesc =  "★ "+epDesc+" ★"
+                    epDesc =  "★ "+epDesc+" ★"
                 }
 
                 val epi = AnimeEpisode(
@@ -297,7 +297,6 @@ class KrunchyProvider : MainAPI() {
         if (!dat.isNullOrEmpty()) {
             val json = mapper.readValue<KrunchyVideo>(dat)
             val streams = ArrayList<Streams>()
-            val streamspre = ArrayList<Streams>()
             for (stream in json.streams) {
                 if (
                     listOf(
@@ -334,70 +333,36 @@ class KrunchyProvider : MainAPI() {
                         "trailer_hls",
                     ).contains(streampremium.format)
                 ) {
-                    val urllink = streampremium.url
-                        .replace("\\/", "/")
-                        .replace(Regex("\\/clipFrom.*?index.m3u8"), "").replace("'_,'", "'_'")
-                        .replace(streampremium.url.split("/")[2], "fy.v.vrv.co")
-                    if (streampremium.audioLang == "jaJP" && (listOf("esLA").contains(streampremium.hardsubLang))) {
-                        callback(ExtractorLink(
-                            "Crunchyroll",
-                            "Crunchy Hardsub (Latino)",
-                            urllink,
-                            "",
-                            Qualities.Unknown.value,
-                            false
-                        ))
+                    if (streampremium.format == "trailer_hls" && streampremium.audioLang == "jaJP" && (listOf("esLA").contains(streampremium.hardsubLang))) {
+                        streampremium.title = "Hardsub (Latino)"
+                        streams.add(streampremium)
                     }
 
-                    if (streampremium.audioLang == "jaJP" && (listOf("enUS").contains(streampremium.hardsubLang))) {
-
-                        callback(ExtractorLink(
-                            "Crunchyroll",
-                            "Crunchyroll Hardsub (US)",
-                            urllink,
-                            "",
-                            Qualities.Unknown.value,
-                            false
-                        ))
+                    if (streampremium.format == "trailer_hls" && streampremium.audioLang == "jaJP" && (listOf("enUS").contains(streampremium.hardsubLang))) {
+                        streampremium.title = "Hardsub (English US)"
+                        streams.add(streampremium)
                     }
 
-                    if (streampremium.audioLang == "jaJP" && (listOf(null).contains(streampremium.hardsubLang))) {
-                        callback(ExtractorLink(
-                            "Crunchyroll",
-                            "Crunchyroll RAW",
-                            urllink,
-                            "",
-                            Qualities.Unknown.value,
-                            false
-                        ))
+                    if (streampremium.format == "trailer_hls" && streampremium.audioLang == "jaJP" && (listOf(null).contains(streampremium.hardsubLang))) {
+                        streampremium.title = "RAW"
+                        streams.add(streampremium)
                     }
 
-                    if (streampremium.audioLang == "esLA" && (listOf(null).contains(streampremium.hardsubLang))) {
-                        callback(ExtractorLink(
-                            "Crunchyroll",
-                            "Crunchyroll Español Latino",
-                            urllink,
-                            "",
-                            Qualities.Unknown.value,
-                            false
-                        ))
+                    if (streampremium.format == "trailer_hls" && streampremium.audioLang == "esLA" && (listOf(null).contains(streampremium.hardsubLang))) {
+                        streampremium.title = "(Latino)"
+                        streams.add(streampremium)
                     }
 
-                    if (streampremium.audioLang!!.contains("US") && (listOf(null).contains(streampremium.hardsubLang))) {
-                        callback(ExtractorLink(
-                            "Crunchyroll",
-                            "Crunchyroll English",
-                            urllink,
-                            "",
-                            Qualities.Unknown.value,
-                            false
-                        ))
+                    if (streampremium.format == "trailer_hls" && streampremium.audioLang!!.contains("US") && (listOf(null).contains(streampremium.hardsubLang))) {
+                        streampremium.title = "(English US)"
+                        streams.add(streampremium)
                     }
                 }
             }
 
             streams.apmap { stream ->
-                hlsHelper.m3u8Generation(M3u8Helper.M3u8Stream(stream.url, null), false).apmap {
+              if (stream.url.contains("m3u8") && stream.format!!.contains("adaptive") ) {
+                  hlsHelper.m3u8Generation(M3u8Helper.M3u8Stream(stream.url, null), false).apmap {
                     callback(
                         ExtractorLink(
                             "Crunchyroll",
@@ -409,8 +374,22 @@ class KrunchyProvider : MainAPI() {
                         )
                     )
                 }
+              } else {
+                  val urllink = stream.url
+                      .replace("\\/", "/")
+                      .replace(Regex("\\/clipFrom.*?index.m3u8"), "").replace("'_,'", "'_'")
+                      .replace(stream.url.split("/")[2], "fy.v.vrv.co")
+                  callback(
+                  ExtractorLink(
+                      "Crunchyroll",
+                      "Crunchy - ${stream.title}",
+                      urllink,
+                      "",
+                      Qualities.Unknown.value,
+                      false
+                  )
+              ) }
             }
-
             json.subtitles.apmap {
                 subtitleCallback(
                     SubtitleFile(it.language, it.url)
