@@ -1185,9 +1185,9 @@ class ResultFragment : Fragment(), PanelsChildGestureRegionObserver.GestureRegio
                     result_episode_loading?.isVisible = false
                     if (result_episodes == null || result_episodes.adapter == null) return@observe
                     currentEpisodes = episodes.value
-                    (result_episodes?.adapter as EpisodeAdapter?)?.cardList = episodes.value
-                    (result_episodes?.adapter as EpisodeAdapter?)?.updateLayout()
-                    (result_episodes?.adapter as EpisodeAdapter?)?.notifyDataSetChanged()
+                    (result_episodes?.adapter as? EpisodeAdapter?)?.cardList = episodes.value
+                    (result_episodes?.adapter as? EpisodeAdapter?)?.updateLayout()
+                    (result_episodes?.adapter as? EpisodeAdapter?)?.notifyDataSetChanged()
                 }
             }
         }
