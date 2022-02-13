@@ -207,7 +207,6 @@ class KrunchyProvider : MainAPI() {
 
         val subEpisodes = ArrayList<AnimeEpisode>()
         val dubEpisodes = ArrayList<AnimeEpisode>()
-
         soup.select(".season").forEach {
             val seasonName = it.selectFirst("a.season-dropdown")?.text()?.trim()
             it.select(".episode").forEach { ep ->
@@ -243,7 +242,6 @@ class KrunchyProvider : MainAPI() {
                 }
             }
         }
-
         return AnimeLoadResponse(
             title,
             null,
@@ -382,7 +380,7 @@ class KrunchyProvider : MainAPI() {
                   callback(
                   ExtractorLink(
                       "Crunchyroll",
-                      "Crunchy - ${stream.title}",
+                      "Crunchy - ${stream.title} ★",
                       urllink,
                       "",
                       Qualities.Unknown.value,
@@ -391,8 +389,11 @@ class KrunchyProvider : MainAPI() {
               ) }
             }
             json.subtitles.apmap {
+                val langclean = it.language.replace("esLA","Spanish")
+                    .replace("enUS","English")
+                    .replace("esES","Spanish (Spain)")
                 subtitleCallback(
-                    SubtitleFile(it.language, it.url)
+                    SubtitleFile(langclean, it.url)
                 )
             }
 
