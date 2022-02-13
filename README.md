@@ -67,7 +67,7 @@ It merely scrapes 3rd-party websites that are publicly accessable via any regula
 - [www23.estrenosdoramas.net](https://www23.estrenosdoramas.net) 
 - [filman.cc](https://filman.cc) 
 - [fmovies.app](https://fmovies.app) 
-- [gogoanime.wiki](https://gogoanime.wiki) 
+- [gogoanime.film](https://gogoanime.film) 
 - [ihavenotv.com](https://ihavenotv.com) 
 - [kdramahood.com](https://kdramahood.com) 
 - [crunchyroll.com](http://www.crunchyroll.com) 
