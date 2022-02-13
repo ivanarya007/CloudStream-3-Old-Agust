@@ -220,7 +220,7 @@ class KrunchyProvider : MainAPI() {
 
                 var epDesc = (if (epNum == null) "" else "Episode $epNum") + (if (!seasonName.isNullOrEmpty()) " - $seasonName" else "")
                 if (poster?.contains("widestar") == true) {
-                  epDesc =  "★ "+epDesc
+                  epDesc =  "★ "+epDesc+" ★"
                 }
 
                 val epi = AnimeEpisode(
@@ -297,6 +297,7 @@ class KrunchyProvider : MainAPI() {
         if (!dat.isNullOrEmpty()) {
             val json = mapper.readValue<KrunchyVideo>(dat)
             val streams = ArrayList<Streams>()
+            val streamspre = ArrayList<Streams>()
             for (stream in json.streams) {
                 if (
                     listOf(
@@ -349,6 +350,7 @@ class KrunchyProvider : MainAPI() {
                     }
 
                     if (streampremium.audioLang == "jaJP" && (listOf("enUS").contains(streampremium.hardsubLang))) {
+
                         callback(ExtractorLink(
                             "Crunchyroll",
                             "Crunchyroll Hardsub (US)",
@@ -384,7 +386,7 @@ class KrunchyProvider : MainAPI() {
                     if (streampremium.audioLang!!.contains("US") && (listOf(null).contains(streampremium.hardsubLang))) {
                         callback(ExtractorLink(
                             "Crunchyroll",
-                            "Crunchy English",
+                            "Crunchyroll English",
                             urllink,
                             "",
                             Qualities.Unknown.value,
@@ -394,8 +396,8 @@ class KrunchyProvider : MainAPI() {
                 }
             }
 
-            streams.forEach { stream ->
-                hlsHelper.m3u8Generation(M3u8Helper.M3u8Stream(stream.url, null), false).forEach {
+            streams.apmap { stream ->
+                hlsHelper.m3u8Generation(M3u8Helper.M3u8Stream(stream.url, null), false).apmap {
                     callback(
                         ExtractorLink(
                             "Crunchyroll",
@@ -409,7 +411,7 @@ class KrunchyProvider : MainAPI() {
                 }
             }
 
-            json.subtitles.forEach {
+            json.subtitles.apmap {
                 subtitleCallback(
                     SubtitleFile(it.language, it.url)
                 )
