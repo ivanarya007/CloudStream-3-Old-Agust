@@ -301,63 +301,37 @@ class KrunchyProvider : MainAPI() {
                         "adaptive_hls", "adaptive_dash",
                         "multitrack_adaptive_hls_v2",
                         "vo_adaptive_dash", "vo_adaptive_hls",
+                        "trailer_hls",
                     ).contains(stream.format)
                 ) {
-                    if (stream.audioLang == "jaJP" && (listOf(null).contains(stream.hardsubLang)) && listOf("m3u", "m3u8").contains(hlsHelper.absoluteExtensionDetermination(stream.url))) {
-                        stream.title = "RAW"
+                    if (stream.format!!.contains("adaptive") && listOf("jaJP", "esLA", "esES", "enUS")
+                            .contains(stream.audioLang) && (listOf("esLA", "esES", "enUS", null).contains(stream.hardsubLang))
+                        && listOf("m3u", "m3u8").contains(hlsHelper.absoluteExtensionDetermination(stream.url)))
+                    {
+                        stream.title = if (stream.hardsubLang == "enUS" && stream.audioLang == "jaJP") "Hardsub (English)"
+                        else if (stream.hardsubLang == "esLA" && stream.audioLang == "jaJP") "Hardsub (Latino)"
+                        else if (stream.hardsubLang == "esES" && stream.audioLang == "jaJP") "Hardsub (Español España)"
+                        else if (stream.audioLang == "esLA") "Latino"
+                        else if (stream.audioLang == "esES") "Español España"
+                        else if (stream.audioLang == "enUS") "English (US)"
+                        else "RAW"
                         streams.add(stream)
                     }
-
-                    if (stream.audioLang == "jaJP" && (listOf("enUS").contains(stream.hardsubLang)) && listOf("m3u", "m3u8").contains(hlsHelper.absoluteExtensionDetermination(stream.url))) {
-                        stream.title = "Hardsub (US)"
-                        streams.add(stream)
-                    }
-
-                    if (stream.audioLang == "jaJP" && (listOf("esES").contains(stream.hardsubLang)) && listOf("m3u", "m3u8").contains(hlsHelper.absoluteExtensionDetermination(stream.url))) {
-                        stream.title = "Hardsub (España)"
-                        streams.add(stream)
-                    }
-
-                    if (stream.audioLang == "jaJP" && (listOf("esLA").contains(stream.hardsubLang)) && listOf("m3u", "m3u8").contains(hlsHelper.absoluteExtensionDetermination(stream.url))) {
-                        stream.title = "Hardsub(Latino)"
+                    //Premium eps
+                    if (stream.format == "trailer_hls" && listOf("jaJP", "esLA", "esES", "enUS").contains(stream.audioLang) &&
+                        (listOf("esLA", "esES", "enUS", null).contains(stream.hardsubLang))) {
+                        stream.title =
+                            if (stream.hardsubLang == "enUS" && stream.audioLang == "jaJP") "Hardsub (English)"
+                            else if (stream.hardsubLang == "esLA" && stream.audioLang == "jaJP") "Hardsub (Latino)"
+                            else if (stream.hardsubLang == "esES" && stream.audioLang == "jaJP") "Hardsub (Español España)"
+                            else if (stream.audioLang == "esLA") "Latino"
+                            else if (stream.audioLang == "esES") "Español España"
+                            else if (stream.audioLang == "enUS") "English (US)"
+                            else "RAW"
                         streams.add(stream)
                     }
                 }
             }
-
-            for (streampremium in json.streams) {
-                if (
-                    listOf(
-                        "trailer_hls",
-                    ).contains(streampremium.format)
-                ) {
-                    if (streampremium.format == "trailer_hls" && streampremium.audioLang == "jaJP" && (listOf("esLA").contains(streampremium.hardsubLang))) {
-                        streampremium.title = "Hardsub (Latino)"
-                        streams.add(streampremium)
-                    }
-
-                    if (streampremium.format == "trailer_hls" && streampremium.audioLang == "jaJP" && (listOf("enUS").contains(streampremium.hardsubLang))) {
-                        streampremium.title = "Hardsub (English US)"
-                        streams.add(streampremium)
-                    }
-
-                    if (streampremium.format == "trailer_hls" && streampremium.audioLang == "jaJP" && (listOf(null).contains(streampremium.hardsubLang))) {
-                        streampremium.title = "RAW"
-                        streams.add(streampremium)
-                    }
-
-                    if (streampremium.format == "trailer_hls" && streampremium.audioLang == "esLA" && (listOf(null).contains(streampremium.hardsubLang))) {
-                        streampremium.title = "(Latino)"
-                        streams.add(streampremium)
-                    }
-
-                    if (streampremium.format == "trailer_hls" && streampremium.audioLang!!.contains("US") && (listOf(null).contains(streampremium.hardsubLang))) {
-                        streampremium.title = "(English US)"
-                        streams.add(streampremium)
-                    }
-                }
-            }
-
             streams.apmap { stream ->
               if (stream.url.contains("m3u8") && stream.format!!.contains("adaptive") ) {
                   hlsHelper.m3u8Generation(M3u8Helper.M3u8Stream(stream.url, null), false).apmap {
@@ -372,8 +346,8 @@ class KrunchyProvider : MainAPI() {
                         )
                     )
                 }
-              } else {
-                  val urllink = stream.url
+              } else if (stream.format == "trailer_hls") {
+                  val premiumstream = stream.url
                       .replace("\\/", "/")
                       .replace(Regex("\\/clipFrom.*?index.m3u8"), "").replace("'_,'", "'_'")
                       .replace(stream.url.split("/")[2], "fy.v.vrv.co")
@@ -381,12 +355,13 @@ class KrunchyProvider : MainAPI() {
                   ExtractorLink(
                       "Crunchyroll",
                       "Crunchy - ${stream.title} ★",
-                      urllink,
+                      premiumstream,
                       "",
                       Qualities.Unknown.value,
                       false
                   )
-              ) }
+              )
+              } else null
             }
             json.subtitles.apmap {
                 val langclean = it.language.replace("esLA","Spanish")
