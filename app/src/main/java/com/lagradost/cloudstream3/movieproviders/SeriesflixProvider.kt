@@ -82,7 +82,7 @@ class SeriesflixProvider:MainAPI() {
 
 
 
-    override suspend fun load(url: String): LoadResponse? {
+    override suspend fun load(url: String): LoadResponse {
         val type = if (url.contains("/movies/")) TvType.Movie else TvType.TvSeries
 
         val document = app.get(url).document

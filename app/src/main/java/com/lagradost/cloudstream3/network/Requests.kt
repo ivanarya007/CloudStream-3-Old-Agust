@@ -270,7 +270,7 @@ open class Requests {
                     2 -> addCloudFlareDns()
 //                3 -> addOpenDns()
                     4 -> addAdGuardDns()
-                    5 -> addQuad9Dns()
+                    //  5 -> addQuad9Dns()
                 }
             }
             // Needs to be build as otherwise the other builders will change this object

@@ -1,5 +1,6 @@
 package com.lagradost.cloudstream3.extractors
 
+import com.lagradost.cloudstream3.apmap
 import com.lagradost.cloudstream3.app
 import com.lagradost.cloudstream3.network.WebViewResolver
 import com.lagradost.cloudstream3.utils.ExtractorApi
@@ -25,6 +26,11 @@ class Watchsb4 : WatchSB() {
 }
 
 
+class Upstream : WatchSB() {
+    override val name = "Upstream"
+    override val mainUrl = "https://upstream.to"
+}
+
 class ZplayerV2 : WatchSB() {
     override val name = "Zplayer V2"
     override val mainUrl = "https://v2.zplayer.live"
@@ -41,23 +47,24 @@ open class WatchSB : ExtractorApi() {
                 Regex("""master\.m3u8""")
             )
         )
-
-        return M3u8Helper().m3u8Generation(
+        val sources = mutableListOf<ExtractorLink>()
+        if (response.url.contains("m3u8")) M3u8Helper().m3u8Generation(
             M3u8Helper.M3u8Stream(
                 response.url,
                 headers = response.headers.toMap()
             ), true
         )
-            .map { stream ->
+            .apmap { stream ->
                 val qualityString = if ((stream.quality ?: 0) == 0) "" else "${stream.quality}p"
-                ExtractorLink(
+               sources.add( ExtractorLink(
                     name,
                     "$name $qualityString",
                     stream.streamUrl,
                     url,
                     getQualityFromName(stream.quality.toString()),
                     true
-                )
+                ))
             }
+        return sources
     }
 }

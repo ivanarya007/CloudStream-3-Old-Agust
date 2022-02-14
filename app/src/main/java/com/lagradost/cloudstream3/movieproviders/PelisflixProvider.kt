@@ -16,6 +16,7 @@ class PelisflixProvider:MainAPI() {
         TvType.Movie,
         TvType.TvSeries,
     )
+
     override suspend fun getMainPage(): HomePageResponse {
         val items = ArrayList<HomePageList>()
         val urls = listOf(
@@ -47,6 +48,7 @@ class PelisflixProvider:MainAPI() {
         if (items.size <= 0) throw ErrorLoadingException()
         return HomePageResponse(items)
     }
+
     override suspend fun search(query: String): ArrayList<SearchResponse> {
         val url = "$mainUrl/?s=$query"
         val doc = app.get(url).document
@@ -79,22 +81,16 @@ class PelisflixProvider:MainAPI() {
         return ArrayList(search)
     }
 
-    override suspend fun load(url: String): LoadResponse? {
+
+
+    override suspend fun load(url: String): LoadResponse {
         val type = if (url.contains("/pelicula/")) TvType.Movie else TvType.TvSeries
-
-        val document = app.get(url).document
-
+        val urlm = app.get(url)
+        val document = urlm.document
+        val urltext = urlm.text
+        val desc = urltext.substringAfter("{\"@context\":\"https://schema.org\",\"@type\":\"VideoObject\",\"name\":\"")
+            .substringAfter("\",\"description\":\"").substringBefore("\",\"thumbnailUrl\"")
         val title = document.selectFirst("h1.Title").text()
-        val descRegex = Regex("(.Recuerda.*Pelisflix.+)")
-        val descRegex2 = Regex("(Actualmente.*.)")
-        val descRegex3 = Regex("(.*Director:.*)")
-        val descRegex4 = Regex("(.*Actores:.*)")
-        val descRegex5 = Regex("(Ver.*(\\)|)((\\d+).))")
-        val descipt = document.selectFirst("div.Description").text().replace(descRegex, "")
-            .replace(descRegex2, "").replace(descRegex3, "")
-            .replace(descRegex4, "").replace(descRegex5, "")
-        val desc2Regex = Regex("(G(e|é)nero:.*..)")
-        val descipt2 = document.selectFirst("div.Description").text().replace(desc2Regex,"")
         val rating =
             document.selectFirst("div.rating-content button.like-mov span.vot_cl")?.text()?.toFloatOrNull()
                 ?.times(0)?.toInt()
@@ -151,7 +147,7 @@ class PelisflixProvider:MainAPI() {
                 episodeList,
                 fixUrlNull(poster),
                 year?.toIntOrNull(),
-                descipt2,
+                desc.replace("\\",""),
                 null,
                 null,
                 rating
@@ -166,7 +162,7 @@ class PelisflixProvider:MainAPI() {
             ) {
                 posterUrl = fixUrlNull(poster)
                 this.year = year?.toIntOrNull()
-                this.plot = descipt
+                this.plot = desc.replace("\\","")
                 this.rating = rating
                 setDuration(duration)
             }

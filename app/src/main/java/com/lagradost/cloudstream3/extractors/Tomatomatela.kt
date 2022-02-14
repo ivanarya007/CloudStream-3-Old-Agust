@@ -13,6 +13,7 @@ class Cinestart: Tomatomatela() {
     override val details = "vr.php?v="
 }
 
+
 open class Tomatomatela : ExtractorApi() {
     override val name = "Tomatomatela"
     override val mainUrl = "https://tomatomatela.com"
@@ -22,8 +23,9 @@ open class Tomatomatela : ExtractorApi() {
         @JsonProperty("file") val file: String
     )
     open val details = "details.php?v="
+    open val embeddetails = "/embed.html#"
     override suspend fun getUrl(url: String, referer: String?): List<ExtractorLink>? {
-        val link = url.replace("$mainUrl/embed.html#","$mainUrl/$details")
+        val link = url.replace("$mainUrl$embeddetails","$mainUrl/$details")
         val server = app.get(link, allowRedirects = false).text
         val json = mapper.readValue<tomato>(server)
         if (json.status == 200) return listOf(
