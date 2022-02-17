@@ -110,6 +110,13 @@ val extractorApis: Array<ExtractorApi> = arrayOf(
     MixDrop1(),
     XStreamCdn(),
     StreamSB(),
+    StreamSB1(),
+    StreamSB2(),
+    StreamSB3(),
+    StreamSB4(),
+    StreamSB5(),
+    StreamSB6(),
+    StreamSB7(),
     Streamhub(),
 
     Tomatomatela(),
@@ -126,12 +133,12 @@ val extractorApis: Array<ExtractorApi> = arrayOf(
     FeHD(),
     Fplayer(),
     Suzihaza(),
-    WatchSB(),
-    Watchsb1(),
-    Watchsb2(),
-    Watchsb3(),
-    Watchsb4(),
-    Upstream(),
+    StreamSB(),
+    // WatchSB(),
+    // Watchsb1(),
+    // Watchsb2(),
+    // Watchsb3(),
+    //  Watchsb4(),
     Uqload(),
     Uqload1(),
     Evoload(),
@@ -140,14 +147,12 @@ val extractorApis: Array<ExtractorApi> = arrayOf(
     // UpstreamExtractor(), deactivated cause doesnt work
 
     Jawcloud(),
-    Jawcloud1(),
+
 
     OkRu(),
 
     Videobin(),
     Videobin1(),
-    ZplayerV2(),
-    Zplayer(),
 
     Tomatomatela(),
     Cinestart(),
@@ -163,6 +168,10 @@ val extractorApis: Array<ExtractorApi> = arrayOf(
 
     YourUpload(),
     Mcloud(),
+
+    Genericm3u8Extractor(),
+    ZplayerV2(),
+    Zplayer(),
 
     )
 

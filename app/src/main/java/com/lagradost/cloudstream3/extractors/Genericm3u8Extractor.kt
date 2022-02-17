@@ -9,36 +9,15 @@ import com.lagradost.cloudstream3.utils.M3u8Helper
 import com.lagradost.cloudstream3.utils.getQualityFromName
 
 
-class Watchsb1 : WatchSB() {
-    override val mainUrl = "https://sbplay1.com"
-}
 
-class Watchsb2 : WatchSB() {
-    override val mainUrl = "https://sbplay2.com"
-}
-
-class Watchsb3 : WatchSB() {
-    override val mainUrl = "https://sbplay.one"
-}
-
-class Watchsb4 : WatchSB() {
-    override val mainUrl = "https://cloudemb.com"
-}
-
-
-class Upstream : WatchSB() {
-    override val name = "Upstream"
-    override val mainUrl = "https://upstream.to"
-}
-
-class ZplayerV2 : WatchSB() {
+class ZplayerV2 : Genericm3u8Extractor() {
     override val name = "Zplayer V2"
     override val mainUrl = "https://v2.zplayer.live"
 }
 
-open class WatchSB : ExtractorApi() {
-    override val name = "WatchSB"
-    override val mainUrl = "https://watchsb.com"
+open class Genericm3u8Extractor : ExtractorApi() {
+    override val name = "Upstream"
+    override val mainUrl = "https://upstream.to"
     override val requiresReferer = false
 
     override suspend fun getUrl(url: String, referer: String?): List<ExtractorLink> {

@@ -4,9 +4,6 @@ import com.lagradost.cloudstream3.apmap
 import com.lagradost.cloudstream3.utils.*
 import com.lagradost.cloudstream3.app
 
-class Jawcloud1: WatchSB() {
-    override val mainUrl: String = "https://www.jawcloud.co"
-}
 
 open class Jawcloud : ExtractorApi() {
     override val name = "Jawcloud"

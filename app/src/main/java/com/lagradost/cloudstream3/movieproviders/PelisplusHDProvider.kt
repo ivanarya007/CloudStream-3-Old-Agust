@@ -160,9 +160,8 @@ class PelisplusHDProvider:MainAPI() {
     ): Boolean {
         app.get(data).document.select("div.player > script").apmap {
             val linkRegex = Regex("""(https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))""")
-            val links = linkRegex.findAll(it.toString()).map {
+            val links = linkRegex.findAll(it.data()).map {
                 it.value.replace("https://pelisplushd.net/fembed.php?url=","https://www.fembed.com/v/")
-                    .replace("https://pelistop.co/","https://watchsb.com/")
             }.toList().apmap {
                 for (extractor in extractorApis) {
                     if (it.startsWith(extractor.mainUrl)) {
