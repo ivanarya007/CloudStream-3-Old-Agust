@@ -36,6 +36,10 @@ class StreamSB7 : StreamSB() {
     override val mainUrl = "https://pelistop.co"
 }
 
+class StreamSB8 : StreamSB() {
+    override val mainUrl = "https://streamsb.net"
+}
+
 open class StreamSB : ExtractorApi() {
     override val name = "StreamSB"
     override val mainUrl = "https://watchsb.com"

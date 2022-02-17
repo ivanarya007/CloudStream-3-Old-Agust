@@ -313,7 +313,7 @@ class AllAnimeProvider : MainAPI() {
 
                     if (response.code < 400) {
                         val links = mapper.readValue<AllAnimeVideoApiResponse>(response.text).links
-                        links.forEach { server ->
+                        links.apmap { server ->
                             if (server.hls != null && server.hls) {
                                 getM3u8Qualities(
                                     server.link,

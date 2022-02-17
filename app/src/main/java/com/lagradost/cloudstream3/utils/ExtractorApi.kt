@@ -117,6 +117,7 @@ val extractorApis: Array<ExtractorApi> = arrayOf(
     StreamSB5(),
     StreamSB6(),
     StreamSB7(),
+    StreamSB8(),
     Streamhub(),
 
     Tomatomatela(),
@@ -133,7 +134,6 @@ val extractorApis: Array<ExtractorApi> = arrayOf(
     FeHD(),
     Fplayer(),
     Suzihaza(),
-    StreamSB(),
     // WatchSB(),
     // Watchsb1(),
     // Watchsb2(),
