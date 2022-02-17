@@ -1,5 +1,6 @@
 package com.lagradost.cloudstream3.extractors
 
+import com.lagradost.cloudstream3.apmap
 import com.lagradost.cloudstream3.app
 import com.lagradost.cloudstream3.network.WebViewResolver
 import com.lagradost.cloudstream3.utils.ExtractorApi
@@ -25,7 +26,7 @@ open class Zplayer : ExtractorApi() {
                 headers = response2.headers.toMap()
             ), true
         )
-            .map { stream ->
+            .apmap  { stream ->
                 val qualityString = if ((stream.quality ?: 0) == 0) "" else "${stream.quality}p"
                 ExtractorLink(
                     name,

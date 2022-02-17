@@ -1,8 +1,11 @@
 package com.lagradost.cloudstream3.extractors
 
+import com.fasterxml.jackson.annotation.JsonProperty
+import com.lagradost.cloudstream3.USER_AGENT
 import com.lagradost.cloudstream3.apmap
 import com.lagradost.cloudstream3.utils.*
 import com.lagradost.cloudstream3.app
+import com.lagradost.cloudstream3.utils.AppUtils.parseJson
 
 
 class StreamSB1 : StreamSB() {
@@ -51,39 +54,77 @@ open class StreamSB : ExtractorApi() {
         return String(hexChars)
     }
 
+
+    data class StreamData (
+        @JsonProperty("file") val file: String,
+        @JsonProperty("cdn_img") val cdnImg: String,
+        @JsonProperty("hash") val hash: String,
+        @JsonProperty("subs") val subs: List<String>,
+        @JsonProperty("length") val length: String,
+        @JsonProperty("id") val id: String,
+        @JsonProperty("title") val title: String,
+        @JsonProperty("backup") val backup: String,
+    )
+
+    data class Main (
+        @JsonProperty("stream_data") val streamData: StreamData,
+        @JsonProperty("status_code") val statusCode: Int,
+    )
+
     override suspend fun getUrl(url: String, referer: String?): List<ExtractorLink>? {
         val id = url.substringAfter("embed-").substringAfter("/e/").substringBefore(".html")
+        println(id)
         val bytes = id.toByteArray()
         val bytesToHex = bytesToHex(bytes)
         val master = "$mainUrl/sources40/566d337678566f743674494a7c7c${bytesToHex}7c7c346b6767586d6934774855537c7c73747265616d7362/6565417268755339773461447c7c346133383438333436313335376136323337373433383634376337633465366534393338373136643732373736343735373237613763376334363733353737303533366236333463353333363534366137633763373337343732363536313664373336327c7c6b586c3163614468645a47617c7c73747265616d7362"
         val headers = mapOf(
-            "watchsb" to "streamsb",
-            "accept-language" to "en-US,en;q=0.5",
+            "Host" to url.substringAfter("https://").substringBefore("/"),
+            "User-Agent" to "Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0",
+            "Accept" to "application/json, text/plain, */*",
+            "Accept-Language" to "en-US,en;q=0.5",
             "Referer" to url,
-            "User-Agent" to "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:96.0) Gecko/20100101 Firefox/96.0",)
+            "watchsb" to "streamsb",
+            "DNT" to "1",
+            "Connection" to "keep-alive",
+            "Sec-Fetch-Dest" to "empty",
+            "Sec-Fetch-Mode" to "no-cors",
+            "Sec-Fetch-Site" to "same-origin",
+            "TE" to "trailers",
+            "Pragma" to "no-cache",
+            "Cache-Control" to "no-cache",)
         val urltext = app.get(master,
-            headers = headers
+            headers = headers,
+            allowRedirects = false
         ).text
-        val sources = mutableListOf<ExtractorLink>()
-        val extractedlink = urltext.substringAfter("\"file\":\"").substringBefore("\",\"")
-        val extractedbackup = urltext.substringAfter("\"backup\":\"").substringBefore("\",\"")
-        if (extractedlink.contains("m3u8"))  M3u8Helper().m3u8Generation(
+        val mapped = urltext.let { parseJson<Main>(it) }
+        if (urltext.contains("m3u8")) return  M3u8Helper().m3u8Generation(
             M3u8Helper.M3u8Stream(
-                if (extractedlink.isBlank()) extractedbackup else extractedlink,
-                headers = app.get(url).headers.toMap()
+                mapped.streamData.file,
+                headers = mapOf(
+                    "User-Agent" to "Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0",
+                    "Accept" to "*/*",
+                    "Accept-Language" to "en-US,en;q=0.5",
+                    "Accept-Encoding" to "gzip, deflate, br",
+                    "Origin" to mainUrl,
+                    "DNT" to "1",
+                    "Connection" to "keep-alive",
+                    "Referer" to "$mainUrl/",
+                    "Sec-Fetch-Dest" to "empty",
+                    "Sec-Fetch-Mode" to "cors",
+                    "Sec-Fetch-Site" to "cross-site",),
             ), true
         )
             .apmap { stream ->
                 val qualityString = if ((stream.quality ?: 0) == 0) "" else "${stream.quality}p"
-                sources.add(  ExtractorLink(
+                 ExtractorLink(
                     name,
                     "$name $qualityString",
                     stream.streamUrl,
                     url,
                     getQualityFromName(stream.quality.toString()),
                     true
-                ))
+                )
             }
-        return sources
+        return null
     }
 }

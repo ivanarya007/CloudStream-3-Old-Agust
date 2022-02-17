@@ -1,5 +1,6 @@
 package com.lagradost.cloudstream3.extractors
 
+import com.lagradost.cloudstream3.apmap
 import com.lagradost.cloudstream3.utils.*
 import com.lagradost.cloudstream3.app
 import java.net.URLDecoder
@@ -9,26 +10,31 @@ class Sendvid1: Sendvid() {
 }
 
 open class Sendvid : ExtractorApi() {
-    override val name = "Sendvid m3u8"
+    override val name = "Sendvid"
     override val mainUrl = "https://sendvid.com"
     override val requiresReferer = false
 
     override suspend fun getUrl(url: String, referer: String?): List<ExtractorLink>? {
         val doc = app.get(url).document
-         doc.select("script").forEach { script ->
-              if (script.data().contains("var video_source =")) {
-              val extractedlink =  script.toString().substringAfter("var video_source = \"").substringBefore("\";")
-              if (extractedlink.isNotBlank())  return listOf(
-                    ExtractorLink(
+        val urlString = doc.select("head meta[property=og:video:secure_url]").attr("content")
+        val sources = mutableListOf<ExtractorLink>()
+        if (urlString.contains("m3u8"))  M3u8Helper().m3u8Generation(
+            M3u8Helper.M3u8Stream(
+                urlString,
+                headers = app.get(url).headers.toMap()
+            ), true
+        )
+            .apmap { stream ->
+                val qualityString = if ((stream.quality ?: 0) == 0) "" else "${stream.quality}p"
+                sources.add(  ExtractorLink(
                     name,
-                    name,
-                    extractedlink,
+                    "$name $qualityString",
+                    stream.streamUrl,
                     url,
-                    Qualities.Unknown.value,
+                    getQualityFromName(stream.quality.toString()),
                     true
                 ))
             }
-        }
-        return null
+        return sources
     }
 }

@@ -171,7 +171,7 @@ class AnimefenixProvider:MainAPI() {
     ): Boolean {
         app.get(data).document.select(".player-container script").apmap { script ->
             if (script.data().contains("var tabsArray =")) {
-                val html = app.get(data).text
+                val html = script.data()
                 val feRegex = Regex("player=2&amp;code(.*)&")
                 feRegex.findAll(html).map {
                     "https://embedsito.com/v/"+(it.value).replace("player=2&amp;code=","").replace("&","")
