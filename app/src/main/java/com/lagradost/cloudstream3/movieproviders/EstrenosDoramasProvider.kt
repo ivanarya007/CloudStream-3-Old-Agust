@@ -187,7 +187,7 @@ class EstrenosDoramasProvider : MainAPI() {
                     allowRedirects = false
                 ).text
                 val extracteklink = link.substringAfter("\"urlremoto\":\"").substringBefore("\"}")
-                    .replace("\\/", "/").replace("//ok.ru/","https://ok.ru/")
+                    .replace("\\/", "/").replace("//ok.ru/","http://ok.ru/")
                 for (extractor in extractorApis) {
                     if (extracteklink.startsWith(extractor.mainUrl)) {
                         extractor.getSafeUrl(extracteklink, data)?.apmap {

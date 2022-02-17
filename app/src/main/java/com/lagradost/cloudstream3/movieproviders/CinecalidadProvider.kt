@@ -98,7 +98,7 @@ class CinecalidadProvider:MainAPI() {
         val poster: String? = soup.selectFirst(".alignnone").attr("data-src")
         val episodes = soup.select("div.se-c div.se-a ul.episodios li").map { li ->
             val href = li.selectFirst("a").attr("href")
-            val epThumb = li.selectFirst("div.imagen img").attr("src")
+            val epThumb = li.selectFirst("img.lazy").attr("data-src")
             val name = li.selectFirst(".episodiotitle a").text()
             TvSeriesEpisode(
                 name,
@@ -143,7 +143,13 @@ class CinecalidadProvider:MainAPI() {
         subtitleCallback: (SubtitleFile) -> Unit,
         callback: (ExtractorLink) -> Unit
     ): Boolean {
-        app.get(data).document.select(".dooplay_player_option").apmap {
+
+        val datam = app.get(data)
+        val doc = datam.document
+        println(data)
+        val datatext = datam.text
+
+        doc.select(".dooplay_player_option").apmap {
             val url = it.attr("data-option")
             if (url.startsWith("https://cinestart.net")) {
                 val extractor = Cinestart()
@@ -181,7 +187,7 @@ class CinecalidadProvider:MainAPI() {
                 }
             }
         }
-        if ((app.get(data).text.contains("en castellano"))) app.get("$data?ref=es").document.select(".dooplay_player_option").apmap {
+        if (datatext.contains("en castellano")) app.get("$data?ref=es").document.select(".dooplay_player_option").apmap {
             val url = it.attr("data-option")
             if (url.startsWith("https://cinestart.net")) {
                 val extractor = Cinestart()
@@ -220,6 +226,29 @@ class CinecalidadProvider:MainAPI() {
                     }
                 }
             }
+        }
+        if (datatext.contains("Subtítulo LAT") || datatext.contains("Forzados LAT"))   {
+             doc.select("#panel_descarga.pane a").apmap {
+                 val link = if (data.contains("serie") || data.contains("episodio")) "${data}${it.attr("href")}"
+                 else it.attr("href")
+                 val docsub = app.get(link)
+                 val linksub = docsub.document
+                 val validsub = docsub.text
+                 if (validsub.contains("Subtítulo") || validsub.contains("Forzados")) {
+                     val langregex = Regex("(Subtítulo.*\$|Forzados.*\$)")
+                     val langdoc = linksub.selectFirst("div.titulo h3").text()
+                     val reallang = langregex.findAll(langdoc).map {
+                         it.value
+                     }.toList().first()
+                     linksub.select("a.link").apmap {
+                         val sublink = if (data.contains("serie") || data.contains("episodio")) "${data}${it.attr("href")}"
+                         else it.attr("href")
+                         subtitleCallback(
+                             SubtitleFile(reallang, sublink )
+                         )
+                     }
+                 }
+             }
         }
         return true
     }
