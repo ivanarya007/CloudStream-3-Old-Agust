@@ -116,7 +116,7 @@ class AnimeflvnetProvider:MainAPI() {
         val episodes = doc.select("li.Episode").map { li ->
             val href = fixUrl(li.selectFirst("a").attr("href"))
             AnimeEpisode(
-                fixUrl(href), "Episodio" + li.selectFirst("a").text().replace(title,"")
+                fixUrl(href).replace("https://m","https://www3"), "Episodio" + li.selectFirst("a").text().replace(title,"")
             )
         }
         val type = doc.selectFirst("span.Type.A").text()
@@ -143,22 +143,12 @@ class AnimeflvnetProvider:MainAPI() {
         callback: (ExtractorLink) -> Unit
     ): Boolean {
         app.get(data).document.select("script").apmap { script ->
-            if (script.data().contains("var videos = {")) {
-                val linkRegex = Regex("""(https:.*?\.html.*)""")
-                val videos = linkRegex.findAll(script.data()).map {
-                    it.value.replace("\\/", "/")
-                }.toList()
-                val serversRegex = Regex("(https?:\\/\\/(www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b([-a-zA-Z0-9()@:%_\\+.~#?&\\/\\/=]*))")
-                serversRegex.findAll(videos.toString()).map {
-                    it.value.replace("https://embedsb.com/e/","https://watchsb.com/e/")
+            if (script.data().contains("var videos = {") || script.data().contains("var anime_id =") || script.data().contains("server")) {
+                val videos = script.data().replace("\\/", "/")
+                fetchUrls(videos).map {
+                    it.replace("https://embedsb.com/e/","https://watchsb.com/e/")
                 }.toList().apmap {
-                    for (extractor in extractorApis) {
-                        if (it.startsWith(extractor.mainUrl)) {
-                            extractor.getSafeUrl(it, data)?.apmap {
-                                callback(it)
-                            }
-                        }
-                    }
+                    loadExtractor(it, data, callback)
                 }
             }
         }
