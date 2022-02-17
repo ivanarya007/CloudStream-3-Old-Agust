@@ -197,7 +197,8 @@ class MundoDonghuaProvider : MainAPI() {
             if (script.data().contains("|protea_tab|jwplayer|")) {
                 val protea = script.data().substringAfter("|protea_tab|jwplayer|").substringBefore("|image|")
                 val requestlink = "https://www.mundodonghua.com/api_donghua.php?slug=$protea"
-                val test = app.get(requestlink, headers = mapOf("Host" to "www.mundodonghua.com",
+                val test = app.get(requestlink, headers =
+                mapOf("Host" to "www.mundodonghua.com",
                     "User-Agent" to "Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0",
                     "Accept" to "*/*",
                     "Accept-Language" to "en-US,en;q=0.5",

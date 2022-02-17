@@ -235,7 +235,10 @@ class KrunchyProvider : MainAPI() {
                     subEpisodes.add(epi)
                 } else if (seasonName.contains("(HD)")) {
                     subEpisodes.add(epi)
-                } else if (seasonName.contains("Dub") || seasonName.contains("Russian")) {
+                } else if (seasonName.contains("Spanish")) {
+                    dubEpisodes.add(epi)
+                }
+                else if (seasonName.contains("Dub") || seasonName.contains("Russian")) {
                     dubEpisodes.add(epi)
                 }  else {
                     subEpisodes.add(epi)
@@ -371,7 +374,6 @@ class KrunchyProvider : MainAPI() {
                     SubtitleFile(langclean, it.url)
                 )
             }
-
             return true
         }
         return false

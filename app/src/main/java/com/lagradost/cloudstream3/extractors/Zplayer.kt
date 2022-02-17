@@ -20,7 +20,8 @@ open class Zplayer : ExtractorApi() {
                 Regex("""master\.m3u8""")
             )
         )
-        return M3u8Helper().m3u8Generation(
+        val sources = mutableListOf<ExtractorLink>()
+       if (response2.url.contains("m3u8"))  M3u8Helper().m3u8Generation(
             M3u8Helper.M3u8Stream(
                 response2.url,
                 headers = response2.headers.toMap()
@@ -28,14 +29,15 @@ open class Zplayer : ExtractorApi() {
         )
             .apmap  { stream ->
                 val qualityString = if ((stream.quality ?: 0) == 0) "" else "${stream.quality}p"
-                ExtractorLink(
+               sources.add( ExtractorLink(
                     name,
                     "$name $qualityString",
                     stream.streamUrl,
                     url,
                     getQualityFromName(stream.quality.toString()),
                     true
-                )
+                ))
             }
+        return sources
     }
 }

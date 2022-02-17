@@ -68,7 +68,7 @@ class EstrenosDoramasProvider : MainAPI() {
     override suspend fun search(query: String): ArrayList<SearchResponse> {
         val search =
             app.get("$mainUrl/?s=$query", timeout = 120).document.select("div.clearfix").map {
-                val title = it.selectFirst("h3 a").text().replace(Regex("[Pp]elicula|[Pp]elicula"),"")
+                val title = it.selectFirst("h3 a").text().replace(Regex("[Pp]elicula |[Pp]elicula"),"")
                 val href = it.selectFirst("a").attr("href")
                 val image = it.selectFirst("img.cate_thumb").attr("src")
                 AnimeSearchResponse(
@@ -114,7 +114,7 @@ class EstrenosDoramasProvider : MainAPI() {
             TvType.TvSeries -> {
                 return newAnimeLoadResponse(title, url, type) {
                     japName = null
-                    engName = title
+                    engName = title.replace(Regex("[Pp]elicula |[Pp]elicula"),"")
                     posterUrl = poster
                     addEpisodes(DubStatus.Subbed, episodes)
                     plot = finaldesc
@@ -122,7 +122,7 @@ class EstrenosDoramasProvider : MainAPI() {
             }
             TvType.Movie -> {
                 MovieLoadResponse(
-                    title,
+                    title.replace(Regex("[Pp]elicula |[Pp]elicula"),""),
                     url,
                     this.name,
                     TvType.Movie,
