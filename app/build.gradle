@@ -36,7 +36,7 @@ android {
         targetSdkVersion 30
 
         versionCode 42
-        versionName "2.7.6"
+        versionName "2.7.7"
 
         resValue "string", "app_version",
                 "${defaultConfig.versionName}${versionNameSuffix ?: ""}"
@@ -53,8 +53,9 @@ android {
     buildTypes {
         release {
             debuggable false
-            minifyEnabled true
-            shrinkResources true
+            minifyEnabled false
+            shrinkResources false
+            // if these two above are enabled, Krunchy won't work
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
         prerelease {
