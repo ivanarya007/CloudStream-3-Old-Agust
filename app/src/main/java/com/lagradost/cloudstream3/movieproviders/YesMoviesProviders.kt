@@ -253,21 +253,67 @@ class YesMoviesProviders(providerUrl: String, providerName: String) : MainAPI() 
 
         urls?.apmap { url ->
             suspendSafeApiCall {
-                val resolved = WebViewResolver(
-                    Regex("""/getSources"""),
-                    // This is unreliable, generating my own link instead
-//                  additionalUrls = listOf(Regex("""^.*transport=polling(?!.*sid=).*$"""))
-                ).resolveUsingWebView(getRequestCreator(url))
-//              val extractorData = resolved.second.getOrNull(0)?.url?.toString()
+//                val resolved = WebViewResolver(
+//                    Regex("""/getSources"""),
+//                    // This is unreliable, generating my own link instead
+////                  additionalUrls = listOf(Regex("""^.*transport=polling(?!.*sid=).*$"""))
+//                ).resolveUsingWebView(getRequestCreator(url))
+////              val extractorData = resolved.second.getOrNull(0)?.url?.toString()
+
+                // ------- Main site -------
+
+                // Possible without token
+
+//                val response = app.get(url)
+//                val key =
+//                    response.document.select("script[src*=https://www.google.com/recaptcha/api.js?render=]")
+//                        .attr("src").substringAfter("render=")
+//                val token = getCaptchaToken(mainUrl, key) ?: return@suspendSafeApiCall
+
+                val serverId = url.substringAfterLast(".")
+                val iframeLink =
+                    app.get("$mainUrl/ajax/get_link/$serverId").mapped<SflixProvider.IframeJson>().link
+                        ?: return@suspendSafeApiCall
+
+                // ------- Iframe -------
+                val mainIframeUrl =
+                    iframeLink.substringBeforeLast("/") // "https://rabbitstream.net/embed-4/6sBcv1i8vUF6?z=" -> "https://rabbitstream.net/embed-4"
+                val mainIframeId = iframeLink.substringAfterLast("/")
+                    .substringBefore("?") // "https://rabbitstream.net/embed-4/6sBcv1i8vUF6?z=" -> "6sBcv1i8vUF6"
+
+                val iframe = app.get(iframeLink, referer = mainUrl)
+                val iframeKey =
+                    iframe.document.select("script[src*=https://www.google.com/recaptcha/api.js?render=]")
+                        .attr("src").substringAfter("render=")
+                val iframeToken = APIHolder.getCaptchaToken(iframeLink, iframeKey)
+                val number = Regex("""recaptchaNumber = '(.*?)'""").find(iframe.text)?.groupValues?.get(1)
+
+                val mapped = app.get(
+                    "${mainIframeUrl.replace("/embed", "/ajax/embed")}/getSources?id=$mainIframeId&_token=$iframeToken&_number=$number",
+                    referer = "https://rabbitstream.net/",
+                    headers = mapOf(
+                        "X-Requested-With" to "XMLHttpRequest",
+                        "Accept" to "*/*",
+                        "Accept-Language" to "en-US,en;q=0.5",
+//                        "Cache-Control" to "no-cache",
+                        "Connection" to "keep-alive",
+//                        "Sec-Fetch-Dest" to "empty",
+//                        "Sec-Fetch-Mode" to "no-cors",
+//                        "Sec-Fetch-Site" to "cross-site",
+//                        "Pragma" to "no-cache",
+//                        "Cache-Control" to "no-cache",
+                        "TE" to "trailers"
+                    )
+                ).mapped<SflixProvider.SourceObject>()
 
                 // Some smarter ws11 or w10 selection might be required in the future.
                 val extractorData =
                     "https://ws11.rabbitstream.net/socket.io/?EIO=4&transport=polling"
 
-                val sources = resolved.first?.let { app.baseClient.newCall(it).execute().text }
-                    ?: return@suspendSafeApiCall
+//                val sources = resolved.first?.let { app.baseClient.newCall(it).execute().text }
+//                    ?: return@suspendSafeApiCall
 
-                val mapped = parseJson<SflixProvider.SourceObject>(sources)
+//                val mapped = parseJson<SourceObject>(sources)
 
                 mapped.tracks?.apmap {
                     it?.toSubtitleFile()?.let { subtitleFile ->

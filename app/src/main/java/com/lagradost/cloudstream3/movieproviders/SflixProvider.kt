@@ -367,7 +367,7 @@ class SflixProvider(providerUrl: String, providerName: String) : MainAPI() {
 
 //                val mapped = parseJson<SourceObject>(sources)
 
-                mapped.tracks?.forEach {
+                mapped.tracks?.apmap {
                     it?.toSubtitleFile()?.let { subtitleFile ->
                         subtitleCallback.invoke(subtitleFile)
                     }
@@ -378,8 +378,8 @@ class SflixProvider(providerUrl: String, providerName: String) : MainAPI() {
                     mapped.sources1 to "source 2",
                     mapped.sources2 to "source 3",
                     mapped.sourcesBackup to "source backup"
-                ).forEach { (sources, sourceName) ->
-                    sources?.forEach {
+                ).apmap { (sources, sourceName) ->
+                    sources?.apmap {
                         it?.toExtractorLink(this, sourceName, extractorData)?.forEach(callback)
                     }
                 }
