@@ -147,6 +147,7 @@ class AnimeflvnetProvider:MainAPI() {
                 val videos = script.data().replace("\\/", "/")
                 fetchUrls(videos).map {
                     it.replace("https://embedsb.com/e/","https://watchsb.com/e/")
+                        .replace("https://ok.ru","http://ok.ru")
                 }.toList().apmap {
                     loadExtractor(it, data, callback)
                 }
