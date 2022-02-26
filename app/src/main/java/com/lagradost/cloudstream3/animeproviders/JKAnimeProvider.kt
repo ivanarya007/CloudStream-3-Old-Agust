@@ -7,6 +7,7 @@ import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.extractors.FEmbed
 import com.lagradost.cloudstream3.utils.AppUtils
 import com.lagradost.cloudstream3.utils.AppUtils.parseJson
+import com.lagradost.cloudstream3.utils.AppUtils.toJson
 import com.lagradost.cloudstream3.utils.ExtractorLink
 import com.lagradost.cloudstream3.utils.extractorApis
 import com.lagradost.cloudstream3.utils.loadExtractor
@@ -94,11 +95,10 @@ class JKAnimeProvider : MainAPI() {
         return ArrayList(search)
     }
 
-    data class Jkanimeeps (
-        @JsonProperty("number") val number: String,
-        @JsonProperty("title") val title: String,
-        @JsonProperty("image") val image: String,
-        @JsonProperty("timestamp") val timestamp: String
+
+
+    data class Numberep (
+        @JsonProperty("epnums") val epnums: List<String>
     )
 
     override suspend fun load(url: String): LoadResponse {
@@ -117,13 +117,19 @@ class JKAnimeProvider : MainAPI() {
         val animeeps = "https://jkanime.net/ajax/last_episode/$animeID/"
         val jsoneps = app.get(animeeps).text
         val json = jsoneps.substringAfter("{\"number\":\"").substringBefore("\",\"title\"").toInt()
-        val test =  (1..json).toRange()
-        val epi = listOf( AnimeEpisode(
-            "$url$test",
-        ))
+        val test =  (1..json).map { "{\"epnums\":[\""+it+"\"]}" }.toList().toString()
+        val jsontest = parseJson<Numberep>(test)
+        val subEpisodes = ArrayList<AnimeEpisode>()
+        println(jsontest.epnums)
+
+        val epi = subEpisodes.add(
+            AnimeEpisode(
+            "$url${jsontest.epnums}"
+        )
+        )
         return newAnimeLoadResponse(title, url, getType(type)) {
             posterUrl = poster
-            addEpisodes(DubStatus.Subbed, epi)
+            addEpisodes(DubStatus.Subbed, subEpisodes)
             showStatus = status
             plot = description
             tags = genres

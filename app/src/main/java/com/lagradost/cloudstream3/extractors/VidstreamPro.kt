@@ -7,7 +7,12 @@ import com.lagradost.cloudstream3.app
 import com.lagradost.cloudstream3.mapper
 import com.lagradost.cloudstream3.utils.*
 
-class VidstreamPro : ExtractorApi() {
+class Vizcloud: VidstreamPro() {
+    override val mainUrl: String = "https://vizcloud2.ru"
+}
+
+//vizcloud2.ru.
+open class VidstreamPro : ExtractorApi() {
     override val name = "Vidstream"
     override val mainUrl = "https://vidstream.pro"
     override val requiresReferer = false

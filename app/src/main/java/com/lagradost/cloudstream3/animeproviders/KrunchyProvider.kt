@@ -374,6 +374,8 @@ class KrunchyProvider : MainAPI() {
                     SubtitleFile(langclean, it.url)
                 )
             }
+
+            println(json)
             return true
         }
         return false

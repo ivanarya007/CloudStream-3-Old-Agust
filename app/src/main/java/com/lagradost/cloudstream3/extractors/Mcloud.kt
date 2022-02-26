@@ -27,7 +27,7 @@ open class Mcloud : ExtractorApi() {
         "Pragma" to "no-cache",
         "Cache-Control" to "no-cache",)
     override suspend fun getUrl(url: String, referer: String?): List<ExtractorLink>? {
-        val link = url.replace("$mainUrl/e/","$mainUrl/info/")
+        val link = url.replace(Regex("$mainUrl/e/|$mainUrl/embed"),"$mainUrl/info/")
         val response = app.get(link, headers = headers).text
 
         data class Sources (

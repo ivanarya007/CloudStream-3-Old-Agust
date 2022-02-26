@@ -77,6 +77,7 @@ object APIHolder {
         VfSerieProvider(),
         VidEmbedProvider(),
         VMoveeProvider(),
+      //  JKAnimeProvider(), //not fully implemented
         WatchAsianProvider(),
         WatchCartoonOnlineProvider(),
         WcoProvider(),
