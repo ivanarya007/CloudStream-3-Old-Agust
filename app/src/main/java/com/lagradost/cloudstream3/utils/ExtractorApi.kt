@@ -11,7 +11,7 @@ import org.jsoup.Jsoup
 
 data class ExtractorLink(
     val source: String,
-    var name: String,
+    val name: String,
     override val url: String,
     override val referer: String,
     val quality: Int,
@@ -46,8 +46,6 @@ data class ExtractorSubtitleLink(
 
 enum class Qualities(var value: Int) {
     Unknown(0),
-    P144(-4), //144p
-    P240(-3), //240p
     P360(-2), // 360p
     P480(-1), // 480p
     P720(1), // 720p
@@ -66,14 +64,6 @@ fun getQualityFromName(qualityName: String): Int {
         "2160" -> Qualities.P2160
         "4k" -> Qualities.P2160
         "4K" -> Qualities.P2160
-        "MOBILE" -> Qualities.P144 //Okru
-        "LOWEST" -> Qualities.P240 //Okru
-        "LOW" -> Qualities.P360 //Okru
-        "SD" -> Qualities.P480 //Okru
-        "HD" -> Qualities.P720 //Okru
-        "FULL" -> Qualities.P1080 //Okru
-        "QUAD" -> Qualities.P1440 //Okru
-        "ULTRA" -> Qualities.P2160 //Okru
         else -> Qualities.Unknown
     }.value
 }
@@ -103,12 +93,12 @@ suspend fun loadExtractor(url: String, referer: String? = null, callback: (Extra
 
 val extractorApis: Array<ExtractorApi> = arrayOf(
     //AllProvider(),
-    VidstreamPro(),
-    Vizcloud(),
+    WcoStream(),
+    Vidstreamz(),
     Mp4Upload(),
     StreamTape(),
     MixDrop(),
-    MixDrop1(),
+    Mcloud(),
     XStreamCdn(),
     StreamSB(),
     StreamSB1(),
@@ -119,41 +109,19 @@ val extractorApis: Array<ExtractorApi> = arrayOf(
     StreamSB6(),
     StreamSB7(),
     StreamSB8(),
+    StreamSB9(),
     Streamhub(),
 
-    Tomatomatela(),
-    Cinestart(),
-
-    Solidfiles(),
-    Solidfiles1(),
-
-    Sendvid(),
-    Sendvid1(),
-
     FEmbed(),
-    Femax20(),
     FeHD(),
     Fplayer(),
-    Suzihaza(),
-    // WatchSB(),
-    // Watchsb1(),
-    // Watchsb2(),
-    // Watchsb3(),
-    //  Watchsb4(),
+  //  WatchSB(), 'cause StreamSB.kt works
     Uqload(),
     Uqload1(),
     Evoload(),
     Evoload1(),
     VoeExtractor(),
-    // UpstreamExtractor(), deactivated cause doesnt work
-
-    Jawcloud(),
-
-
-    OkRu(),
-
-    Videobin(),
-    Videobin1(),
+   // UpstreamExtractor(), GenericM3U8.kt works
 
     Tomatomatela(),
     Cinestart(),
@@ -167,14 +135,16 @@ val extractorApis: Array<ExtractorApi> = arrayOf(
 
     AsianLoad(),
 
-    YourUpload(),
-    Mcloud(),
-
-    Genericm3u8Extractor(),
     ZplayerV2(),
-    Zplayer(),
+    GenericM3U8(),
+    Jawcloud(),
 
-    )
+  // StreamSB.kt works
+  //  SBPlay(),
+  //  SBPlay1(),
+  //  SBPlay2(),
+
+)
 
 fun getExtractorApiFromName(name: String): ExtractorApi {
     for (api in extractorApis) {
