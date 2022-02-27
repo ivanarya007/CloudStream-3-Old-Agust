@@ -375,7 +375,6 @@ class KrunchyProvider : MainAPI() {
                 )
             }
 
-            println(json)
             return true
         }
         return false

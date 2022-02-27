@@ -31,60 +31,65 @@ object APIHolder {
     private const val defProvider = 0
 
     val apis = arrayListOf(
-        PelisplusProvider(),
-        PelisplusHDProvider(),
-        PeliSmartProvider(),
-        GogoanimeProvider(),
+// HenaojaraProvider(), removed due to scraping providers that are already implemented
+        AkwamProvider(),
         AllAnimeProvider(),
         AnimekisaProvider(),
-        //ShiroProvider(), // v2 fucked me
-        AnimeFlickProvider(),
-        AnimeflvnetProvider(),
-
-        TenshiProvider(),
-        WcoProvider(),
-        // MeloMovieProvider(), // Captcha for links
-        DubbedAnimeProvider(),
-        DoramasYTProvider(),
-        CinecalidadProvider(),
-        CuevanaProvider(),
-        EntrepeliculasyseriesProvider(),
-        PelisflixProvider(),
-        SeriesflixProvider(),
-        IHaveNoTvProvider(), // Documentaries provider
-        //LookMovieProvider(), // RECAPTCHA (Please allow up to 5 seconds...)
-        VMoveeProvider(),
-        WatchCartoonOnlineProvider(),
         AllMoviesForYouProvider(),
-
+        AnimefenixProvider(),
+        AnimeFlickProvider(),
+        AnimeflvIOProvider(),
+        AnimeflvnetProvider(),
+        AnimeIDProvider(),
+        AnimeonlineProvider(),
+        AnimePaheProvider(),
+        AsianLoadProvider(),
+        CinecalidadProvider(),
+        CuevanathreeProvider(),
+        DoramasYTProvider(),
+        DramaSeeProvider(),
+        DubbedAnimeProvider(),
+        ElifilmsProvider(),
+        EntrepeliculasyseriesProvider(),
+        EstrenosDoramasProvider(),
+        FilmanProvider(),
+        FmoviesProvider(), //Sflix mirror
+        FrenchStreamProvider(),
+        GogoanimeProvider(),
+        IHaveNoTvProvider(), // Documentaries provider
+        KdramaHoodProvider(),
+        KrunchyProvider(),
         MonoschinosProvider(),
-
-        VidEmbedProvider(),
+        MundoDonghuaProvider(),
+        NineAnimeProvider(),
+        PelisflixProvider(),
+        PeliSmartProvider(),
+        PelisplusHDProvider(),
+        PelisplusSOProvider(),
+        PinoyHDXyzProvider(),
+        PinoyMoviePediaProvider(),
+        PinoyMoviesEsProvider(),
+        SeriesflixProvider(),
+        SflixProvider("https://dopebox.to", "Dopebox"),
+        SflixProvider("https://sflix.to", "Sflix"),
+        BflixProvider("https://bflix.ru","Bflix"),
+        BflixProvider("https://fmovies.to","Fmovies.to"),
+        BflixProvider("https://sflix.pro","Sflix.pro"),
+        TenshiProvider(),
+        TrailersTwoProvider(),
         VfFilmProvider(),
         VfSerieProvider(),
-        FrenchStreamProvider(),
-
-        AsianLoadProvider(),
-
-        SflixProvider("https://sflix.to", "Sflix"),
-        SflixProvider("https://dopebox.to", "Dopebox"),
-        SflixProvider("https://solarmovie.pe", "Solarmovie"),
-
-        //TmdbProvider(),
-
-        FilmanProvider(),
-
-        ZoroProvider(),
-        PinoyMoviePediaProvider(),
-        PinoyHDXyzProvider(),
-        PinoyMoviesEsProvider(),
-        TrailersTwoProvider(),
-        DramaSeeProvider(),
+        VidEmbedProvider(),
+        VMoveeProvider(),
+        //  JKAnimeProvider(), //not fully implemented
         WatchAsianProvider(),
-        KdramaHoodProvider(),
-        AkwamProvider(),
-        AnimePaheProvider(),
-        NineAnimeProvider(),
+        WatchCartoonOnlineProvider(),
+        WcoProvider(),
+        YesMoviesProviders("https://hdtoday.tv", "HDToday"), //Sflix mirror
+        YesMoviesProviders("https://moviesjoy.to", "Moviesjoy"), //Sflix mirror
+        YesMoviesProviders("https://myflixertv.to", "MyFlixer"), //Sflix mirror
+        YesMoviesProviders("https://yesmovies.mn", "YesMovies"), //Sflix mirror
+        ZoroProvider(),
     )
 
     val restrictedApis = arrayListOf(
@@ -257,7 +262,7 @@ object APIHolder {
             allApis
         } else {
             // Filter API depending on preferred media type
-            val listEnumAnime = listOf(TvType.Anime, TvType.AnimeMovie, TvType.OVA)
+            val listEnumAnime = listOf(TvType.Anime, TvType.AnimeMovie, TvType.OVA, TvType.Donghua)
             val listEnumMovieTv = listOf(TvType.Movie, TvType.TvSeries, TvType.Cartoon)
             val mediaTypeList = if (currentPrefMedia == 1) listEnumMovieTv else listEnumAnime
 
@@ -296,6 +301,8 @@ abstract class MainAPI {
         TvType.Cartoon,
         TvType.Anime,
         TvType.OVA,
+        TvType.Mirror,
+        TvType.Donghua
     )
 
     open val vpnStatus = VPNStatus.None
@@ -475,6 +482,8 @@ enum class TvType {
     OVA,
     Torrent,
     Documentary,
+    Mirror,
+    Donghua,
 }
 
 // IN CASE OF FUTURE ANIME MOVIE OR SMTH
@@ -484,7 +493,7 @@ fun TvType.isMovieType(): Boolean {
 
 // returns if the type has an anime opening
 fun TvType.isAnimeOp(): Boolean {
-    return this == TvType.Anime || this == TvType.OVA
+    return this == TvType.Anime || this == TvType.OVA || this == TvType.Donghua
 }
 
 data class SubtitleFile(val lang: String, val url: String)
