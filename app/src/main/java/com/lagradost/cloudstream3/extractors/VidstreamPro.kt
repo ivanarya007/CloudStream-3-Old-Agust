@@ -52,10 +52,10 @@ open class VidstreamPro : ExtractorApi() {
         val sources = mutableListOf<ExtractorLink>()
 
         if (mapped.success) {
-            mapped.media.sources.forEach {
+            mapped.media.sources.apmap {
                 if (it.file.contains("m3u8")) {
                     hlsHelper.m3u8Generation(M3u8Helper.M3u8Stream(it.file, null), true)
-                        .forEach { stream ->
+                        .apmap { stream ->
                             val qualityString =
                                 if ((stream.quality ?: 0) == 0) "" else "${stream.quality}p"
                             sources.add(
