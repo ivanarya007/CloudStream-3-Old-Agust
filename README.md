@@ -73,6 +73,7 @@ It merely scrapes 3rd-party websites that are publicly accessable via any regula
 - [crunchyroll.com](http://www.crunchyroll.com) 
 - [monoschinos2.com](https://monoschinos2.com) 
 - [mundodonghua.com](https://www.mundodonghua.com) 
+- [9anime.center](https://9anime.center) 
 - [pelismart.com](https://pelismart.com) 
 - [pinoy-hd.xyz](https://www.pinoy-hd.xyz) 
 - [pinoymoviepedia.ru](https://pinoymoviepedia.ru) 
