@@ -98,7 +98,7 @@ class JKAnimeProvider : MainAPI() {
 
 
     data class Numberep (
-        @JsonProperty("epnums") val epnums: List<String>
+        @JsonProperty("epnums") val epnums: String
     )
 
     override suspend fun load(url: String): LoadResponse {
@@ -116,20 +116,18 @@ class JKAnimeProvider : MainAPI() {
         val animeID = doc.selectFirst("div.ml-2").attr("data-anime").toInt()
         val animeeps = "https://jkanime.net/ajax/last_episode/$animeID/"
         val jsoneps = app.get(animeeps).text
+        val episodes = ArrayList<AnimeEpisode>()
         val json = jsoneps.substringAfter("{\"number\":\"").substringBefore("\",\"title\"").toInt()
-        val test =  (1..json).map { "{\"epnums\":[\""+it+"\"]}" }.toList().toString()
-        val jsontest = parseJson<Numberep>(test)
-        val subEpisodes = ArrayList<AnimeEpisode>()
-        println(jsontest.epnums)
+        (1..json).map { it }.map {
+            val link = "$url$it"
+            episodes.add(AnimeEpisode(link))
+        }
 
-        val epi = subEpisodes.add(
-            AnimeEpisode(
-            "$url${jsontest.epnums}"
-        )
-        )
+
+
         return newAnimeLoadResponse(title, url, getType(type)) {
             posterUrl = poster
-            addEpisodes(DubStatus.Subbed, subEpisodes)
+            addEpisodes(DubStatus.Subbed, episodes)
             showStatus = status
             plot = description
             tags = genres
@@ -141,16 +139,15 @@ class JKAnimeProvider : MainAPI() {
         subtitleCallback: (SubtitleFile) -> Unit,
         callback: (ExtractorLink) -> Unit
     ): Boolean {
-        app.get(data).document.select("div.playother p").apmap {
-            val encodedurl = it.select("p").attr("data-player")
-            val urlDecoded = base64Decode(encodedurl)
-            val url = (urlDecoded).replace("https://monoschinos2.com/reproductor?url=", "")
-                .replace("https://repro.monoschinos2.com/aqua/sv?url=","")
-            for (extractor in extractorApis) {
-                if (url.startsWith(extractor.mainUrl)) {
-                    extractor.getSafeUrl(url, data)?.apmap {
-                        callback(it)
-                    }
+        app.get(data).document.select("script").apmap { script ->
+            if (script.data().contains("var video = []")) {
+                val videos = script.data().replace("\\/", "/")
+                fetchUrls(videos).map {
+                    it.replace("https://jkanime.net/jkfembed.php?u=","https://suzihaza.com/v/")
+                        .replace("https://jkanime.net/jkokru.php?u=","http://ok.ru/videoembed/")
+                        .replace("https://jkanime.net/jkvmixdrop.php?u=","https://mixdrop.co/e/")
+                }.toList().apmap {
+                    loadExtractor(it, data, callback)
                 }
             }
         }

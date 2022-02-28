@@ -85,6 +85,7 @@ object APIHolder {
         WatchAsianProvider(),
         WatchCartoonOnlineProvider(),
         WcoProvider(),
+        JKAnimeProvider(),
         YesMoviesProviders("https://hdtoday.tv", "HDToday"), //Sflix mirror
         YesMoviesProviders("https://moviesjoy.to", "Moviesjoy"), //Sflix mirror
         YesMoviesProviders("https://myflixertv.to", "MyFlixer"), //Sflix mirror
