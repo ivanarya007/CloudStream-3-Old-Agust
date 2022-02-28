@@ -338,7 +338,7 @@ class BflixProvider(providerUrl: String, providerName: String) : MainAPI() {
                         url, data, callback
                     )
                 }
-                //Apparently each server works, I haven't found any diference
+                //Apparently any server works, I haven't found any diference
                 val sublink = app.get("$mainUrl/ajax/episode/subtitles/${jsonservers.vidstream}").text
                 val jsonsub = parseJson<List<Subtitles>>(sublink)
                 jsonsub.forEach { subtitle ->

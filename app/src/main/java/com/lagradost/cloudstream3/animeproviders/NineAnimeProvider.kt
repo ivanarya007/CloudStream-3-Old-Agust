@@ -228,8 +228,8 @@ class NineAnimeProvider : MainAPI() {
         val tvType = if (infodoc.contains("Movie")) TvType.AnimeMovie else TvType.Anime
         val status =
             if (infodoc.contains("Completed")) ShowStatus.Completed
-        else if (infodoc.contains("Airing")) ShowStatus.Ongoing
-        else null
+            else if (infodoc.contains("Airing")) ShowStatus.Ongoing
+            else null
         val tags = doc.select("div.info .meta .col1 div:contains(Genre) a").map { it.text() }
         return newAnimeLoadResponse(title, url, tvType) {
             posterUrl = poster

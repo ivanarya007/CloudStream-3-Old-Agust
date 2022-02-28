@@ -14,6 +14,10 @@ class Vizcloud: VidstreamPro() {
 class Vidstreamz : VidstreamPro() {
     override val mainUrl: String = "https://vidstreamz.online"
 }
+class Vizcloud : WcoStream() {
+    override val mainUrl: String = "https://vizcloud2.ru"
+}
+
 
 
 open class VidstreamPro : ExtractorApi() {
