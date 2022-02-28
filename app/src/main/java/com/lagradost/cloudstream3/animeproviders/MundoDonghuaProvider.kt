@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.utils.*
+import com.lagradost.cloudstream3.utils.AppUtils.parseJson
+import com.lagradost.cloudstream3.utils.AppUtils.toJson
 import java.util.*
 import kotlin.collections.ArrayList
 
@@ -122,11 +124,16 @@ class MundoDonghuaProvider : MainAPI() {
             tags = genres
         }
     }
+    data class Protea (
+        @JsonProperty("source") val source: List<Source>,
+        @JsonProperty("poster") val poster: String
+    )
+
     data class Source (
-        @JsonProperty("file") val file: String,
-        @JsonProperty("label") val label: String,
-        @JsonProperty("type") val type: String,
-        @JsonProperty("default") val default: String
+        @JsonProperty("file") val file: List<String>,
+        @JsonProperty("label") val label: List<String>,
+        @JsonProperty("type") val type: List<String>,
+        @JsonProperty("default") val default: List<String>
     )
 
 
@@ -137,94 +144,61 @@ class MundoDonghuaProvider : MainAPI() {
         callback: (ExtractorLink) -> Unit
     ): Boolean {
         app.get(data).document.select("script").apmap { script ->
-            if (script.data().contains("|fembed_play|")) {
-               val fembed = script.data().substringAfter("append|src|https|")
-                   .substringBefore("|width|height|").replace("com|","")
-                   .replace("diasfem|this|","").replace("fembed_tab|","")
-                   .replace("|","-")
-                val fembed2 = script.data().substringAfter("|nemonic|addClass|view_counter|html5|")
-                    .substringBefore("width|height|frameborder")
-                    .replace("|","-")
-
-                val fembed3 = script.data().substringAfter("|nemonic|addClass|view_counter|html5|")
-                    .substringBefore("|width|height|")
-
-                val fembed4 = script.data().substringAfter("|iframe|var|false|femplay|diasfem|this||remove|fembed_play|append|src|https|fembed_tab|com|")
-                    .substringBefore("|width|height|frameborder|")
-
-                val fembed5 = script.data().substringAfter("https|console|allowfullscreen|once|frameborder|height||width|")
-                    .substringBefore("|split|com|").split('|')
-               val link = "https://www.fembed.com/v/${fembed}"
-               val link2 = "https://www.fembed.com/v/${fembed2}"
-               val link3 = "https://www.fembed.com/v/${fembed3}"
-               val link4 = "https://www.fembed.com/v/${fembed4}"
-               val link5 = "https://www.fembed.com/v/${fembed5.asReversed()}".replace("[","").replace("]","")
-                   .replace(", ","-")
-               val test = listOf(link, link2, link3, link4, link5)
-                for (url in test){
-                    for (extractor in extractorApis) {
-                        if (url.startsWith(extractor.mainUrl)) {
-                            extractor.getSafeUrl(url, data)?.apmap {
-                                callback(it)
+            if (script.data().contains("eval(function(p,a,c,k,e,d)")) {
+                val packedRegex = Regex("eval\\(function\\(p,a,c,k,e,.*\\)\\)")
+                packedRegex.findAll(script.data()).map {
+                    it.value
+                }.toList().apmap {
+                    val unpack = getAndUnpack(it).replace("diasfem","suzihaza")
+                    fetchUrls(unpack).apmap { url ->
+                        loadExtractor(url, data, callback)
+                    }
+                    if (unpack.contains("protea_tab")) {
+                        val protearegex = Regex("(protea_tab.*slug.*,type)")
+                        val slug = protearegex.findAll(unpack).map {
+                            it.value.replace(Regex("(protea_tab.*slug\":\")"),"").replace("\"},type","")
+                        }.first()
+                        val requestlink = "https://www.mundodonghua.com/api_donghua.php?slug=$slug"
+                        val response = app.get(requestlink, headers =
+                        mapOf("Host" to "www.mundodonghua.com",
+                            "User-Agent" to "Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0",
+                            "Accept" to "*/*",
+                            "Accept-Language" to "en-US,en;q=0.5",
+                            "Referer" to data,
+                            "X-Requested-With" to "XMLHttpRequest",
+                            "DNT" to "1",
+                            "Connection" to "keep-alive",
+                            "Sec-Fetch-Dest" to "empty",
+                            "Sec-Fetch-Mode" to "no-cors",
+                            "Sec-Fetch-Site" to "same-origin",
+                            "TE" to "trailers",
+                            "Pragma" to "no-cache",
+                            "Cache-Control" to "no-cache",)
+                        ).text.replace("\\/", "/").replace("=","%3D")
+                        val nemonicregex = Regex("www\\.nemonicplayer\\.xyz\\/player\\/play\\/[a-zA-Z0-9]{0,8}[a-zA-Z0-9_-]+.*label")
+                        nemonicregex.findAll(response).map {
+                            it.value.replace("\",\"label","")
+                                .replace("\",\"type\":\"video/mp4\",\"default\":\"true\"},{\"file\":\"","")
+                                .replace(Regex("\":\"(\\d+)p\""),"")
+                                .replace(",\"type\":\"video/mp4\"},{\"file\":\"","")
+                                .replace(Regex("(\\d+)p"),"")
+                                .replace("\":\"","")
+                        }.toList().apmap { nemonicurl ->
+                            nemonicurl.split("//").apmap { urlext ->
+                                    callback(
+                                        ExtractorLink(
+                                            "Protea",
+                                            "Protea",
+                                            "https://"+urlext,
+                                            "",
+                                            Qualities.Unknown.value,
+                                            isM3u8 = false
+                                        )
+                                    )
                             }
                         }
                     }
                 }
-            }
-            if (script.data().contains("|asura_player|jwplayer|")) {
-               val asura = script.data().substringAfter("|thumbnail|image|hls|type|").substringBefore("|replace|file|sources|")
-               val extractorLink = "https://www.mdplayer.xyz/nemonicplayer/redirector.php?slug=$asura"
-               val testlink = app.get(extractorLink).text
-               if (testlink.contains("#EXTM3U"))
-                   M3u8Helper().m3u8Generation(
-                       M3u8Helper.M3u8Stream(
-                           extractorLink,
-                           headers = app.get(data).headers.toMap()
-                       ), true
-                   )
-                       .map { stream ->
-                           val qualityString = if ((stream.quality ?: 0) == 0) "" else "${stream.quality}p"
-                           callback( ExtractorLink(
-                               "Asura",
-                               "Asura $qualityString",
-                               stream.streamUrl,
-                               extractorLink,
-                               getQualityFromName(stream.quality.toString()),
-                               true
-                           ))
-                       }
-            }
-            if (script.data().contains("|protea_tab|jwplayer|")) {
-                val protea = script.data().substringAfter("|protea_tab|jwplayer|").substringBefore("|image|")
-                val requestlink = "https://www.mundodonghua.com/api_donghua.php?slug=$protea"
-                val test = app.get(requestlink, headers =
-                mapOf("Host" to "www.mundodonghua.com",
-                    "User-Agent" to "Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0",
-                    "Accept" to "*/*",
-                    "Accept-Language" to "en-US,en;q=0.5",
-                    "Referer" to data,
-                    "X-Requested-With" to "XMLHttpRequest",
-                    "DNT" to "1",
-                    "Connection" to "keep-alive",
-                    "Sec-Fetch-Dest" to "empty",
-                    "Sec-Fetch-Mode" to "no-cors",
-                    "Sec-Fetch-Site" to "same-origin",
-                    "TE" to "trailers",
-                    "Pragma" to "no-cache",
-                    "Cache-Control" to "no-cache",)
-                    ).text
-                val test1 = test.substringAfter("{\"source\":[{\"file\":\"").substringBefore("\",\"label\"")
-                    .replace("\\/", "/")
-                callback(
-                    ExtractorLink(
-                        "Protea",
-                        "Protea",
-                        "https:"+test1,
-                        "",
-                        Qualities.Unknown.value,
-                        isM3u8 = false
-                    )
-                )
             }
         }
         return true

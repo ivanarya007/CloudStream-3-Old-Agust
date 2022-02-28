@@ -8,13 +8,6 @@ import com.lagradost.cloudstream3.utils.ExtractorLink
 import com.lagradost.cloudstream3.utils.M3u8Helper
 import com.lagradost.cloudstream3.utils.getQualityFromName
 
-
-
-class ZplayerV2 : Genericm3u8Extractor() {
-    override val name = "Zplayer V2"
-    override val mainUrl = "https://v2.zplayer.live"
-}
-
 open class Genericm3u8Extractor : ExtractorApi() {
     override val name = "Upstream"
     override val mainUrl = "https://upstream.to"
