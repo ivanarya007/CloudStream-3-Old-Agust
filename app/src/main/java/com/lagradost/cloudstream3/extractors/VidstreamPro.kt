@@ -66,7 +66,7 @@ open class VidstreamPro : ExtractorApi() {
                             link720,
                             link480,
                             link360,
-                            linkauto).forEach { serverurl ->
+                            linkauto).apmap { serverurl ->
                             val quality = if (serverurl.contains("H4")) "1080p"
                             else if (serverurl.contains("H3")) "720p"
                             else if (serverurl.contains("H2")) "480p"
