@@ -7,16 +7,15 @@ import com.lagradost.cloudstream3.app
 import com.lagradost.cloudstream3.mapper
 import com.lagradost.cloudstream3.utils.*
 
-
-class Vidstreamz : VidstreamPro() {
+class Vidstreamz : WcoStream() {
     override val mainUrl: String = "https://vidstreamz.online"
 }
-class Vizcloud : VidstreamPro() {
+class Vizcloud : WcoStream() {
     override val mainUrl: String = "https://vizcloud2.ru"
 }
 
 
-open class VidstreamPro : ExtractorApi() {
+open class WcoStream : ExtractorApi() {
     override val name = "VidStream" //Cause works for animekisa and wco
     override val mainUrl = "https://vidstream.pro"
     override val requiresReferer = false
@@ -52,7 +51,7 @@ open class VidstreamPro : ExtractorApi() {
         val sources = mutableListOf<ExtractorLink>()
 
         if (mapped.success) {
-            mapped.media.sources.apmap {
+            mapped.media.sources.forEach {
                 if (mainUrl == "https://vizcloud2.ru") {
                     if (it.file.contains("vizcloud2.ru")) {
                         //Had to do this thing 'cause "list.m3u8#.mp4" gives 404 error so no quality is added
@@ -82,17 +81,16 @@ open class VidstreamPro : ExtractorApi() {
                                         url,
                                         getQualityFromName(quality),
                                         true,
-                                        headers = mapOf("Referer" to url)
                                     )
                                 )
                             }
                         }
                     }
                 }
-                if (mainUrl == "https://vidstream.pro" ||  mainUrl == "https://vidstreamz.online") {
+                if (mainUrl == "https://vidstream.pro" || mainUrl == "https://vidstreamz.online") {
                 if (it.file.contains("m3u8")) {
                     hlsHelper.m3u8Generation(M3u8Helper.M3u8Stream(it.file, null), true)
-                        .apmap { stream ->
+                        .forEach { stream ->
                             val qualityString =
                                 if ((stream.quality ?: 0) == 0) "" else "${stream.quality}p"
                             sources.add(
@@ -118,7 +116,7 @@ open class VidstreamPro : ExtractorApi() {
                         )
                     )
                 }
-            }
+                }
             }
         }
         return sources
