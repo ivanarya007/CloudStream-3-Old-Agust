@@ -54,22 +54,37 @@ open class VidstreamPro : ExtractorApi() {
         if (mapped.success) {
             mapped.media.sources.apmap {
                 if (mainUrl == "https://vizcloud2.ru") {
-                    if (it.file.contains("vizcloud2.ru"))
-                        hlsHelper.m3u8Generation(M3u8Helper.M3u8Stream(it.file.replace("#.mp4",""), null), true)
-                            .apmap { stream ->
-                                val qualityString =
-                                    if ((stream.quality ?: 0) == 0) "" else "${stream.quality}p"
-                                sources.add(
-                                    ExtractorLink(
-                                        name,
-                                        "$name $qualityString",
-                                        stream.streamUrl,
-                                        "",
-                                        getQualityFromName(stream.quality.toString()),
-                                        true
-                                    )
+                    if (it.file.contains("vizcloud2.ru")) {
+                        //Had to do this thing 'cause "list.m3u8#.mp4" gives 404 error
+                        val link1080 = it.file.replace("list.m3u8#.mp4","H4/v.m3u8")
+                        val link720 = it.file.replace("list.m3u8#.mp4","H3/v.m3u8")
+                        val link480 = it.file.replace("list.m3u8#.mp4","H2/v.m3u8")
+                        val link360 = it.file.replace("list.m3u8#.mp4","H1/v.m3u8")
+                        val linkauto = it.file.replace("#.mp4","")
+                        listOf(
+                            link1080,
+                            link720,
+                            link480,
+                            link360,
+                            linkauto).forEach { serverurl ->
+                            val quality = if (serverurl.contains("H4")) "1080p"
+                            else if (serverurl.contains("H3")) "720p"
+                            else if (serverurl.contains("H2")) "480p"
+                            else if (serverurl.contains("H1")) "360p"
+                            else "Auto"
+                            sources.add(
+                                ExtractorLink(
+                                    "VidStream",
+                                    "VidStream $quality",
+                                    serverurl,
+                                    "",
+                                    getQualityFromName(quality),
+                                    true,
+                                    headers = mapOf("Referer" to url)
                                 )
-                            }
+                            )
+                        }
+                    }
                 }
                 if (mainUrl == "https://vidstream.pro" ||  mainUrl == "https://vidstreamz.online") {
                 if (it.file.contains("m3u8")) {
