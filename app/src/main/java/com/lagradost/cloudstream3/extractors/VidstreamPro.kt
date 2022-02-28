@@ -7,17 +7,13 @@ import com.lagradost.cloudstream3.app
 import com.lagradost.cloudstream3.mapper
 import com.lagradost.cloudstream3.utils.*
 
-class Vizcloud: VidstreamPro() {
-    override val mainUrl: String = "https://vizcloud2.ru"
-}
 
 class Vidstreamz : VidstreamPro() {
     override val mainUrl: String = "https://vidstreamz.online"
 }
-class Vizcloud : WcoStream() {
+class Vizcloud : VidstreamPro() {
     override val mainUrl: String = "https://vizcloud2.ru"
 }
-
 
 
 open class VidstreamPro : ExtractorApi() {
@@ -57,6 +53,25 @@ open class VidstreamPro : ExtractorApi() {
 
         if (mapped.success) {
             mapped.media.sources.apmap {
+                if (mainUrl == "https://vizcloud2.ru") {
+                    if (it.file.contains("vizcloud2.ru"))
+                        hlsHelper.m3u8Generation(M3u8Helper.M3u8Stream(it.file.replace("#.mp4",""), null), true)
+                            .apmap { stream ->
+                                val qualityString =
+                                    if ((stream.quality ?: 0) == 0) "" else "${stream.quality}p"
+                                sources.add(
+                                    ExtractorLink(
+                                        name,
+                                        "$name $qualityString",
+                                        stream.streamUrl,
+                                        "",
+                                        getQualityFromName(stream.quality.toString()),
+                                        true
+                                    )
+                                )
+                            }
+                }
+                if (mainUrl == "https://vidstream.pro" ||  mainUrl == "https://vidstreamz.online") {
                 if (it.file.contains("m3u8")) {
                     hlsHelper.m3u8Generation(M3u8Helper.M3u8Stream(it.file, null), true)
                         .apmap { stream ->
@@ -85,6 +100,7 @@ open class VidstreamPro : ExtractorApi() {
                         )
                     )
                 }
+            }
             }
         }
         return sources
