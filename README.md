@@ -87,6 +87,7 @@ It merely scrapes 3rd-party websites that are publicly accessable via any regula
 - [watchasian.sh](https://watchasian.sh) 
 - [wcostream.com](https://www.wcostream.com) 
 - [wcostream.cc](https://wcostream.cc) 
+- [jkanime.net](https://jkanime.net) 
 - [zoro.to](https://zoro.to) 
 - [asiaflix.app](https://asiaflix.app) 
 <!--SITE LIST END-->
