@@ -88,6 +88,6 @@ It merely scrapes 3rd-party websites that are publicly accessable via any regula
 - [wcostream.cc](https://wcostream.cc) 
 - [jkanime.net](https://jkanime.net) 
 - [zoro.to](https://zoro.to) 
-- [asiaflix.app](https://asiaflix.app) 
 - [fmovies.app](https://fmovies.app) 
+- [asiaflix.app](https://asiaflix.app) 
 <!--SITE LIST END-->
