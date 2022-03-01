@@ -43,7 +43,7 @@ class BflixProvider(providerUrl: String, providerName: String) : MainAPI() {
                     null,
                 )
             }
-            items.add(HomePageList(if (element.isBlank()) "" else name, test))
+            items.add(HomePageList(name, test))
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -251,10 +251,14 @@ class BflixProvider(providerUrl: String, providerName: String) : MainAPI() {
             ?.times(1000)?.toInt()
         val durationdoc = soup.selectFirst("div.info div.meta").toString()
         val durationregex = Regex("((\\d+) min)")
+        val yearegex = Regex("<span>(\\d+)<\\/span>")
         val duration = if (durationdoc.contains("na min")) null
          else durationregex.findAll(durationdoc).map {
             it.value.replace(" min","")
         }.first().toIntOrNull()
+        val year = if (mainUrl == "https://bflix.ru") { yearegex.findAll(durationdoc).map {
+            it.value.replace(Regex("<span>|<\\/span>"),"")
+        }.first().toIntOrNull() } else null
         return when (tvType) {
             TvType.TvSeries -> {
                 TvSeriesLoadResponse(
@@ -264,14 +268,14 @@ class BflixProvider(providerUrl: String, providerName: String) : MainAPI() {
                     tvType,
                     episodes!!,
                     poster,
-                    null,
+                    year,
                     description,
                     null,
                     null,
                     rating,
                     tags,
                     recommendations = recommendations,
-                    duration = duration
+                    duration = duration,
                 )
             }
             TvType.Movie -> {
@@ -282,7 +286,7 @@ class BflixProvider(providerUrl: String, providerName: String) : MainAPI() {
                     tvType,
                     url,
                     poster,
-                    null,
+                    year,
                     description,
                     null,
                     rating,
