@@ -20,33 +20,32 @@ class BflixProvider(providerUrl: String, providerName: String) : MainAPI() {
 
     override suspend fun getMainPage(): HomePageResponse {
         val items = ArrayList<HomePageList>()
-        val urls = listOf(
-            Pair("$mainUrl/home", "Movies"),
-            Pair("$mainUrl/tv-series", "Series"),
-            Pair("$mainUrl/top-imdb", "Top"),
+        val soup = app.get("$mainUrl/home").document
+        val testa = listOf(
+            Pair("Movies", "div.tab-content[data-name=movies] div.filmlist div.item"),
+            Pair("Shows", "div.tab-content[data-name=shows] div.filmlist div.item"),
+            Pair("Trending", "div.tab-content[data-name=trending] div.filmlist div.item"),
+            Pair("Latest Movies", "div.container.mt-5 section.bl:contains(Latest Movies) div.filmlist div.item"),
+            Pair("Latest TV-Series", "div.container.mt-5 section.bl:contains(Latest TV-Series) div.filmlist div.item"),
         )
-        for (i in urls) {
-            try {
-                val response = app.get(i.first)
-                val soup = Jsoup.parse(response.text)
-                val home = soup.select(".filmlist div.item").map {
-                    val title = it.selectFirst("h3 a").text()
-                    val link = fixUrl(it.selectFirst("a").attr("href"))
-                    TvSeriesSearchResponse(
-                        title,
-                        link,
-                        this.name,
-                        if (link.contains("/movie/")) TvType.Movie else TvType.TvSeries,
-                        it.selectFirst("a.poster img").attr("src"),
-                        null,
-                        null,
-                    )
-                }
-
-                items.add(HomePageList(i.second, home))
-            } catch (e: Exception) {
-                e.printStackTrace()
+        for ((name, element) in testa) try {
+            val test = soup.select(element).map {
+                val title = it.selectFirst("h3 a").text()
+                val link = fixUrl(it.selectFirst("a").attr("href"))
+               // val quality = it.selectFirst("div.quality").text()
+                TvSeriesSearchResponse(
+                    title,
+                    link,
+                    this.name,
+                    if (link.contains("/movie/")) TvType.Movie else TvType.TvSeries,
+                    it.selectFirst("a.poster img").attr("src"),
+                    null,
+                    null,
+                )
             }
+            items.add(HomePageList(name, test))
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
 
         if (items.size <= 0) throw ErrorLoadingException()

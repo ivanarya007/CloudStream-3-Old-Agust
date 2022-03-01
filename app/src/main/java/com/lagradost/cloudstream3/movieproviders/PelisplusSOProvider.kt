@@ -67,25 +67,20 @@ class PelisplusSOProvider:MainAPI() {
     }
 
     override suspend fun search(query: String): List<SearchResponse> {
-
+        val url = "https://www1.pelisplus.so/search.html?keyword=${query}"
         val headers = mapOf(
-            "Host" to "pelisplus.so",
-            "User-Agent" to USER_AGENT,
+            "Host" to "www1.pelisplus.so",
+            "User-Agent" to "Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0",
             "Accept" to "*/*",
             "Accept-Language" to "en-US,en;q=0.5",
-            "Referer" to "https://pelisplus.so/",
             "X-Requested-With" to "XMLHttpRequest",
             "DNT" to "1",
             "Connection" to "keep-alive",
-            "Sec-Fetch-Dest" to "document",
-            "Sec-Fetch-Mode" to "navigate",
+            "Referer" to url,
+            "Sec-Fetch-Dest" to "empty",
+            "Sec-Fetch-Mode" to "cors",
             "Sec-Fetch-Site" to "same-origin",
-            "TE" to "trailers",
-            "Pragma" to "no-cache",
-            "Cache-Control" to "no-cache",
-            "Upgrade-Insecure-Requests" to "1"
         )
-        val url = "https://pelisplus.so/search.html?keyword=${query}"
         val html = app.get(
             url,
             headers = headers
@@ -131,18 +126,18 @@ class PelisplusSOProvider:MainAPI() {
         val poster: String? = soup.selectFirst(".poster img").attr("src")
         val episodes = soup.select(".item-season-episodes a").map { li ->
             val epTitle = li.selectFirst("a").text()
-            val epThumb = null
             val href = fixUrl(li.selectFirst("a").attr("href"))
-            val epDate = null
-            val epNum = null
-
+            val seasonid = href.replace(Regex("($mainUrl\\/.*\\/temporada-|capitulo-)"),"").replace("/","-").let { str ->
+                str.split("-").mapNotNull { subStr -> subStr.toIntOrNull() }
+            }
+            val isValid = seasonid.size == 2
+            val episode = if (isValid) seasonid.getOrNull(1) else null
+            val season = if (isValid) seasonid.getOrNull(0) else null
             TvSeriesEpisode(
                 epTitle,
-                null,
-                epNum,
+                season,
+                episode,
                 href,
-                epThumb,
-                epDate
             )
         }.reversed()
 
@@ -199,7 +194,7 @@ class PelisplusSOProvider:MainAPI() {
         subtitleCallback: (SubtitleFile) -> Unit,
         callback: (ExtractorLink) -> Unit
     ): Boolean {
-        app.get(data).document.select(".server-item-1 li.tab-video").apmap {
+       app.get(data).document.select(".server-item-1 li.tab-video").apmap {
             val url = it.attr("data-video")
             for (extractor in extractorApis) {
                 if (url.startsWith(extractor.mainUrl)) {

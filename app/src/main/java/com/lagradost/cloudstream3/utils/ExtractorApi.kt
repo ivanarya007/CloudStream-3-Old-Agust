@@ -146,7 +146,8 @@ val extractorApis: Array<ExtractorApi> = arrayOf(
     Evoload(),
     Evoload1(),
     VoeExtractor(),
-    // UpstreamExtractor(), deactivated cause doesnt work
+  //  UpstreamExtractor(),
+    Upstream(),
 
     Jawcloud(),
 
@@ -171,7 +172,7 @@ val extractorApis: Array<ExtractorApi> = arrayOf(
     YourUpload(),
     Mcloud(),
 
-    Genericm3u8Extractor(),
+   // Genericm3u8Extractor(),
     ZplayerV2(),
     Zplayer(),
     )

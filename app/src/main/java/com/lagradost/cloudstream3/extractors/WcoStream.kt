@@ -51,7 +51,7 @@ open class WcoStream : ExtractorApi() {
         val sources = mutableListOf<ExtractorLink>()
 
         if (mapped.success) {
-            mapped.media.sources.forEach {
+            mapped.media.sources.apmap {
                 if (mainUrl == "https://vizcloud2.ru") {
                     if (it.file.contains("vizcloud2.ru")) {
                         //Had to do this thing 'cause "list.m3u8#.mp4" gives 404 error so no quality is added
@@ -89,33 +89,36 @@ open class WcoStream : ExtractorApi() {
                 }
                 if (mainUrl == "https://vidstream.pro" || mainUrl == "https://vidstreamz.online") {
                 if (it.file.contains("m3u8")) {
-                    hlsHelper.m3u8Generation(M3u8Helper.M3u8Stream(it.file, null), true)
-                        .apmap { stream ->
-                            val qualityString =
-                                if ((stream.quality ?: 0) == 0) "" else "${stream.quality}p"
-                            sources.add(
-                                ExtractorLink(
-                                    name,
-                                    "$name $qualityString",
-                                    stream.streamUrl,
-                                    "",
-                                    getQualityFromName(stream.quality.toString()),
-                                    true
+                    val testurl = app.get(it.file).text
+                    if (testurl.contains("EXTM3")) {
+                        hlsHelper.m3u8Generation(M3u8Helper.M3u8Stream(it.file, null), true)
+                            .apmap { stream ->
+                                val qualityString =
+                                    if ((stream.quality ?: 0) == 0) "" else "${stream.quality}p"
+                                sources.add(
+                                    ExtractorLink(
+                                        name,
+                                        "$name $qualityString",
+                                        stream.streamUrl,
+                                        "",
+                                        getQualityFromName(stream.quality.toString()),
+                                        true
+                                    )
                                 )
-                            )
+                            }
                         }
-                } else {
-                    sources.add(
-                        ExtractorLink(
-                            name,
-                            name + if (it.label != null) " - ${it.label}" else "",
-                            it.file,
-                            "",
-                            Qualities.P720.value,
-                            false
+                    } else {
+                        sources.add(
+                            ExtractorLink(
+                                name,
+                                name + if (it.label != null) " - ${it.label}" else "",
+                                it.file,
+                                "",
+                                Qualities.P720.value,
+                                false
+                            )
                         )
-                    )
-                }
+                    }
                 }
             }
         }

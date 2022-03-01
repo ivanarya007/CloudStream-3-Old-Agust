@@ -104,10 +104,17 @@ class PelisplusHDProvider:MainAPI() {
         val episodes = soup.select("div.tab-pane .btn").map { li ->
             val href = li.selectFirst("a").attr("href")
             val name = li.selectFirst(".btn-primary.btn-block").text()
+            val seasonid = href.replace("/capitulo/","-")
+                .replace(Regex("$mainUrl/.*/.*/temporada/"),"").let { str ->
+                    str.split("-").mapNotNull { subStr -> subStr.toIntOrNull() }
+                }
+            val isValid = seasonid.size == 2
+            val episode = if (isValid) seasonid.getOrNull(1) else null
+            val season = if (isValid) seasonid.getOrNull(0) else null
             TvSeriesEpisode(
                 name,
-                null,
-                null,
+                season,
+                episode,
                 href,
             )
         }

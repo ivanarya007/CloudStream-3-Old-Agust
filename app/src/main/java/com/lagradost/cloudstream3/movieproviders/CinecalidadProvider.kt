@@ -100,12 +100,18 @@ class CinecalidadProvider:MainAPI() {
             val href = li.selectFirst("a").attr("href")
             val epThumb = li.selectFirst("img.lazy").attr("data-src")
             val name = li.selectFirst(".episodiotitle a").text()
+            val seasonid = li.selectFirst(".numerando").text().replace(Regex("(S|E)"),"").let { str ->
+                str.split("-").mapNotNull { subStr -> subStr.toIntOrNull() }
+            }
+            val isValid = seasonid.size == 2
+            val episode = if (isValid) seasonid.getOrNull(1) else null
+            val season = if (isValid) seasonid.getOrNull(0) else null
             TvSeriesEpisode(
                 name,
-                null,
-                null,
+                season,
+                episode,
                 href,
-                epThumb
+                if (epThumb.contains("svg")) null else epThumb
             )
         }
         return when (val tvType = if (url.contains("/ver-pelicula/")) TvType.Movie else TvType.TvSeries) {

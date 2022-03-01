@@ -3,7 +3,7 @@ package com.lagradost.cloudstream3.movieproviders
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.utils.ExtractorLink
 import com.lagradost.cloudstream3.utils.extractorApis
-import java.util.ArrayList
+import kotlin.collections.ArrayList
 
 class PeliSmartProvider: MainAPI() {
     override val mainUrl = "https://pelismart.com"
@@ -92,16 +92,30 @@ class PeliSmartProvider: MainAPI() {
         val title = soup.selectFirst(".wpb_wrapper h1").text()
         val description = soup.selectFirst("div.wpb_wrapper p")?.text()?.trim()
         val poster: String? = soup.selectFirst(".vc_single_image-img").attr("src")
-        val episodes = soup.select("div.vc_tta-panel-body div a").map { li ->
+        val episodes = ArrayList<TvSeriesEpisode>()
+         soup.select("div.vc_tta-panel-body div a").map { li ->
             val href = li.selectFirst("a").attr("href")
             val preregex = Regex("(\\d+)\\. ")
             val name = li.selectFirst("a").text().replace(preregex,"")
-            TvSeriesEpisode(
-                name,
-                null,
-                null,
-                href,
-            )
+            val regextest = Regex("(temporada-(\\d+)-capitulo-(\\d+)|temporada-(\\d+)-episodio-(\\d+))")
+            regextest.findAll(href).map {
+               it.value.replace(Regex("(temporada-|-)"),"")
+           }.toList().map { eps ->
+               val seasonid = eps.let { str ->
+               str.split("episodio","capitulo").mapNotNull { subStr -> subStr.toIntOrNull() }
+           }
+               val isValid = seasonid.size == 2
+               val episode = if (isValid) seasonid.getOrNull(1) else null
+               val season = if (isValid) seasonid.getOrNull(0) else null
+               episodes.add(
+                   TvSeriesEpisode(
+                   name,
+                   season,
+                   episode,
+                   href,
+               )
+               )
+           }
         }
         return when (val tvType = if (episodes.isEmpty()) TvType.Movie else TvType.TvSeries) {
             TvType.TvSeries -> {

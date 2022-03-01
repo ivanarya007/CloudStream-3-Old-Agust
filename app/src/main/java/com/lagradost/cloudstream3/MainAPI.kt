@@ -53,7 +53,6 @@ object APIHolder {
         EntrepeliculasyseriesProvider(),
         EstrenosDoramasProvider(),
         FilmanProvider(),
-        FmoviesProvider(), //Sflix mirror
         FrenchStreamProvider(),
         GogoanimeProvider(),
         IHaveNoTvProvider(), // Documentaries provider
@@ -70,8 +69,6 @@ object APIHolder {
         PinoyMoviePediaProvider(),
         PinoyMoviesEsProvider(),
         SeriesflixProvider(),
-        SflixProvider("https://dopebox.to", "Dopebox"),
-        SflixProvider("https://sflix.to", "Sflix"),
         BflixProvider("https://bflix.ru","Bflix"),
         BflixProvider("https://fmovies.to","Fmovies.to"),
         BflixProvider("https://sflix.pro","Sflix.pro"),
@@ -81,15 +78,10 @@ object APIHolder {
         VfSerieProvider(),
         VidEmbedProvider(),
         VMoveeProvider(),
-        // JKAnimeProvider(), //not fully implemented
         WatchAsianProvider(),
         WatchCartoonOnlineProvider(),
         WcoProvider(),
         JKAnimeProvider(),
-        YesMoviesProviders("https://hdtoday.tv", "HDToday"), //Sflix mirror
-        YesMoviesProviders("https://moviesjoy.to", "Moviesjoy"), //Sflix mirror
-        YesMoviesProviders("https://myflixertv.to", "MyFlixer"), //Sflix mirror
-        YesMoviesProviders("https://yesmovies.mn", "YesMovies"), //Sflix mirror
         ZoroProvider(),
     )
 
@@ -98,6 +90,13 @@ object APIHolder {
         // NyaaProvider(), // torrents in cs3 is wack
         // ThenosProvider(), // ddos protection and wacked links
         AsiaFlixProvider(),
+        SflixProvider("https://dopebox.to", "Dopebox"),
+        SflixProvider("https://sflix.to", "Sflix"),
+        YesMoviesProviders("https://hdtoday.tv", "HDToday"), //Sflix mirror
+        YesMoviesProviders("https://moviesjoy.to", "Moviesjoy"), //Sflix mirror
+        YesMoviesProviders("https://myflixertv.to", "MyFlixer"), //Sflix mirror
+        YesMoviesProviders("https://yesmovies.mn", "YesMovies"), //Sflix mirror
+        FmoviesProvider(), //Sflix mirror
     )
 
     private val backwardsCompatibleProviders = arrayListOf(
