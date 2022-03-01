@@ -31,12 +31,12 @@ android {
     buildToolsVersion "30.0.3"
 
     defaultConfig {
-        applicationId "com.stormunblessed.cloudstream3"
+        applicationId "com.lagradost.cloudstream3"
         minSdkVersion 21
         targetSdkVersion 30
 
         versionCode 44
-        versionName "2.8.0"
+        versionName "2.7.15"
 
         resValue "string", "app_version",
                 "${defaultConfig.versionName}${versionNameSuffix ?: ""}"
@@ -55,7 +55,6 @@ android {
             debuggable false
             minifyEnabled false
             shrinkResources false
-            // if these two above are enabled, Krunchy won't work
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
         prerelease {
@@ -97,15 +96,15 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.4.1'
     implementation 'com.google.android.material:material:1.5.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.3'
-    implementation 'androidx.navigation:navigation-fragment-ktx:2.5.0-alpha02'
-    implementation 'androidx.navigation:navigation-ui-ktx:2.5.0-alpha02'
+    implementation 'androidx.navigation:navigation-fragment-ktx:2.5.0-alpha03'
+    implementation 'androidx.navigation:navigation-ui-ktx:2.5.0-alpha03'
     implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.4.1'
     implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.4.1'
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.3'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
 
-    implementation "io.karn:khttp-android:0.1.2" //okhttp instead
+    //implementation "io.karn:khttp-android:0.1.2" //okhttp instead
     implementation 'org.jsoup:jsoup:1.13.1'
     implementation "com.fasterxml.jackson.module:jackson-module-kotlin:2.12.3"
 
@@ -155,7 +154,7 @@ dependencies {
     // Networking
     implementation "com.squareup.okhttp3:okhttp:4.9.2"
     implementation "com.squareup.okhttp3:okhttp-dnsoverhttps:4.9.1"
-    implementation 'com.google.android.exoplayer:extension-okhttp:2.16.1'
+    implementation 'com.google.android.exoplayer:extension-okhttp:2.17.0'
 
     // Util to skip the URI file fuckery 🙏
     implementation "com.github.tachiyomiorg:unifile:17bec43"
