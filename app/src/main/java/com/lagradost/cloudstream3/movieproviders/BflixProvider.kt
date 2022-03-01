@@ -247,7 +247,14 @@ class BflixProvider(providerUrl: String, providerName: String) : MainAPI() {
                         year = null
                     )
                 }
-
+        val rating = soup.selectFirst(".info span.imdb").text().toFloatOrNull()
+            ?.times(1000)?.toInt()
+        val durationdoc = soup.selectFirst("div.info div.meta").toString()
+        val durationregex = Regex("((\\d+) min)")
+        val duration = if (durationdoc.contains("na min")) null
+         else durationregex.findAll(durationdoc).map {
+            it.value.replace(" min","")
+        }.first().toIntOrNull()
         return when (tvType) {
             TvType.TvSeries -> {
                 TvSeriesLoadResponse(
@@ -261,9 +268,10 @@ class BflixProvider(providerUrl: String, providerName: String) : MainAPI() {
                     description,
                     null,
                     null,
-                    null,
+                    rating,
                     tags,
                     recommendations = recommendations,
+                    duration = duration
                 )
             }
             TvType.Movie -> {
@@ -277,9 +285,10 @@ class BflixProvider(providerUrl: String, providerName: String) : MainAPI() {
                     null,
                     description,
                     null,
-                    null,
+                    rating,
                     tags,
-                    recommendations = recommendations
+                    recommendations = recommendations,
+                    duration = duration
                 )
             }
             else -> null
