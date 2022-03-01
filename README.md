@@ -66,7 +66,6 @@ It merely scrapes 3rd-party websites that are publicly accessable via any regula
 - [bestdubbedanime.com](https://bestdubbedanime.com) 
 - [www23.estrenosdoramas.net](https://www23.estrenosdoramas.net) 
 - [filman.cc](https://filman.cc) 
-- [fmovies.app](https://fmovies.app) 
 - [gogoanime.film](https://gogoanime.film) 
 - [ihavenotv.com](https://ihavenotv.com) 
 - [kdramahood.com](https://kdramahood.com) 
@@ -90,4 +89,5 @@ It merely scrapes 3rd-party websites that are publicly accessable via any regula
 - [jkanime.net](https://jkanime.net) 
 - [zoro.to](https://zoro.to) 
 - [asiaflix.app](https://asiaflix.app) 
+- [fmovies.app](https://fmovies.app) 
 <!--SITE LIST END-->
