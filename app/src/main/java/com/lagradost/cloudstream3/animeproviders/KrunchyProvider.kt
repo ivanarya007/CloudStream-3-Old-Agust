@@ -207,6 +207,7 @@ class KrunchyProvider : MainAPI() {
 
         val subEpisodes = ArrayList<AnimeEpisode>()
         val dubEpisodes = ArrayList<AnimeEpisode>()
+        val premiumEpisodes = ArrayList<AnimeEpisode>()
         soup.select(".season").forEach {
             val seasonName = it.selectFirst("a.season-dropdown")?.text()?.trim()
             it.select(".episode").forEach { ep ->
@@ -234,13 +235,18 @@ class KrunchyProvider : MainAPI() {
                 if (seasonName == null) {
                     subEpisodes.add(epi)
                 } else if (seasonName.contains("(HD)")) {
-                    subEpisodes.add(epi)
+                    //For one piece premium eps
+                    premiumEpisodes.add(epi)
                 } else if (seasonName.contains("Spanish")) {
                     dubEpisodes.add(epi)
                 }
                 else if (seasonName.contains("Dub") || seasonName.contains("Russian")) {
                     dubEpisodes.add(epi)
-                }  else {
+                }
+                else if (epDesc.contains("★")) {
+                    premiumEpisodes.add(epi)
+                }
+                else {
                     subEpisodes.add(epi)
                 }
             }
@@ -254,7 +260,7 @@ class KrunchyProvider : MainAPI() {
             TvType.Anime,
             poster,
             year,
-            hashMapOf(DubStatus.Subbed to subEpisodes.reversed(), DubStatus.Dubbed to dubEpisodes.reversed()),
+            hashMapOf(DubStatus.Subbed to subEpisodes.reversed(), DubStatus.Dubbed to dubEpisodes.reversed(), DubStatus.Premium to premiumEpisodes.reversed()),
             null,
             description,
             genres

@@ -74,32 +74,57 @@ class JKAnimeProvider : MainAPI() {
         return HomePageResponse(items)
     }
 
+    data class MainSearch (
+        @JsonProperty("animes") val animes: List<Animes>,
+        @JsonProperty("anime_types") val animeTypes: AnimeTypes
+    )
+
+    data class Animes (
+        @JsonProperty("id") val id: String,
+        @JsonProperty("slug") val slug: String,
+        @JsonProperty("title") val title: String,
+        @JsonProperty("image") val image: String,
+        @JsonProperty("synopsis") val synopsis: String,
+        @JsonProperty("type") val type: String,
+        @JsonProperty("status") val status: String,
+        @JsonProperty("thumbnail") val thumbnail: String
+    )
+
+    data class AnimeTypes (
+        @JsonProperty("TV") val TV: String,
+        @JsonProperty("OVA") val OVA: String,
+        @JsonProperty("Movie") val Movie: String,
+        @JsonProperty("Special") val Special: String,
+        @JsonProperty("ONA") val ONA: String,
+        @JsonProperty("Music") val Music: String
+    )
+
     override suspend fun search(query: String): ArrayList<SearchResponse> {
-        val search =
-            app.get("$mainUrl/buscar/$query/", timeout = 120).document.select("div.col-lg-12  div.row div.col-lg-2.col-md-6.col-sm-6").map {
-                val title = it.selectFirst("h5 a").text()
-                val href = fixUrl(it.selectFirst("a").attr("href"))
-                val image = it.selectFirst(".set-bg").attr("data-setbg")
-                AnimeSearchResponse(
-                    title,
-                    href,
-                    this.name,
-                    TvType.Anime,
-                    fixUrl(image),
-                    null,
-                    if (title.contains("Latino") || title.contains("Castellano")) EnumSet.of(
-                        DubStatus.Dubbed
-                    ) else EnumSet.of(DubStatus.Subbed),
-                )
-            }
+        val main = app.get("https://jkanime.net/ajax/ajax_search/?q=$query").text
+        val json = parseJson<MainSearch>(main)
+        val search = ArrayList<AnimeSearchResponse>()
+         json.animes.forEach {
+            val title = it.title
+            val href = "$mainUrl/${it.slug}"
+            val image = "https://cdn.jkanime.net/assets/images/animes/image/${it.slug}.jpg"
+          search.add(
+              AnimeSearchResponse(
+                title,
+                href,
+                this.name,
+                TvType.Anime,
+                image,
+                null,
+                if (title.contains("Latino") || title.contains("Castellano")) EnumSet.of(
+                    DubStatus.Dubbed
+                ) else EnumSet.of(DubStatus.Subbed),
+            )
+          )
+        }
+
         return ArrayList(search)
     }
 
-
-
-    data class Numberep (
-        @JsonProperty("epnums") val epnums: String
-    )
 
     override suspend fun load(url: String): LoadResponse {
         val doc = app.get(url, timeout = 120).document

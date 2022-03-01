@@ -25,8 +25,8 @@ class BflixProvider(providerUrl: String, providerName: String) : MainAPI() {
             Pair("Movies", "div.tab-content[data-name=movies] div.filmlist div.item"),
             Pair("Shows", "div.tab-content[data-name=shows] div.filmlist div.item"),
             Pair("Trending", "div.tab-content[data-name=trending] div.filmlist div.item"),
-            Pair("Latest Movies", "div.container.mt-5 section.bl:contains(Latest Movies) div.filmlist div.item"),
-            Pair("Latest TV-Series", "div.container.mt-5 section.bl:contains(Latest TV-Series) div.filmlist div.item"),
+            Pair("Latest Movies", "div.container section.bl:contains(Latest Movies) div.filmlist div.item"),
+            Pair("Latest TV-Series", "div.container section.bl:contains(Latest TV-Series) div.filmlist div.item"),
         )
         for ((name, element) in testa) try {
             val test = soup.select(element).map {
@@ -43,7 +43,7 @@ class BflixProvider(providerUrl: String, providerName: String) : MainAPI() {
                     null,
                 )
             }
-            items.add(HomePageList(name, test))
+            items.add(HomePageList(if (element.isBlank()) "" else name, test))
         } catch (e: Exception) {
             e.printStackTrace()
         }

@@ -83,6 +83,13 @@ object APIHolder {
         WcoProvider(),
         JKAnimeProvider(),
         ZoroProvider(),
+        SflixProvider("https://sflix.to", "Sflix"),
+        SflixProvider("https://dopebox.to", "Dopebox"),
+        YesMoviesProviders("https://hdtoday.tv", "HDToday"), //Sflix mirror
+        YesMoviesProviders("https://moviesjoy.to", "Moviesjoy"), //Sflix mirror
+        YesMoviesProviders("https://myflixertv.to", "MyFlixer"), //Sflix mirror
+        YesMoviesProviders("https://yesmovies.mn", "YesMovies"), //Sflix mirror
+        FmoviesProvider(), //Sflix mirror
     )
 
     val restrictedApis = arrayListOf(
@@ -90,13 +97,6 @@ object APIHolder {
         // NyaaProvider(), // torrents in cs3 is wack
         // ThenosProvider(), // ddos protection and wacked links
         AsiaFlixProvider(),
-        SflixProvider("https://dopebox.to", "Dopebox"),
-        SflixProvider("https://sflix.to", "Sflix"),
-        YesMoviesProviders("https://hdtoday.tv", "HDToday"), //Sflix mirror
-        YesMoviesProviders("https://moviesjoy.to", "Moviesjoy"), //Sflix mirror
-        YesMoviesProviders("https://myflixertv.to", "MyFlixer"), //Sflix mirror
-        YesMoviesProviders("https://yesmovies.mn", "YesMovies"), //Sflix mirror
-        FmoviesProvider(), //Sflix mirror
     )
 
     private val backwardsCompatibleProviders = arrayListOf(
@@ -471,6 +471,7 @@ enum class ShowStatus {
 enum class DubStatus {
     Dubbed,
     Subbed,
+    Premium,
 }
 
 enum class TvType {

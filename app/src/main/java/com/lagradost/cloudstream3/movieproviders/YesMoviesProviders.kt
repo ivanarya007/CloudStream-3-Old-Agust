@@ -6,13 +6,11 @@ import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.LoadResponse.Companion.setDuration
 import com.lagradost.cloudstream3.mvvm.suspendSafeApiCall
 import com.lagradost.cloudstream3.network.AppResponse
+import com.lagradost.cloudstream3.utils.*
 
 import com.lagradost.cloudstream3.utils.AppUtils.parseJson
 import com.lagradost.cloudstream3.utils.AppUtils.toJson
 import com.lagradost.cloudstream3.utils.AppUtils.tryParseJson
-import com.lagradost.cloudstream3.utils.ExtractorLink
-import com.lagradost.cloudstream3.utils.M3u8Helper
-import com.lagradost.cloudstream3.utils.getQualityFromName
 import kotlinx.coroutines.delay
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
@@ -286,6 +284,11 @@ class YesMoviesProviders(providerUrl: String, providerName: String) : MainAPI() 
                     "https://ws11.rabbitstream.net/socket.io/?EIO=4&transport=polling"
 
                 extractRabbitStream(iframeLink, subtitleCallback, callback, extractorData) { it }
+                for (extractor in extractorApis)  {
+                    if (iframeLink.startsWith(extractor.mainUrl)) {
+                        loadExtractor(iframeLink, data, callback)
+                    }
+                }
             }
         }
 
@@ -469,6 +472,9 @@ class YesMoviesProviders(providerUrl: String, providerName: String) : MainAPI() 
                     "Vidcloud",
                     ignoreCase = true
                 ) || this.equals("RapidStream", ignoreCase = true)
+                || this.equals("DoodStream", ignoreCase = true) ||
+                this.equals("Voe", ignoreCase = true)
+                || this.equals("Mixdrop", ignoreCase = true)
             ) return true
             return false
         }
@@ -534,58 +540,60 @@ class YesMoviesProviders(providerUrl: String, providerName: String) : MainAPI() 
             nameTransformer: (String) -> String
         ) {
             // https://rapid-cloud.ru/embed-6/dcPOVRE57YOT?z= -> https://rapid-cloud.ru/embed-6
-            val mainIframeUrl =
-                url.substringBeforeLast("/")
-            val mainIframeId = url.substringAfterLast("/")
-                .substringBefore("?") // https://rapid-cloud.ru/embed-6/dcPOVRE57YOT?z= -> dcPOVRE57YOT
-            val iframe = app.get(url, referer = mainUrl)
-            val iframeKey =
-                iframe.document.select("script[src*=https://www.google.com/recaptcha/api.js?render=]")
-                    .attr("src").substringAfter("render=")
-            val iframeToken = APIHolder.getCaptchaToken(url, iframeKey)
-            val number =
-                Regex("""recaptchaNumber = '(.*?)'""").find(iframe.text)?.groupValues?.get(1)
+            if (url.contains("rapid-cloud.ru")  || url.contains("rabbitstream")) {
+                val mainIframeUrl =
+                    url.substringBeforeLast("/")
+                val mainIframeId = url.substringAfterLast("/")
+                    .substringBefore("?") // https://rapid-cloud.ru/embed-6/dcPOVRE57YOT?z= -> dcPOVRE57YOT
+                val iframe = app.get(url, referer = mainUrl)
+                val iframeKey =
+                    iframe.document.select("script[src*=https://www.google.com/recaptcha/api.js?render=]")
+                        .attr("src").substringAfter("render=")
+                val iframeToken = APIHolder.getCaptchaToken(url, iframeKey)
+                val number =
+                    Regex("""recaptchaNumber = '(.*?)'""").find(iframe.text)?.groupValues?.get(1)
 
-            val mapped = app.get(
-                "${
-                    mainIframeUrl.replace(
-                        "/embed",
-                        "/ajax/embed"
-                    )
-                }/getSources?id=$mainIframeId&_token=$iframeToken&_number=$number",
-                referer = mainUrl,
-                headers = mapOf(
-                    "X-Requested-With" to "XMLHttpRequest",
-                    "Accept" to "*/*",
-                    "Accept-Language" to "en-US,en;q=0.5",
+                val mapped = app.get(
+                    "${
+                        mainIframeUrl.replace(
+                            "/embed",
+                            "/ajax/embed"
+                        )
+                    }/getSources?id=$mainIframeId&_token=$iframeToken&_number=$number",
+                    referer = mainUrl,
+                    headers = mapOf(
+                        "X-Requested-With" to "XMLHttpRequest",
+                        "Accept" to "*/*",
+                        "Accept-Language" to "en-US,en;q=0.5",
 //                        "Cache-Control" to "no-cache",
-                    "Connection" to "keep-alive",
+                        "Connection" to "keep-alive",
 //                        "Sec-Fetch-Dest" to "empty",
 //                        "Sec-Fetch-Mode" to "no-cors",
 //                        "Sec-Fetch-Site" to "cross-site",
 //                        "Pragma" to "no-cache",
 //                        "Cache-Control" to "no-cache",
-                    "TE" to "trailers"
-                )
-            ).mapped<SourceObject>()
+                        "TE" to "trailers"
+                    )
+                ).mapped<SourceObject>()
 
-            mapped.tracks?.apmap { track ->
-                track?.toSubtitleFile()?.let { subtitleFile ->
-                    subtitleCallback.invoke(subtitleFile)
+                mapped.tracks?.apmap { track ->
+                    track?.toSubtitleFile()?.let { subtitleFile ->
+                        subtitleCallback.invoke(subtitleFile)
+                    }
                 }
-            }
 
-            val list = listOf(
-                mapped.sources to "source 1",
-                mapped.sources1 to "source 2",
-                mapped.sources2 to "source 3",
-                mapped.sourcesBackup to "source backup"
-            )
+                val list = listOf(
+                    mapped.sources to "source 1",
+                    mapped.sources1 to "source 2",
+                    mapped.sources2 to "source 3",
+                    mapped.sourcesBackup to "source backup"
+                )
 
-            list.apmap { subList ->
-                subList.first?.apmap { source ->
-                    source?.toExtractorLink(this, nameTransformer(subList.second), extractorData)
-                        ?.forEach(callback)
+                list.apmap { subList ->
+                    subList.first?.apmap { source ->
+                        source?.toExtractorLink(this, nameTransformer(subList.second), extractorData)
+                            ?.forEach(callback)
+                    }
                 }
             }
         }

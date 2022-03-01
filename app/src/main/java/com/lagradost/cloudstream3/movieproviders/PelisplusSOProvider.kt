@@ -194,7 +194,8 @@ class PelisplusSOProvider:MainAPI() {
         subtitleCallback: (SubtitleFile) -> Unit,
         callback: (ExtractorLink) -> Unit
     ): Boolean {
-       app.get(data).document.select(".server-item-1 li.tab-video").apmap {
+        val document = app.get(data).document
+       document.select(".server-item-1 li.tab-video").apmap {
             val url = it.attr("data-video")
             for (extractor in extractorApis) {
                 if (url.startsWith(extractor.mainUrl)) {
@@ -205,7 +206,7 @@ class PelisplusSOProvider:MainAPI() {
                 }
             }
         }
-        app.get(data).document.select(".server-item-0 li.tab-video").apmap {
+        document.select(".server-item-0 li.tab-video").apmap {
             val url = it.attr("data-video")
             for (extractor in extractorApis) {
                 if (url.startsWith(extractor.mainUrl)) {
@@ -216,7 +217,7 @@ class PelisplusSOProvider:MainAPI() {
                 }
             }
         }
-        app.get(data).document.select(".server-item-2 li.tab-video").apmap {
+        document.select(".server-item-2 li.tab-video").apmap {
             val url = it.attr("data-video")
             for (extractor in extractorApis) {
                 if (url.startsWith(extractor.mainUrl)) {
