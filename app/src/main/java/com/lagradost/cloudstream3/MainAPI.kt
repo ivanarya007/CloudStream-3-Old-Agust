@@ -74,6 +74,7 @@ object APIHolder {
         BflixProvider("https://sflix.pro","Sflix.pro"),
         TenshiProvider(),
         TrailersTwoProvider(),
+        TioAnimeProvider(),
         VfFilmProvider(),
         VfSerieProvider(),
         VidEmbedProvider(),
