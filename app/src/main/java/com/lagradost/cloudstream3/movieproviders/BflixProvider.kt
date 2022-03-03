@@ -38,7 +38,7 @@ class BflixProvider(providerUrl: String, providerName: String) : MainAPI() {
                     link,
                     this.name,
                     if (link.contains("/movie/")) TvType.Movie else TvType.TvSeries,
-                    it.selectFirst("a.poster img").attr("src"),
+                    it.selectFirst("a.poster img").attr("src").replace(Regex("(w-(\\d+)$)"),""),
                     null,
                     null,
                 )
@@ -363,6 +363,7 @@ class BflixProvider(providerUrl: String, providerName: String) : MainAPI() {
                 val sublink =
                     app.get("$mainUrl/ajax/episode/subtitles/${jsonservers.vidstream}").text
                 val jsonsub = parseJson<List<Subtitles>>(sublink)
+
                 jsonsub.forEach { subtitle ->
                     subtitleCallback(
                         SubtitleFile(subtitle.label, subtitle.file)

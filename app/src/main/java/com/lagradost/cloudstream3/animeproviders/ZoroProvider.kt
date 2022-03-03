@@ -322,7 +322,6 @@ class ZoroProvider : MainAPI() {
             )
         }
 
-
         // Prevent duplicates
         servers.distinctBy { it.second }.apmap {
             val link =
@@ -334,7 +333,7 @@ class ZoroProvider : MainAPI() {
 
             if (!hasLoadedExtractorLink) {
                 extractRabbitStream(extractorLink, subtitleCallback, callback) { sourceName ->
-                     sourceName + " - ${it.first}"
+                    sourceName + " - ${it.first}"
                 }
             }
         }
