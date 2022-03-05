@@ -173,12 +173,14 @@
         <Preference
                 android:icon="@drawable/baseline_save_as_24"
                 android:key="@string/backup_key"
-                android:title="@string/backup_settings" />
+                android:title="@string/backup_settings"
+                android:summary="@string/backup_settings_des"/>
 
         <Preference
                 android:icon="@drawable/baseline_restore_page_24"
                 android:key="@string/restore_key"
-                android:title="@string/restore_settings" />
+                android:title="@string/restore_settings"
+                android:summary="@string/restore_settings_des"/>
 
         <Preference
                 android:key="@string/mal_key"

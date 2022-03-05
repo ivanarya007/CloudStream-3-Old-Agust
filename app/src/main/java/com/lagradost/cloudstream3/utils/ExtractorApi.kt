@@ -106,6 +106,7 @@ val extractorApis: Array<ExtractorApi> = arrayOf(
     WcoStream(),
     Vidstreamz(),
     Vizcloud(),
+    Vizcloud2(),
     Mp4Upload(),
     StreamTape(),
     MixDrop(),

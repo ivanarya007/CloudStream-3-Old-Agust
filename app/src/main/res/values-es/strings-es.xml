@@ -112,6 +112,17 @@
      <string name="double_tap_to_pause_settings_des">Toca dos veces en el centro para pausar</string>
      <string name="use_system_brightness_settings">Usar brillo del sistema</string>
      <string name="use_system_brightness_settings_des">Usar el brillo del sistema en lugar de una capa negra</string>
+
+     <string name="restore_settings">Restaurar datos</string>
+     <string name="restore_settings_des">Selecciona tu archivo de respaldo para restaurar tus datos</string>
+     <string name="backup_settings">Respaldar datos</string>
+     <string name="restore_success">Los datos han sido restaurados</string>
+     <string name="restore_failed_format" formatted="true">Error al restaurar datos desde %s</string>
+     <string name="backup_success">Datos almacenados con éxito</string>
+     <string name="backup_failed">Faltan los permisos de almacenamiento, por favor intente de nuevo</string>
+     <string name="backup_failed_error_format">Error respaldando %s</string>
+     <string name="backup_settings_des">Crea un archivo JSON con tus datos,\nen la carpeta de descargas designada</string>
+
      <string name="search">Buscar</string>
      <string name="settings_info">Info</string>
      <string name="advanced_search">Búsqueda Avanzada</string>
@@ -222,7 +233,7 @@
      <string name="resize_fill">Estirar</string>
      <string name="resize_zoom">Acercar</string>
      <string name="player_load_subtitles">Seleccionar archivo</string>
-     <string name="download_path_pref">Ruta de descarga</string>
+     <string name="download_path_pref">Carpeta de descarga</string>
      <string name="downloaded_file">Archivo descargado</string>
      <string name="subtitles_example_text">Jovencillo emponzoñado de whisky, qué mala figurota exhibes.</string>
      <string name="home_source">Fuente</string>

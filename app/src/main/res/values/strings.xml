@@ -199,12 +199,14 @@
     </string>
 
     <string name="restore_settings">Restore data from backup</string>
+    <string name="restore_settings_des">Select your backup file to restore your data</string>
     <string name="backup_settings">Backup data</string>
     <string name="restore_success">Loaded backup file</string>
     <string name="restore_failed_format" formatted="true">Failed to restore data from file %s</string>
     <string name="backup_success">Successfully stored data</string>
     <string name="backup_failed">Storage permissions missing, please try again</string>
     <string name="backup_failed_error_format">Error backing up %s</string>
+    <string name="backup_settings_des">Will create a JSON file with your data,\nuses the download path selected</string>
 
     <string name="search">Search</string>
     <string name="settings_info">Info</string>
