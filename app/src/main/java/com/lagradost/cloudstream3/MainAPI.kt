@@ -45,7 +45,7 @@ object APIHolder {
         AnimePaheProvider(),
         AsianLoadProvider(),
         CinecalidadProvider(),
-        CuevanathreeProvider(),
+        CuevanaProvider(),
         DoramasYTProvider(),
         DramaSeeProvider(),
         DubbedAnimeProvider(),

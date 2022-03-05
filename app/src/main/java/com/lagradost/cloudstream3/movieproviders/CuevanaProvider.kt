@@ -6,7 +6,7 @@ import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.utils.*
 import java.util.*
 
-class CuevanathreeProvider:MainAPI() {
+class CuevanaProvider:MainAPI() {
     override val mainUrl = "https://cuevana3.io"
     override val name = "Cuevana"
     override val lang = "es"
