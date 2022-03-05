@@ -92,7 +92,7 @@ class PelisplusHDProvider:MainAPI() {
                     null
                 )
             }
-        }.toList()
+        }
     }
 
     override suspend fun load(url: String): LoadResponse? {
@@ -135,7 +135,7 @@ class PelisplusHDProvider:MainAPI() {
                     poster,
                     year,
                     description,
-                    ShowStatus.Ongoing,
+                    null,
                     null,
                     null,
                     tags,
@@ -165,18 +165,9 @@ class PelisplusHDProvider:MainAPI() {
         subtitleCallback: (SubtitleFile) -> Unit,
         callback: (ExtractorLink) -> Unit
     ): Boolean {
-        app.get(data).document.select("div.player > script").apmap {
-            val linkRegex = Regex("""(https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*))""")
-            val links = linkRegex.findAll(it.data()).map {
-                it.value.replace("https://pelisplushd.net/fembed.php?url=","https://www.fembed.com/v/")
-            }.toList().apmap {
-                for (extractor in extractorApis) {
-                    if (it.startsWith(extractor.mainUrl)) {
-                        extractor.getSafeUrl(it, data)?.apmap {
-                            callback(it)
-                        }
-                    }
-                }
+        app.get(data).document.select("div.player > script").map { script ->
+            fetchUrls(script.data().replace("https://pelisplushd.net/fembed.php?url=","https://www.fembed.com/v/")).apmap {
+                loadExtractor(it, data, callback)
             }
         }
         return true

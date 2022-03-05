@@ -26,9 +26,9 @@ class EntrepeliculasyseriesProvider:MainAPI() {
             Pair("$mainUrl/anime/", "Animes"),
         )
 
-        for (i in urls) {
+        for ((url, name) in urls) {
             try {
-                val soup = app.get(i.first).document
+                val soup = app.get(url).document
                 val home = soup.select("ul.list-movie li").map {
                     val title = it.selectFirst("a.link-title h2").text()
                     val link = it.selectFirst("a").attr("href")
@@ -43,7 +43,7 @@ class EntrepeliculasyseriesProvider:MainAPI() {
                     )
                 }
 
-                items.add(HomePageList(i.second, home))
+                items.add(HomePageList(name, home))
             } catch (e: Exception) {
                 logError(e)
             }
@@ -103,11 +103,11 @@ class EntrepeliculasyseriesProvider:MainAPI() {
             val episode = if (isValid) seasonid.getOrNull(1) else null
             val season = if (isValid) seasonid.getOrNull(0) else null
             TvSeriesEpisode(
-                "Capítulo $episode",
+                null,
                 season,
                 episode,
                 href,
-                epThumb
+                fixUrl(epThumb)
             )
         }
         return when (val tvType = if (url.contains("/pelicula/")) TvType.Movie else TvType.TvSeries) {

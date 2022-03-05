@@ -3,6 +3,7 @@ package com.lagradost.cloudstream3.movieproviders
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.extractors.Cinestart
+import com.lagradost.cloudstream3.mvvm.logError
 import com.lagradost.cloudstream3.utils.*
 import java.util.*
 
@@ -29,9 +30,9 @@ class CinecalidadProvider:MainAPI() {
             Pair("$mainUrl/genero-de-la-pelicula/peliculas-en-calidad-4k/", "4K UHD"),
         )
 
-        for (i in urls) {
+        for ((url, name) in urls) {
             try {
-                val soup = app.get(i.first).document
+                val soup = app.get(url).document
                 val home = soup.select(".item.movies").map {
                     val title = it.selectFirst("div.in_title").text()
                     val link = it.selectFirst("a").attr("href")
@@ -46,9 +47,9 @@ class CinecalidadProvider:MainAPI() {
                     )
                 }
 
-                items.add(HomePageList(i.second, home))
+                items.add(HomePageList(name, home))
             } catch (e: Exception) {
-                e.printStackTrace()
+                logError(e)
             }
         }
 
@@ -152,7 +153,6 @@ class CinecalidadProvider:MainAPI() {
 
         val datam = app.get(data)
         val doc = datam.document
-        println(data)
         val datatext = datam.text
 
         doc.select(".dooplay_player_option").apmap {
@@ -173,7 +173,7 @@ class CinecalidadProvider:MainAPI() {
                     app.get(it,
                         headers = mapOf(
                             "Host" to "cinecalidad.lol",
-                            "User-Agent" to "Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0",
+                            "User-Agent" to USER_AGENT,
                             "Accept" to "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
                             "Accept-Language" to "en-US,en;q=0.5",
                             "DNT" to "1",
@@ -185,9 +185,9 @@ class CinecalidadProvider:MainAPI() {
                             "Sec-Fetch-Site" to "same-origin",
                             "Sec-Fetch-User" to "?1",
                         ),
-                    allowRedirects = false).response.headers.values("location").apmap { extractedurl ->
-                     if (extractedurl.contains("cinestart"))   {
-                         loadExtractor(extractedurl, mainUrl, callback)
+                        allowRedirects = false).response.headers.values("location").apmap { extractedurl ->
+                        if (extractedurl.contains("cinestart"))   {
+                            loadExtractor(extractedurl, mainUrl, callback)
                         }
                     }
                 }
@@ -198,7 +198,6 @@ class CinecalidadProvider:MainAPI() {
             if (url.startsWith("https://cinestart.net")) {
                 val extractor = Cinestart()
                 extractor.getSafeUrl(url)?.forEach { link ->
-                    link.name += " Castellano"
                     callback.invoke(link)
                 }
             } else {
@@ -213,7 +212,7 @@ class CinecalidadProvider:MainAPI() {
                     app.get(it,
                         headers = mapOf(
                             "Host" to "cinecalidad.lol",
-                            "User-Agent" to "Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0",
+                            "User-Agent" to USER_AGENT,
                             "Accept" to "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
                             "Accept-Language" to "en-US,en;q=0.5",
                             "DNT" to "1",
@@ -234,27 +233,25 @@ class CinecalidadProvider:MainAPI() {
             }
         }
         if (datatext.contains("Subtítulo LAT") || datatext.contains("Forzados LAT"))   {
-             doc.select("#panel_descarga.pane a").apmap {
-                 val link = if (data.contains("serie") || data.contains("episodio")) "${data}${it.attr("href")}"
-                 else it.attr("href")
-                 val docsub = app.get(link)
-                 val linksub = docsub.document
-                 val validsub = docsub.text
-                 if (validsub.contains("Subtítulo") || validsub.contains("Forzados")) {
-                     val langregex = Regex("(Subtítulo.*\$|Forzados.*\$)")
-                     val langdoc = linksub.selectFirst("div.titulo h3").text()
-                     val reallang = langregex.findAll(langdoc).map {
-                         it.value
-                     }.toList().first()
-                     linksub.select("a.link").apmap {
-                         val sublink = if (data.contains("serie") || data.contains("episodio")) "${data}${it.attr("href")}"
-                         else it.attr("href")
-                         subtitleCallback(
-                             SubtitleFile(reallang, sublink )
-                         )
-                     }
-                 }
-             }
+            doc.select("#panel_descarga.pane a").apmap {
+                val link = if (data.contains("serie") || data.contains("episodio")) "${data}${it.attr("href")}"
+                else it.attr("href")
+                val docsub = app.get(link)
+                val linksub = docsub.document
+                val validsub = docsub.text
+                if (validsub.contains("Subtítulo") || validsub.contains("Forzados")) {
+                    val langregex = Regex("(Subtítulo.*\$|Forzados.*\$)")
+                    val langdoc = linksub.selectFirst("div.titulo h3").text()
+                    val reallang = langregex.find(langdoc)?.destructured?.component1()
+                    linksub.select("a.link").apmap {
+                        val sublink = if (data.contains("serie") || data.contains("episodio")) "${data}${it.attr("href")}"
+                        else it.attr("href")
+                        subtitleCallback(
+                            SubtitleFile(reallang!!, sublink)
+                        )
+                    }
+                }
+            }
         }
         return true
     }

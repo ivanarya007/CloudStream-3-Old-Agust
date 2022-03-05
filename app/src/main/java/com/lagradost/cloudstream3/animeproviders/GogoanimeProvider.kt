@@ -297,13 +297,14 @@ class GogoanimeProvider : MainAPI() {
                         source: GogoSource,
                         sourceCallback: (ExtractorLink) -> Unit
                     ) {
-                        if (source.file.contains("m3u8")) { M3u8Helper().m3u8Generation(
+                        if (source.file.contains("m3u8")) {
+                            M3u8Helper().m3u8Generation(
                             M3u8Helper.M3u8Stream(
                                 source.file,
                                 headers = mapOf("Referer" to "https://gogoplay.io")
                             ), true
                         )
-                            .apmap { stream ->
+                            .map { stream ->
                                 val qualityString = if ((stream.quality ?: 0) == 0) "" else "${stream.quality}p"
                                 sourceCallback(  ExtractorLink(
                                     name,
@@ -314,17 +315,18 @@ class GogoanimeProvider : MainAPI() {
                                     true
                                 ))
                             }
-                            } else if (source.file.contains("vidstreaming")) {
-                                sourceCallback.invoke(
-                            ExtractorLink(
-                                this.name,
-                                "${this.name} ${source.label?.replace("0 P", "0p") ?: ""}",
-                                source.file,
-                                "https://gogoplay.io",
-                                getQualityFromName(source.label ?: ""),
-                                isM3u8 = source.type == "hls"
+                        } else if (source.file.contains("vidstreaming")) {
+                            sourceCallback.invoke(
+                                ExtractorLink(
+                                    this.name,
+                                    "${this.name} ${source.label?.replace("0 P", "0p") ?: ""}",
+                                    source.file,
+                                    "https://gogoplay.io",
+                                    getQualityFromName(source.label ?: ""),
+                                    isM3u8 = source.type == "hls"
+                                )
                             )
-                        ) }
+                        }
                     }
 
                     sources.source?.forEach {

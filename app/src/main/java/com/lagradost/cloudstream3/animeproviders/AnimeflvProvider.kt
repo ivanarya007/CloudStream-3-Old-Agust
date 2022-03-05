@@ -5,7 +5,6 @@ import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.utils.*
 import com.lagradost.cloudstream3.utils.AppUtils.parseJson
 import java.util.*
-import kotlin.collections.ArrayList
 
 class AnimeflvnetProvider:MainAPI() {
     companion object {
@@ -15,10 +14,8 @@ class AnimeflvnetProvider:MainAPI() {
             else TvType.Anime
         }
     }
-    override val mainUrl: String
-        get() = "https://www3.animeflv.net"
-    override val name: String
-        get() = "Animeflv.net"
+    override val mainUrl = "https://www3.animeflv.net"
+    override val name = "Animeflv.net"
     override val lang = "es"
     override val hasMainPage = true
     override val hasChromecastSupport = true
@@ -61,9 +58,9 @@ class AnimeflvnetProvider:MainAPI() {
                     )
                 })
         )
-        for (i in urls) {
+        for ((url, name) in urls) {
             try {
-                val doc = app.get(i.first).document
+                val doc = app.get(url).document
                 val home = doc.select("ul.ListAnimes li article").map {
                     val title = it.selectFirst("h3.Title").text()
                     val poster = it.selectFirst("figure img").attr("src")
@@ -78,7 +75,7 @@ class AnimeflvnetProvider:MainAPI() {
                     )
                 }
 
-                items.add(HomePageList(i.second, home))
+                items.add(HomePageList(name, home))
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -95,29 +92,25 @@ class AnimeflvnetProvider:MainAPI() {
         @JsonProperty("slug") val slug: String
     )
 
-    override suspend fun search(query: String): ArrayList<SearchResponse> {
+    override suspend fun search(query: String): List<SearchResponse> {
         val response = app.post("https://www3.animeflv.net/api/animes/search",
             data = mapOf(Pair("value",query))
-            ).text
+        ).text
         val json = parseJson<List<SearchObject>>(response)
-        val search = ArrayList<AnimeSearchResponse>()
-         json.map {
-            val title = it.title
-            val href = "$mainUrl/anime/${it.slug}"
-            val image = "$mainUrl/uploads/animes/covers/${it.id}.jpg"
-            search.add(
+       return json.map { searchr ->
+            val title = searchr.title
+            val href = "$mainUrl/anime/${searchr.slug}"
+            val image = "$mainUrl/uploads/animes/covers/${searchr.id}.jpg"
                 AnimeSearchResponse(
-                title,
-                href,
-                this.name,
-                TvType.Anime,
-                fixUrl(image),
-                null,
-                if (title.contains("Latino") || title.contains("Castellano")) EnumSet.of(DubStatus.Dubbed) else EnumSet.of(DubStatus.Subbed),
-            )
-            )
+                    title,
+                    href,
+                    this.name,
+                    TvType.Anime,
+                    fixUrl(image),
+                    null,
+                    if (title.contains("Latino") || title.contains("Castellano")) EnumSet.of(DubStatus.Dubbed) else EnumSet.of(DubStatus.Subbed),
+                )
         }
-        return ArrayList(search)
     }
 
     override suspend fun load(url: String): LoadResponse {
@@ -138,18 +131,18 @@ class AnimeflvnetProvider:MainAPI() {
         doc.select("script").map { script ->
             if (script.data().contains("var episodes = [")) {
                 val data = script.data().substringAfter("var episodes = [").substringBefore("];")
-                 data.split("],").forEach {
+                data.split("],").forEach {
                     val epNum = it.removePrefix("[").substringBefore(",")
-                   // val epthumbid = it.removePrefix("[").substringAfter(",").substringBefore("]")
+                    // val epthumbid = it.removePrefix("[").substringAfter(",").substringBefore("]")
                     val animeid = doc.selectFirst("div.Strs.RateIt").attr("data-id")
                     val epthumb = "https://cdn.animeflv.net/screenshots/$animeid/$epNum/th_3.jpg"
                     val link = url.replace("/anime/","/ver/")+"-$epNum"
                     episodes.add( AnimeEpisode(
-                         link,
-                            "Capítulo $epNum",
-                         posterUrl = epthumb,
-                         episode = epNum.toIntOrNull()
-                     )
+                        link,
+                        null,
+                        posterUrl = epthumb,
+                        episode = epNum.toIntOrNull()
+                    )
                     )
                 }
             }
@@ -174,7 +167,7 @@ class AnimeflvnetProvider:MainAPI() {
                 fetchUrls(videos).map {
                     it.replace("https://embedsb.com/e/","https://watchsb.com/e/")
                         .replace("https://ok.ru","http://ok.ru")
-                }.toList().apmap {
+                }.apmap {
                     loadExtractor(it, data, callback)
                 }
             }

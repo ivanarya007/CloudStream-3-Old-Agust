@@ -10,7 +10,7 @@ class Zplayer: ZplayerV2() {
 }
 
 class Upstream: ZplayerV2() {
-    override val name: String = "Upstream"
+    override val name: String = "Upstream" //Here 'cause works
     override val mainUrl: String = "https://upstream.to"
 }
 
@@ -22,7 +22,7 @@ open class ZplayerV2 : ExtractorApi() {
     override suspend fun getUrl(url: String, referer: String?): List<ExtractorLink> {
         val doc = app.get(url).document
         val sources = mutableListOf<ExtractorLink>()
-       doc.select("script").map { script ->
+        doc.select("script").map { script ->
             if (script.data().contains("eval(function(p,a,c,k,e,d)")) {
                 val testdata = getAndUnpack(script.data())
                 val m3u8regex = Regex("((https:|http:)\\/\\/.*\\.m3u8)")
@@ -38,7 +38,7 @@ open class ZplayerV2 : ExtractorApi() {
                                     headers = mapOf("Referer" to url)
                                 ), true
                             )
-                                .apmap { stream ->
+                                .map { stream ->
                                     val qualityString = if ((stream.quality ?: 0) == 0) "" else "${stream.quality}p"
                                     sources.add(  ExtractorLink(
                                         name,
@@ -50,7 +50,7 @@ open class ZplayerV2 : ExtractorApi() {
                                     ))
                                 }
                         }
-                     }
+                    }
                 }
             }
         }
