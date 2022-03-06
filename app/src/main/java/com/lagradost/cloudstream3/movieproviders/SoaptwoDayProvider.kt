@@ -8,10 +8,8 @@ import com.lagradost.cloudstream3.utils.AppUtils.parseJson
 import java.util.*
 
 class SoaptwoDayProvider:MainAPI() {
-    override val mainUrl: String
-        get() = "https://secretlink.xyz" //Probably a rip off, but it has no captcha
-    override val name: String
-        get() = "Soap2Day"
+    override val mainUrl = "https://secretlink.xyz" //Probably a rip off, but it has no captcha
+    override val name = "Soap2Day"
     override val hasMainPage = true
     override val hasChromecastSupport = true
     override val hasDownloadSupport = true
@@ -57,14 +55,14 @@ class SoaptwoDayProvider:MainAPI() {
             val image = fixUrl(it.selectFirst("img").attr("src"))
             val href = fixUrl(it.selectFirst("a").attr("href"))
             TvSeriesSearchResponse(
-                    title,
-                    href,
-                    this.name,
-                    TvType.TvSeries,
-                    image,
-                    null,
-                    null
-                )
+                title,
+                href,
+                this.name,
+                TvType.TvSeries,
+                image,
+                null,
+                null
+            )
         }
     }
 
@@ -75,7 +73,7 @@ class SoaptwoDayProvider:MainAPI() {
         val poster = soup.selectFirst(".col-md-5 > div:nth-child(1) > div:nth-child(1) > img").attr("src")
         val episodes = soup.select("div.alert > div > div > a").map {
             val link = it.attr("href")
-            val name = it.text().replace(Regex("((\\d+)\\.)"),"")
+            val name = it.text().replace(Regex("(^(\\d+)\\.)"),"")
             TvSeriesEpisode(
                 name,
                 null,
@@ -188,21 +186,31 @@ class SoaptwoDayProvider:MainAPI() {
                 json.streambackup
             ).mapNotNull { stream ->
                 val cleanstreamurl = stream?.replace("\\/","/")?.replace("\\\\\\","")
-                callback(ExtractorLink(
-                    "Soap2Day",
-                    "Soap2Day",
-                    cleanstreamurl!!,
-                    "https://soap2day.ac",
-                    Qualities.Unknown.value,
-                    isM3u8 = false
-                ))
+                if (cleanstreamurl?.isNotBlank() == true) {
+                    callback(ExtractorLink(
+                        "Soap2Day",
+                        "Soap2Day",
+                        cleanstreamurl,
+                        "https://soap2day.ac",
+                        Qualities.Unknown.value,
+                        isM3u8 = false
+                    ))
+                }
             }
             json.subs?.forEach { subtitle ->
                 val sublink = mainUrl+subtitle.path
-                println(subtitle.downlink)
-                subtitleCallback(
-                    SubtitleFile(subtitle.name!!, sublink)
-                )
+                listOf(
+                    sublink,
+                    subtitle.downlink
+                ).mapNotNull { subs ->
+                    if (subs != null) {
+                        if (subs.isNotBlank()) {
+                            subtitleCallback(
+                                SubtitleFile(subtitle.name!!, subs)
+                            )
+                        }
+                    }
+                }
             }
         }
         return true
