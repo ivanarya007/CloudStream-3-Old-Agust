@@ -86,6 +86,7 @@ object APIHolder {
         AkwamProvider(),
         AnimePaheProvider(),
         NineAnimeProvider(),
+        VumooProvider(),
     )
 
     val restrictedApis = arrayListOf(
