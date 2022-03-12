@@ -315,7 +315,7 @@ open class TmdbProvider : MainAPI() {
     }
 
     override suspend fun search(query: String): List<SearchResponse>? {
-        return tmdb.searchService().multi(query, 1, "en-Us", "US", true).awaitResponse()
+        return tmdb.searchService().multi(query, 1, "en-Us", "US", false).awaitResponse()
             .body()?.results?.mapNotNull {
                 it.movie?.toSearchResponse() ?: it.tvShow?.toSearchResponse()
             }

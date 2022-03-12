@@ -93,6 +93,7 @@ object APIHolder {
         YesMoviesProviders("https://yesmovies.mn", "YesMovies"), //Sflix mirror
         FmoviesProvider(), //Sflix mirror
         SoaptwoDayProvider(),
+        TwoEmbedProvider(),
     )
 
     val restrictedApis = arrayListOf(
