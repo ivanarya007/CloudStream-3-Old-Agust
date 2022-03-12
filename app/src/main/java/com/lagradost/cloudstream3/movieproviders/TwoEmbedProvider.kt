@@ -35,37 +35,35 @@ class TwoEmbedProvider : TmdbProvider() {
         callback: (ExtractorLink) -> Unit
     ): Boolean {
         val mappedData = parseJson<TmdbLink>(data)
-        println(data)
         val (id, site) = if (mappedData.imdbID != null) listOf(
             mappedData.imdbID,
             "imdb"
         ) else listOf(mappedData.tmdbID.toString(), "tmdb")
         val isMovie = mappedData.episode == null && mappedData.season == null
         val embedUrl = if (isMovie) {
-                "https://www.2embed.ru/embed/$site/movie?id=$id"
+            "$mainUrl/embed/$site/movie?id=$id"
 
         } else {
             val suffix = "$id&s=${mappedData.season ?: 1}&e=${mappedData.episode ?: 1}"
-                "https://www.2embed.ru/embed/$site/tv?id=$suffix"
+            "$mainUrl/embed/$site/tv?id=$suffix"
         }
         val document = app.get(embedUrl).document
         val captchaKey =
-            document.select("body[data-recaptcha-key]")
-                .attr("data-recaptcha-key")
+            document.select("script[src*=https://www.google.com/recaptcha/api.js?render=]")
+                .attr("src").substringAfter("render=")
 
-       val servers =  document.select(".dropdown-menu a[data-id]").map { it.attr("data-id") }
-       servers.apmap { serverID ->
-           val token = getCaptchaToken(embedUrl, captchaKey)
-           val ajax = app.get("$mainUrl/ajax/embed/play?id=$serverID&_token=$token", headers =
-           mapOf("Referer" to embedUrl)).text
-           val mappedservers = parseJson<EmbedJson>(ajax)
-           val iframeLink = mappedservers.link
-           if (iframeLink.contains("rabbitstream")) {
-               extractRabbitStream(iframeLink, subtitleCallback, callback) { it }
-           } else {
-               loadExtractor(iframeLink, embedUrl, callback)
-           }
-       }
+        val servers =  document.select(".dropdown-menu a[data-id]").map { it.attr("data-id") }
+        servers.apmap { serverID ->
+            val token = getCaptchaToken(embedUrl, captchaKey)
+            val ajax = app.get("$mainUrl/ajax/embed/play?id=$serverID&_token=$token", referer = embedUrl).text
+            val mappedservers = parseJson<EmbedJson>(ajax)
+            val iframeLink = mappedservers.link
+            if (iframeLink.contains("rabbitstream")) {
+                extractRabbitStream(iframeLink, subtitleCallback, callback) { it }
+            } else {
+                loadExtractor(iframeLink, embedUrl, callback)
+            }
+        }
         return true
     }
 }
