@@ -35,6 +35,7 @@ object APIHolder {
         // HenaojaraProvider(), removed due to scraping providers that are already implemented
         AkwamProvider(),
         AllAnimeProvider(),
+        ApiMDBProvider(),
         AnimekisaProvider(),
         AllMoviesForYouProvider(),
         AnimefenixProvider(),

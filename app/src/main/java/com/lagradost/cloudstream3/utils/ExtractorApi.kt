@@ -176,6 +176,8 @@ val extractorApis: Array<ExtractorApi> = arrayOf(
    // Genericm3u8Extractor(),
     ZplayerV2(),
     Zplayer(),
+
+    PlayerVoxzer(),
     )
 
 
