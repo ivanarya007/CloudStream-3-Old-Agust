@@ -89,5 +89,6 @@ It merely scrapes 3rd-party websites that are publicly accessable via any regula
 - [jkanime.net](https://jkanime.net) 
 - [zoro.to](https://zoro.to) 
 - [fmovies.app](https://fmovies.app) 
+- [2embed.ru](https://www.2embed.ru) 
 - [asiaflix.app](https://asiaflix.app) 
 <!--SITE LIST END-->
