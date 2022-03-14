@@ -1,11 +1,14 @@
 # CloudStream-3
 
-![GitHub release](https://img.shields.io/github/v/release/Stormunblessed/cloudstream-3?sort=semver&style=for-the-badge)
-![Downloads](https://img.shields.io/github/downloads/Stormunblessed/CloudStream-3/total?color=blue&style=for-the-badge)
-![Build](https://img.shields.io/github/workflow/status/stormunblessed/CloudStream-3/Pre-release?style=for-the-badge)
+<!-- ![Maintenance](https://img.shields.io/maintenance/yes/2022?color=blue&style=for-the-badge) -->
+![GitHub release](https://img.shields.io/github/v/release/LagradOst/cloudstream-3?sort=semver&style=for-the-badge)
+![Downloads](https://img.shields.io/github/downloads/lagradost/CloudStream-3/total?color=blue&style=for-the-badge)
+![Build](https://img.shields.io/github/workflow/status/lagradost/CloudStream-3/Pre-release?style=for-the-badge)
+[![Discord](https://img.shields.io/discord/737724143126052974?style=for-the-badge)](https://discord.gg/5Hus6fM)
+
 
 **DOWNLOAD:**
-https://github.com/Stormunblessed/CloudStream-3/releases
+https://github.com/LagradOst/CloudStream-3/releases
 
 
 ***Features:***
@@ -22,22 +25,24 @@ https://github.com/Stormunblessed/CloudStream-3/releases
 
 ***The list of supported languages:***
 * 🇱🇧 Arabic
-* 🇬🇧 English
 * 🇳🇱 Dutch
+* 🇬🇧 English
 * 🇫🇷 French
-* 🇬🇷 Greek
-* 🇸🇪 Swedish
-* 🇵🇭 Tagalog
-* 🇵🇱 Polish
-* 🇮🇳 Hindi
-* 🇮🇳 Malayalam
-* 🇪🇸 Spanish
-* 🇳🇴 Norsk
 * 🇩🇪 German
-* 🇹🇷 Turkish
+* 🇬🇷 Greek
+* 🇮🇳 Hindi
+* 🇮🇹 Italian
 * 🇲🇰 Macedonian
+* 🇮🇳 Malayalam
+* 🇳🇴 Norsk
+* 🇵🇱 Polish
 * 🇧🇷 Portuguese (Brazil)
 * 🇷🇴 Romanian
+* 🇪🇸 Spanish
+* 🇸🇪 Swedish
+* 🇵🇭 Tagalog
+* 🇹🇷 Turkish
+* 🇻🇳 Vietnamese
 
 ***Disclaimer:***
 
@@ -55,40 +60,42 @@ It merely scrapes 3rd-party websites that are publicly accessable via any regula
 ***Sites used:***
 <!-- Do not remove those two comments -->
 <!--SITE LIST START-->
-- [akwam.io](https://akwam.io) 
+- [pelisplus.icu](https://pelisplus.icu) 
+- [pelismart.com](https://pelismart.com) 
+- [gogoanime.film](https://gogoanime.film) 
 - [allanime.site](https://allanime.site) 
 - [animekisa.in](https://animekisa.in) 
-- [allmoviesforyou.net](https://allmoviesforyou.net) 
 - [animeflick.net](https://animeflick.net) 
-- [asianembed.io](https://asianembed.io) 
-- [doramasyt.com](https://doramasyt.com) 
-- [dramasee.net](https://dramasee.net) 
-- [bestdubbedanime.com](https://bestdubbedanime.com) 
-- [www23.estrenosdoramas.net](https://www23.estrenosdoramas.net) 
-- [filman.cc](https://filman.cc) 
-- [gogoanime.film](https://gogoanime.film) 
-- [ihavenotv.com](https://ihavenotv.com) 
-- [kdramahood.com](https://kdramahood.com) 
-- [crunchyroll.com](http://www.crunchyroll.com) 
-- [monoschinos2.com](https://monoschinos2.com) 
-- [mundodonghua.com](https://www.mundodonghua.com) 
-- [9anime.center](https://9anime.center) 
-- [pelismart.com](https://pelismart.com) 
-- [pinoy-hd.xyz](https://www.pinoy-hd.xyz) 
-- [pinoymoviepedia.ru](https://pinoymoviepedia.ru) 
-- [pinoymovies.es](https://pinoymovies.es) 
 - [tenshi.moe](https://tenshi.moe) 
-- [trailers.to](https://trailers.to) 
+- [wcostream.cc](https://wcostream.cc) 
+- [bestdubbedanime.com](https://bestdubbedanime.com) 
+- [doramasyt.com](https://doramasyt.com) 
+- [pelisflix.li](https://pelisflix.li) 
+- [seriesflix.video](https://seriesflix.video) 
+- [ihavenotv.com](https://ihavenotv.com) 
+- [vmovee.watch](https://www.vmovee.watch) 
+- [wcostream.com](https://www.wcostream.com) 
+- [allmoviesforyou.net](https://allmoviesforyou.net) 
+- [v2.apimdb.net](https://v2.apimdb.net) 
+- [monoschinos2.com](https://monoschinos2.com) 
+- [vidembed.cc](https://vidembed.cc) 
 - [vf-film.me](https://vf-film.me) 
 - [vf-serie.org](https://vf-serie.org) 
-- [vidembed.cc](https://vidembed.cc) 
-- [vmovee.watch](https://www.vmovee.watch) 
-- [watchasian.sh](https://watchasian.sh) 
-- [wcostream.com](https://www.wcostream.com) 
-- [wcostream.cc](https://wcostream.cc) 
-- [jkanime.net](https://jkanime.net) 
+- [asianembed.io](https://asianembed.io) 
+- [filman.cc](https://filman.cc) 
 - [zoro.to](https://zoro.to) 
-- [fmovies.app](https://fmovies.app) 
+- [pinoymoviepedia.ru](https://pinoymoviepedia.ru) 
+- [pinoy-hd.xyz](https://www.pinoy-hd.xyz) 
+- [pinoymovies.es](https://pinoymovies.es) 
+- [trailers.to](https://trailers.to) 
 - [2embed.ru](https://www.2embed.ru) 
+- [dramasee.net](https://dramasee.net) 
+- [watchasian.sh](https://watchasian.sh) 
+- [kdramahood.com](https://kdramahood.com) 
+- [akwam.to](https://akwam.to) 
+- [mycima.tv](https://mycima.tv) 
+- [egy.best](https://egy.best) 
+- [9anime.center](https://9anime.center) 
+- [animeworld.tv](https://www.animeworld.tv) 
 - [asiaflix.app](https://asiaflix.app) 
 <!--SITE LIST END-->
