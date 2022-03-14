@@ -43,8 +43,9 @@ class TioAnimeProvider:MainAPI() {
                     val epRegex = Regex("(-(\\d+)\$)")
                     val url = it.selectFirst("a").attr("href").replace(epRegex,"")
                         .replace("ver/","anime/")
-                    val epNum = epRegex.findAll(it.selectFirst("a").attr("href")).map {
-                        it.value
+                    val urlepnum = it.selectFirst("a").attr("href")
+                    val epNum = epRegex.findAll(urlepnum).map {
+                        it.value.replace("-","")
                     }.first().toIntOrNull()
                     AnimeSearchResponse(
                         title,

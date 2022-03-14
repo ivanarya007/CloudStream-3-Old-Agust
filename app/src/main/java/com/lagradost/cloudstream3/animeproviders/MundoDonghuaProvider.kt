@@ -126,14 +126,14 @@ class MundoDonghuaProvider : MainAPI() {
     }
     data class Protea (
         @JsonProperty("source") val source: List<Source>,
-        @JsonProperty("poster") val poster: String
+        @JsonProperty("poster") val poster: String?
     )
 
     data class Source (
-        @JsonProperty("file") val file: List<String>,
-        @JsonProperty("label") val label: List<String>,
-        @JsonProperty("type") val type: List<String>,
-        @JsonProperty("default") val default: List<String>
+        @JsonProperty("file") val file: String,
+        @JsonProperty("label") val label: String?,
+        @JsonProperty("type") val type: String?,
+        @JsonProperty("default") val default: String?
     )
 
 
@@ -149,7 +149,7 @@ class MundoDonghuaProvider : MainAPI() {
                 packedRegex.findAll(script.data()).map {
                     it.value
                 }.toList().apmap {
-                    val unpack = getAndUnpack(it).replace("diasfem","suzihaza")
+                    val unpack = getAndUnpack(it).replace("diasfem","embedsito")
                     fetchUrls(unpack).apmap { url ->
                         loadExtractor(url, data, callback)
                     }
@@ -174,28 +174,45 @@ class MundoDonghuaProvider : MainAPI() {
                             "TE" to "trailers",
                             "Pragma" to "no-cache",
                             "Cache-Control" to "no-cache",)
-                        ).text.replace("\\/", "/").replace("=","%3D")
-                        val nemonicregex = Regex("www\\.nemonicplayer\\.xyz\\/player\\/play\\/[a-zA-Z0-9]{0,8}[a-zA-Z0-9_-]+.*label")
-                        nemonicregex.findAll(response).map {
-                            it.value.replace("\",\"label","")
-                                .replace("\",\"type\":\"video/mp4\",\"default\":\"true\"},{\"file\":\"","")
-                                .replace(Regex("\":\"(\\d+)p\""),"")
-                                .replace(",\"type\":\"video/mp4\"},{\"file\":\"","")
-                                .replace(Regex("(\\d+)p"),"")
-                                .replace("\":\"","")
-                        }.toList().apmap { nemonicurl ->
-                            nemonicurl.split("//").apmap { urlext ->
-                                    callback(
+                        ).text.removePrefix("[").removeSuffix("]")
+                        val json = parseJson<Protea>(response)
+                        json.source.forEach { source ->
+                            callback(
+                                ExtractorLink(
+                                    "Protea",
+                                    "Protea ${source.label}",
+                                    fixUrl(source.file),
+                                    "",
+                                    getQualityFromName(source.label!!),
+                                    false
+                                )
+                            )
+                        }
+                    }
+                    if (unpack.contains("asura_player")) {
+                    val proteaRegex = Regex("(asura_player.*type)")
+                        proteaRegex.findAll(unpack).map {
+                            it.value
+                        }.toList().apmap { protea ->
+                            val file = protea.substringAfter("{file:\"").substringBefore("\"")
+                            M3u8Helper().m3u8Generation(
+                                M3u8Helper.M3u8Stream(
+                                    file,
+                                ), true
+                            )
+                                .apmap { stream ->
+                                    val qualityString = if ((stream.quality ?: 0) == 0) "" else "${stream.quality}p"
+                                      callback(
                                         ExtractorLink(
-                                            "Protea",
-                                            "Protea",
-                                            "https://"+urlext,
-                                            "",
-                                            Qualities.Unknown.value,
-                                            isM3u8 = false
-                                        )
+                                        "Protea",
+                                        "Protea $qualityString",
+                                        stream.streamUrl,
+                                        "",
+                                        getQualityFromName(stream.quality.toString()),
+                                        true
                                     )
-                            }
+                                      )
+                                }
                         }
                     }
                 }
