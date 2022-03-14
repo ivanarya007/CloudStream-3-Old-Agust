@@ -95,7 +95,7 @@ class EntrepeliculasyseriesProvider:MainAPI() {
         val poster: String? = soup.selectFirst("article.TPost img.lazy").attr("data-src")
         val episodes = soup.select(".TPostMv article").map { li ->
             val href = (li.select("a") ?: li.select(".C a") ?: li.select("article a")).attr("href")
-            val epThumb = li.selectFirst("div.Image img").attr("data-src")
+            val epThumb = li.selectFirst("div.Image img").attr("data-src").replace(Regex("/w(\\d+)/"),"/w500/")
             val seasonid = li.selectFirst("span.Year").text().let { str ->
                 str.split("x").mapNotNull { subStr -> subStr.toIntOrNull() }
             }

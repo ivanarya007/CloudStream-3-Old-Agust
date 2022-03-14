@@ -121,7 +121,7 @@ class PelisflixProvider:MainAPI() {
                 if (episodes.isNotEmpty()) {
                     episodes.apmap { episode ->
                         val epNum = episode.selectFirst("> td > span.Num")?.text()?.toIntOrNull()
-                        val epthumb = episode.selectFirst("img")?.attr("src")
+                        val epthumb = episode.selectFirst("img")?.attr("src")?.replace(Regex("/w(\\d+)/"),"/w500/")
                         val aName = episode.selectFirst("> td.MvTbTtl > a")
                         val name = aName.text()
                         val href = aName.attr("href")
@@ -207,13 +207,7 @@ class PelisflixProvider:MainAPI() {
                     allowRedirects = false
                 ).response.headers.values("location").apmap { link ->
                     val url1 = link.replace("#bu","")
-                    for (extractor in extractorApis) {
-                        if (url1.startsWith(extractor.mainUrl)) {
-                            extractor.getSafeUrl(url1, data)?.apmap {
-                                callback(it)
-                            }
-                        }
-                    }
+                   loadExtractor(url1, data, callback)
                 }
             }
         }

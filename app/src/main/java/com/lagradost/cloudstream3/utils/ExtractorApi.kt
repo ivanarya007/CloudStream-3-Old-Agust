@@ -121,6 +121,8 @@ val extractorApis: Array<ExtractorApi> = arrayOf(
     StreamSB6(),
     StreamSB7(),
     StreamSB8(),
+    StreamSB9(),
+    StreamSB10(),
     Streamhub(),
 
     Tomatomatela(),

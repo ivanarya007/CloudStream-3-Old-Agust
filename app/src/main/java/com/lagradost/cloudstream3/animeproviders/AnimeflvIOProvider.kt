@@ -1,7 +1,9 @@
 package com.lagradost.cloudstream3.movieproviders
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.utils.*
+import com.lagradost.cloudstream3.utils.AppUtils.parseJson
 
 import org.jsoup.Jsoup
 import java.util.*
@@ -169,6 +171,22 @@ class AnimeflvIOProvider:MainAPI() {
             else -> null
         }
     }
+
+    data class MainJson (
+        @JsonProperty("source") val source: List<Source>,
+        @JsonProperty("source_bk") val sourceBk: String?,
+        @JsonProperty("track") val track: List<String>?,
+        @JsonProperty("advertising") val advertising: List<String>?,
+        @JsonProperty("linkiframe") val linkiframe: String?
+    )
+
+    data class Source (
+        @JsonProperty("file") val file: String,
+        @JsonProperty("label") val label: String,
+        @JsonProperty("default") val default: String,
+        @JsonProperty("type") val type: String
+    )
+
     override suspend fun loadLinks(
         data: String,
         isCasting: Boolean,
@@ -176,7 +194,46 @@ class AnimeflvIOProvider:MainAPI() {
         callback: (ExtractorLink) -> Unit
     ): Boolean {
         app.get(data).document.select("li.tab-video").apmap {
-            val url = it.attr("data-video")
+            val url = fixUrl(it.attr("data-video"))
+            if (url.contains("animeid")) {
+                val ajaxurl = url.replace("streaming.php","ajax.php")
+                val ajaxurltext = app.get(ajaxurl).text
+                val json = parseJson<MainJson>(ajaxurltext)
+                json.source.forEach { source ->
+                    if (source.file.contains("m3u8")) {
+                        M3u8Helper().m3u8Generation(
+                            M3u8Helper.M3u8Stream(
+                                source.file,
+                                headers = mapOf("Referer" to "https://animeid.to")
+                            ), true
+                        )
+                            .map { stream ->
+                                val qualityString = if ((stream.quality ?: 0) == 0) "" else "${stream.quality}p"
+                                callback(
+                                    ExtractorLink(
+                                    name,
+                                    "$name $qualityString",
+                                    stream.streamUrl,
+                                    "https://animeid.to",
+                                    getQualityFromName(stream.quality.toString()),
+                                    true
+                                )
+                                )
+                            }
+                    } else {
+                        callback(
+                            ExtractorLink(
+                                name,
+                                "$name ${source.label}",
+                                source.file,
+                                "https://animeid.to",
+                                Qualities.Unknown.value,
+                                isM3u8 = source.file.contains("m3u8")
+                            )
+                        )
+                    }
+                }
+            }
             for (extractor in extractorApis) {
                 if (url.startsWith(extractor.mainUrl)) {
                     extractor.getSafeUrl(url, data)?.apmap {

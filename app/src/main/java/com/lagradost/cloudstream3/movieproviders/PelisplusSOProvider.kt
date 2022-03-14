@@ -3,12 +3,14 @@ package com.lagradost.cloudstream3.movieproviders
 
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.utils.ExtractorLink
+import com.lagradost.cloudstream3.utils.M3u8Helper
 import com.lagradost.cloudstream3.utils.extractorApis
+import com.lagradost.cloudstream3.utils.getQualityFromName
 import org.jsoup.Jsoup
 import java.util.*
 
 class PelisplusSOProvider:MainAPI() {
-    override val mainUrl = "https://pelisplus.so"
+    override val mainUrl = "https://www1.pelisplus.so"
     override val name = "Pelisplus.so"
     override val lang = "es"
     override val hasMainPage = true
@@ -196,10 +198,54 @@ class PelisplusSOProvider:MainAPI() {
     ): Boolean {
         val document = app.get(data).document
        document.select(".server-item-1 li.tab-video").apmap {
-            val url = it.attr("data-video")
+           val url = fixUrl(it.attr("data-video"))
+           if (url.contains("pelisplus.icu")) {
+               val doc = app.get(url).document
+               doc.select("script[type=text/JavaScript]").map { script ->
+                   if (script.data().contains("var playerInstance =", ignoreCase = true))
+                   {
+                       val m3u8regex = Regex("((https:|http:)\\/\\/.*\\.m3u8.*expiry=(\\d+))")
+                       m3u8regex.findAll(script.data()).map {
+                           it.value
+                       }.forEach { file ->
+                           if (file.contains("m3u8")) {
+                               M3u8Helper().m3u8Generation(
+                                   M3u8Helper.M3u8Stream(
+                                       file,
+                                       headers = mapOf("Referer" to "https://pelisplus.icu")
+                                   ), true
+                               )
+                                   .map { stream ->
+                                       val qualityString = if ((stream.quality ?: 0) == 0) "" else "${stream.quality}p"
+                                       callback(
+                                           ExtractorLink(
+                                               name,
+                                               "$name $qualityString Latino",
+                                               stream.streamUrl,
+                                               "https://pelisplus.icu",
+                                               getQualityFromName(stream.quality.toString()),
+                                               true
+                                           ))
+                                   }
+                           }
+                       }
+                   }
+               }
+               doc.select("ul.list-server-items li").map {
+                   val secondurl = fixUrl(it.attr("data-video"))
+                   for (extractor in extractorApis) {
+                       if (secondurl.startsWith(extractor.mainUrl)) {
+                           extractor.getSafeUrl(secondurl, data)?.apmap {
+                               it.name += " Latino"
+                               callback(it)
+                           }
+                       }
+                   }
+               }
+           }
             for (extractor in extractorApis) {
                 if (url.startsWith(extractor.mainUrl)) {
-                    extractor.getSafeUrl(url, data)?.forEach {
+                    extractor.getSafeUrl(url, data)?.apmap {
                         it.name += " Latino"
                         callback(it)
                     }
@@ -207,10 +253,54 @@ class PelisplusSOProvider:MainAPI() {
             }
         }
         document.select(".server-item-0 li.tab-video").apmap {
-            val url = it.attr("data-video")
+            val url = fixUrl(it.attr("data-video"))
+            if (url.contains("pelisplus.icu")) {
+                val doc = app.get(url).document
+                doc.select("script[type=text/JavaScript]").map { script ->
+                    if (script.data().contains("var playerInstance =", ignoreCase = true))
+                    {
+                        val m3u8regex = Regex("((https:|http:)\\/\\/.*\\.m3u8.*expiry=(\\d+))")
+                        m3u8regex.findAll(script.data()).map {
+                            it.value
+                        }.forEach { file ->
+                            if (file.contains("m3u8")) {
+                                M3u8Helper().m3u8Generation(
+                                    M3u8Helper.M3u8Stream(
+                                        file,
+                                        headers = mapOf("Referer" to "https://pelisplus.icu")
+                                    ), true
+                                )
+                                    .map { stream ->
+                                        val qualityString = if ((stream.quality ?: 0) == 0) "" else "${stream.quality}p"
+                                        callback(
+                                            ExtractorLink(
+                                                name,
+                                                "$name $qualityString Subtitulado",
+                                                stream.streamUrl,
+                                                "https://pelisplus.icu",
+                                                getQualityFromName(stream.quality.toString()),
+                                                true
+                                            ))
+                                    }
+                            }
+                        }
+                    }
+                }
+                doc.select("ul.list-server-items li").map {
+                    val secondurl = fixUrl(it.attr("data-video"))
+                    for (extractor in extractorApis) {
+                        if (secondurl.startsWith(extractor.mainUrl)) {
+                            extractor.getSafeUrl(secondurl, data)?.apmap {
+                                it.name += " Subtitulado"
+                                callback(it)
+                            }
+                        }
+                    }
+                }
+            }
             for (extractor in extractorApis) {
                 if (url.startsWith(extractor.mainUrl)) {
-                    extractor.getSafeUrl(url, data)?.forEach {
+                    extractor.getSafeUrl(url, data)?.apmap {
                         it.name += " Subtitulado"
                         callback(it)
                     }
@@ -218,10 +308,54 @@ class PelisplusSOProvider:MainAPI() {
             }
         }
         document.select(".server-item-2 li.tab-video").apmap {
-            val url = it.attr("data-video")
+            val url = fixUrl(it.attr("data-video"))
+            if (url.contains("pelisplus.icu")) {
+                val doc = app.get(url).document
+                doc.select("script[type=text/JavaScript]").map { script ->
+                    if (script.data().contains("var playerInstance =", ignoreCase = true))
+                    {
+                      val m3u8regex = Regex("((https:|http:)\\/\\/.*\\.m3u8.*expiry=(\\d+))")
+                       m3u8regex.findAll(script.data()).map {
+                          it.value
+                      }.forEach { file ->
+                           if (file.contains("m3u8")) {
+                               M3u8Helper().m3u8Generation(
+                                   M3u8Helper.M3u8Stream(
+                                       file,
+                                       headers = mapOf("Referer" to "https://pelisplus.icu")
+                                   ), true
+                               )
+                                   .map { stream ->
+                                       val qualityString = if ((stream.quality ?: 0) == 0) "" else "${stream.quality}p"
+                                       callback(
+                                           ExtractorLink(
+                                           name,
+                                           "$name $qualityString Castellano",
+                                           stream.streamUrl,
+                                           "https://pelisplus.icu",
+                                           getQualityFromName(stream.quality.toString()),
+                                           true
+                                       ))
+                                   }
+                           }
+                       }
+                    }
+                }
+                doc.select("ul.list-server-items li").map {
+                    val secondurl = fixUrl(it.attr("data-video"))
+                    for (extractor in extractorApis) {
+                        if (secondurl.startsWith(extractor.mainUrl)) {
+                            extractor.getSafeUrl(secondurl, data)?.apmap {
+                                it.name += " Castellano"
+                                callback(it)
+                            }
+                        }
+                    }
+                }
+            }
             for (extractor in extractorApis) {
                 if (url.startsWith(extractor.mainUrl)) {
-                    extractor.getSafeUrl(url, data)?.forEach {
+                    extractor.getSafeUrl(url, data)?.apmap {
                         it.name += " Castellano"
                         callback(it)
                     }
