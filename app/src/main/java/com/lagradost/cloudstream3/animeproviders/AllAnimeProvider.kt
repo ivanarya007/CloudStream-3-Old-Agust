@@ -8,6 +8,7 @@ import com.lagradost.cloudstream3.mvvm.safeApiCall
 import com.lagradost.cloudstream3.utils.ExtractorLink
 import com.lagradost.cloudstream3.utils.M3u8Helper
 import com.lagradost.cloudstream3.utils.getQualityFromName
+import com.lagradost.cloudstream3.utils.loadExtractor
 import org.jsoup.Jsoup
 import org.mozilla.javascript.Context
 import org.mozilla.javascript.Scriptable
@@ -284,7 +285,8 @@ class AllAnimeProvider : MainAPI() {
             .map { URLDecoder.decode(it.destructured.component1().sanitize(), "UTF-8") }
         sources.apmap {
             safeApiCall {
-                var link = it.replace(" ", "%20")
+                var link = it.replace(" ", "%20").replace("https://ok.ru","http://ok.ru")
+                if (link.contains("ok.ru")) loadExtractor(link, data, callback)
                 if (URI(link).isAbsolute || link.startsWith("//")) {
                     if (link.startsWith("//")) link = "https:$it"
 

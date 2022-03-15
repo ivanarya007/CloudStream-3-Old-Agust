@@ -12,7 +12,6 @@ import com.lagradost.cloudstream3.utils.getQualityFromName
 
 class Suzihaza: XStreamCdn() {
     override val mainUrl: String = "https://suzihaza.com"
-    override var domainUrl: String = "suzihaza.com"
 }
 
 class Femax20: XStreamCdn() {

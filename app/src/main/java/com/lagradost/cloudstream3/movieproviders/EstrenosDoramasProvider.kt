@@ -66,13 +66,15 @@ class EstrenosDoramasProvider : MainAPI() {
         return HomePageResponse(items)
     }
 
-    override suspend fun search(query: String): ArrayList<SearchResponse> {
+    override suspend fun search(query: String): List<SearchResponse> {
+        val searchob = ArrayList<AnimeSearchResponse>()
         val search =
             app.get("$mainUrl/?s=$query", timeout = 120).document.select("div.clearfix").map {
                 val title = it.selectFirst("h3 a").text().replace(Regex("[Pp]elicula |[Pp]elicula"),"")
                 val href = it.selectFirst("a").attr("href")
                 val image = it.selectFirst("img.cate_thumb").attr("src")
-                AnimeSearchResponse(
+                val lists =
+                    AnimeSearchResponse(
                     title,
                     href,
                     this.name,
@@ -83,8 +85,14 @@ class EstrenosDoramasProvider : MainAPI() {
                         DubStatus.Dubbed
                     ) else EnumSet.of(DubStatus.Subbed),
                 )
+                if (href.contains("capitulo")) {
+                    //nothing
+                }
+                else {
+                    searchob.add(lists)
+                }
             }
-        return ArrayList(search)
+        return searchob
     }
 
     override suspend fun load(url: String): LoadResponse? {
@@ -104,10 +112,17 @@ class EstrenosDoramasProvider : MainAPI() {
                     .replace("</span>","").replace("Sinopsis:","")
             }.toList().first()
         }
+        val epi = ArrayList<AnimeEpisode>()
         val episodes = doc.select("div.post .lcp_catlist a").map {
             val name = it.selectFirst("a").text()
             val link = it.selectFirst("a").attr("href")
-            AnimeEpisode(link, name)
+            val test = AnimeEpisode(link, name)
+            if (link.equals(url)) {
+                //nothing
+            }
+            else {
+                epi.add(test)
+            }
         }.reversed()
 
 
@@ -117,7 +132,7 @@ class EstrenosDoramasProvider : MainAPI() {
                     japName = null
                     engName = title.replace(Regex("[Pp]elicula |[Pp]elicula"),"")
                     posterUrl = poster
-                    addEpisodes(DubStatus.Subbed, episodes)
+                    addEpisodes(DubStatus.Subbed, epi.reversed())
                     plot = finaldesc
                 }
             }

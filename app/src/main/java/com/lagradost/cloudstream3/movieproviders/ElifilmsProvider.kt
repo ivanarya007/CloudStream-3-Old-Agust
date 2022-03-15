@@ -91,15 +91,9 @@ class ElifilmsProvider:MainAPI() {
     ): Boolean {
         app.get(data).document.select("li.change-server a").apmap {
             val encodedurl = it.attr("data-id")
-            val urlDecoded = base64Decode(encodedurl)
+            val urlDecoded = base64Decode(encodedurl).replace("//ok.ru","http://ok.ru")
             val url = fixUrl(urlDecoded)
-            for (extractor in extractorApis) {
-                if (url.startsWith(extractor.mainUrl)) {
-                    extractor.getSafeUrl(url, data)?.forEach {
-                        callback(it)
-                    }
-                }
-            }
+            loadExtractor(url, data, callback)
         }
         return true
     }
