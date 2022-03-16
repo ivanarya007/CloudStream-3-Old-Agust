@@ -46,7 +46,7 @@ class JKAnimeProvider : MainAPI() {
                 app.get(mainUrl).document.select(".listadoanime-home a.bloqq").map {
                     val title = it.selectFirst("h5").text()
                     val poster = it.selectFirst(".anime__sidebar__comment__item__pic img").attr("src")
-                    val epRegex = Regex("/(\\d+)/")
+                    val epRegex = Regex("/(\\d+)/|/especial/")
                     val url = it.attr("href").replace(epRegex, "")
                     val epNum = it.selectFirst("h6").text().replace("Episodio ", "").toIntOrNull()
                     AnimeSearchResponse(
