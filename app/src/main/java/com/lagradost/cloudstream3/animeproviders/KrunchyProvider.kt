@@ -58,10 +58,8 @@ class KrunchyProvider : MainAPI() {
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false).build()
     }
 
-    override val mainUrl: String
-        get() = "http://www.crunchyroll.com"
-    override val name: String
-        get() = "Crunchyroll"
+    override var mainUrl = "http://www.crunchyroll.com"
+    override var name: String = "Crunchyroll"
     override val lang = "es"
     override val hasQuickSearch: Boolean
         get() = false

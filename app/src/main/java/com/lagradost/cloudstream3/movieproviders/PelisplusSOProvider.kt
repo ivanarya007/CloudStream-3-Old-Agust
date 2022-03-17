@@ -10,8 +10,8 @@ import org.jsoup.Jsoup
 import java.util.*
 
 class PelisplusSOProvider:MainAPI() {
-    override val mainUrl = "https://www1.pelisplus.so"
-    override val name = "Pelisplus.so"
+    override var mainUrl = "https://www1.pelisplus.so"
+    override var name = "Pelisplus.so"
     override val lang = "es"
     override val hasMainPage = true
     override val hasChromecastSupport = true

@@ -9,8 +9,8 @@ import kotlin.collections.ArrayList
 import kotlin.math.E
 
 class AnimeonlineProvider:MainAPI() {
-    override val mainUrl = "https://animeonline1.ninja"
-    override val name = "Animeonline"
+    override var mainUrl = "https://animeonline1.ninja"
+    override var name = "Animeonline"
     override val lang = "es"
     override val hasMainPage = true
     override val hasChromecastSupport = true

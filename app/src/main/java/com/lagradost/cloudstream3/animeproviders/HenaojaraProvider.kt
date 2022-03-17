@@ -8,10 +8,8 @@ import java.util.*
 import kotlin.collections.ArrayList
 
 class HenaojaraProvider: MainAPI() {
-    override val mainUrl: String
-        get() = "https://henaojara.com"
-    override val name: String
-        get() = "Henaojara"
+    override var mainUrl: String = "https://henaojara.com"
+    override var name: String = "Henaojara"
     override val lang = "es"
     override val hasMainPage = true
     override val hasChromecastSupport = true

@@ -70,12 +70,12 @@ class DoramasYTProvider : MainAPI() {
                 })
         )
 
-        for (i in urls) {
+        for ((url, name) in urls) {
             try {
-
-                val home = app.get(i.first, timeout = 120).document.select(".col-6").map {
+                val posterelement = if (url.contains("/emision")) "div.animes img" else ".anithumb img"
+                val home = app.get(url, timeout = 120).document.select(".col-6").map {
                     val title = it.selectFirst(".animedtls p").text()
-                    val poster = it.selectFirst(".anithumb img").attr("src")
+                    val poster = it.selectFirst(posterelement).attr("src")
                     AnimeSearchResponse(
                         title,
                         it.selectFirst("a").attr("href"),
@@ -89,7 +89,7 @@ class DoramasYTProvider : MainAPI() {
                     )
                 }
 
-                items.add(HomePageList(i.second, home))
+                items.add(HomePageList(name, home))
             } catch (e: Exception) {
                 e.printStackTrace()
             }

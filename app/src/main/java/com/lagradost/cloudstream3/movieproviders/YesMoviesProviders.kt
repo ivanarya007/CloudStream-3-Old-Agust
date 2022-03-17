@@ -17,9 +17,25 @@ import org.jsoup.nodes.Element
 import java.net.URI
 import kotlin.system.measureTimeMillis
 
-class YesMoviesProviders(providerUrl: String, providerName: String) : MainAPI() {
-    override val mainUrl = providerUrl
-    override val name = providerName
+
+class HDTodayProvider : YesMoviesProviders() {
+    override var mainUrl = "https://hdtoday.tv"
+    override var name = "HDToday"
+}
+
+class MoviesJoyProvider : YesMoviesProviders() {
+    override var mainUrl = "https://moviesjoy.to"
+    override var name = "Moviesjoy"
+}
+
+class MyflixerToProvider : YesMoviesProviders() {
+    override var mainUrl = "https://myflixertv.to"
+    override var name = "MyFlixer"
+}
+
+open class YesMoviesProviders : MainAPI() {
+    override var mainUrl = "https://yesmovies.mn"
+    override var name = "YesMovies"
 
     override val hasQuickSearch = false
     override val hasMainPage = true

@@ -19,7 +19,7 @@ class DoodWsExtractor : DoodLaExtractor() {
 }
 
 class DoodShExtractor : DoodLaExtractor() {
-    override val mainUrl = "https://dood.sh"
+    override var mainUrl = "https://dood.sh"
 }
 
 

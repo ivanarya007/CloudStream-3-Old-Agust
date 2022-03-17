@@ -10,8 +10,8 @@ import java.util.*
 import kotlin.collections.ArrayList
 
 class AnimeflvIOProvider:MainAPI() {
-    override val mainUrl = "https://animeflv.io"
-    override val name = "Animeflv.io"
+    override var mainUrl = "https://animeflv.io"
+    override var name = "Animeflv.io"
     override val lang = "es"
     override val hasMainPage = true
     override val hasChromecastSupport = true

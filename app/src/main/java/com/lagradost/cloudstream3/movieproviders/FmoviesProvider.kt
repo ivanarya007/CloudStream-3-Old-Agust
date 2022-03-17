@@ -25,8 +25,8 @@ import java.net.URI
 import kotlin.system.measureTimeMillis
 
 class FmoviesProvider : MainAPI() {
-    override val mainUrl = "https://fmovies.app"
-    override val name = "Fmovies"
+    override var mainUrl = "https://fmovies.app"
+    override var name = "Fmovies"
 
     override val hasQuickSearch = false
     override val hasMainPage = true

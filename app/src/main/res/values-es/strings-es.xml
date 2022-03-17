@@ -122,6 +122,8 @@
      <string name="backup_failed">Faltan los permisos de almacenamiento, por favor intente de nuevo</string>
      <string name="backup_failed_error_format">Error respaldando %s</string>
      <string name="backup_settings_des">Crea un archivo JSON con tus datos,\nen la carpeta de descargas designada</string>
+     <string name="killswitch_settings">Descargar metadatos actualizados desde github</string>
+     <string name="killswitch_settings_des">Si quieres usar todos proveedores (incluso los que no funcionen) desactiva esta opción</string>
 
      <string name="search">Buscar</string>
      <string name="settings_info">Info</string>
@@ -211,7 +213,12 @@
      <string name="dont_show_again">No mostrar de nuevo</string>
      <string name="update">Actualizar</string>
      <string name="watch_quality_pref">Calidad Preferida</string>
-    <string name="video_cache_settings">Tamaño del caché de video</string>
+     <string name="video_buffer_size_settings">Tamñano de búfer del video</string>
+     <string name="video_buffer_length_settings">Duración del búfer de vídeo</string>
+     <string name="video_buffer_disk_settings">Caché de video en memoria</string>
+     <string name="video_buffer_clear_settings">Limpiar caché de video e imagen</string>
+     <string name="video_ram_description">Si se configura demasiado alto puede causar problemas en dispositivos con poca RAM, tales como Android TV o teléfonos viejos</string>
+     <string name="video_disk_description">Si se configura demasiado alto puede causar problemas en dispositivos con poca RAM, tales como Android TV o teléfonos viejos.</string>
      <string name="dns_pref">DNS mediante HTTPS</string>
      <string name="dns_pref_summary">Útil para evitar bloqueos de ISP</string>
      <string name="display_subbed_dubbed_settings">Mostrar Anime Doblado/Subtitulado</string>

@@ -12,8 +12,8 @@ import kotlin.collections.ArrayList
 
 class MundoDonghuaProvider : MainAPI() {
 
-    override val mainUrl = "https://www.mundodonghua.com"
-    override val name = "MundoDonghua"
+    override var mainUrl = "https://www.mundodonghua.com"
+    override var name = "MundoDonghua"
     override val lang = "es"
     override val hasMainPage = true
     override val hasChromecastSupport = true

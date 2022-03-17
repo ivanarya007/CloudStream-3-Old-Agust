@@ -6,10 +6,8 @@ import com.lagradost.cloudstream3.utils.*
 import kotlin.collections.ArrayList
 
 class ElifilmsProvider:MainAPI() {
-    override val mainUrl: String
-        get() = "https://elifilms.net"
-    override val name: String
-        get() = "Elifilms"
+    override var mainUrl: String = "https://elifilms.net"
+    override var name: String = "Elifilms"
     override val lang = "es"
     override val hasMainPage = true
     override val hasChromecastSupport = true
