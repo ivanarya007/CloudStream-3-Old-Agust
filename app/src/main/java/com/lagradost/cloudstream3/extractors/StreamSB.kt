@@ -101,7 +101,6 @@ open class StreamSB : ExtractorApi() {
         ).text
         val mapped = urltext.let { parseJson<Main>(it) }
         val testurl = app.get(mapped.streamData.file, headers = headers).text
-        println("TEST URL $testurl")
         val urlmain = mapped.streamData.file.substringBefore("/hls/")
         if (urltext.contains("m3u8") && testurl.contains("EXTM3U")) return  M3u8Helper().m3u8Generation(
             M3u8Helper.M3u8Stream(

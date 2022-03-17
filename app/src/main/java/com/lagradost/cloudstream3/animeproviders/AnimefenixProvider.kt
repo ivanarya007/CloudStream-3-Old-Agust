@@ -5,6 +5,7 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.extractors.*
 import com.lagradost.cloudstream3.utils.*
+import com.lagradost.cloudstream3.utils.AppUtils.parseJson
 import org.jsoup.Jsoup
 import java.net.URLDecoder
 import java.util.*
@@ -40,7 +41,7 @@ class AnimefenixProvider:MainAPI() {
                 app.get(mainUrl).document.select(".capitulos-grid div.item").map {
                     val title = it.selectFirst("div.overtitle").text()
                     val poster = it.selectFirst("a img").attr("src")
-                    val epRegex = Regex("(-(\\d+)\$)")
+                    val epRegex = Regex("(-(\\d+)\$|-(\\d+)\\.(\\d+))")
                     val url = it.selectFirst("a").attr("href").replace(epRegex,"")
                         .replace("/ver/","/")
                     val epNum = it.selectFirst(".is-size-7").text().replace("Episodio ","").toIntOrNull()
@@ -163,6 +164,14 @@ class AnimefenixProvider:MainAPI() {
         }
     }
 
+    private fun cleanStreamID(input: String): String = input.replace(Regex("player=.*&amp;code=|&"),"")
+
+    data class Amazon (
+        @JsonProperty("file") var file  : String? = null,
+        @JsonProperty("type") var type  : String? = null,
+        @JsonProperty("label") var label : String? = null
+    )
+
     override suspend fun loadLinks(
         data: String,
         isCasting: Boolean,
@@ -172,105 +181,115 @@ class AnimefenixProvider:MainAPI() {
         app.get(data).document.select(".player-container script").apmap { script ->
             if (script.data().contains("var tabsArray =")) {
                 val html = script.data()
-                val feRegex = Regex("player=2&amp;code(.*)&")
-                feRegex.findAll(html).map {
-                    "https://embedsito.com/v/"+(it.value).replace("player=2&amp;code=","").replace("&","")
-                }.toList().apmap {
-                    loadExtractor(it, data, callback)
-                }
-                val mp4Regex = Regex("player=3&amp;code=(.*)&")
-                mp4Regex.findAll(html).map {
-                    "https://www.mp4upload.com/embed-"+(it.value).replace("player=3&amp;code=","").replace("&","")+".html"
-                }.toList().apmap {
-                    loadExtractor(it, data, callback)
-                }
-                val youruploadRegex = Regex("player=6&amp;code=(.*)&")
-                youruploadRegex.findAll(html).map {
-                    "https://www.yourupload.com/embed/"+(it.value).replace("player=6&amp;code=","").replace("&","")
-                }.toList().apmap {
-                    loadExtractor(it, data, callback)
-                }
-                val okruRegex = Regex("player=12&amp;code=(.*)&")
-                okruRegex.findAll(html).map {
-                    "https://ok.ru/videoembed/"+(it.value).replace("player=12&amp;code=","").replace("&","")
-                }.toList().apmap {
-                    loadExtractor(it, data, callback)
-                }
-                val sendvidRegex = Regex("player=4&amp;code=(.*)&")
-                sendvidRegex.findAll(html).map {
-                    "https://sendvid.com/"+(it.value).replace("player=4&amp;code=","").replace("&","")
-                }.toList().apmap {
-                    loadExtractor(it, data, callback)
-                }
-                val fireloadRegex = Regex("player=22&amp;code=(.*)&")
-                val link6 = fireloadRegex.findAll(html).map {
-                    "https://www.animefenix.com/stream/fl.php?v="+URLDecoder.decode((it.value).replace("player=22&amp;code=","").replace("&",""), "UTF-8")
-                }.toList()
-                if (link6.isNotEmpty()) {
-                    link6.apmap {
-                        val fireload = app.get(it).text
-                        val extractedlink = fireload.substringAfter("{\"file\":\"").substringBefore("\",\"type")
-                            .replace("\\/", "/")
-                        val quality = fireload.substringAfter("\"label\":\"").substringBefore("\"}")
-                        val testlink = app.get("https://$extractedlink")
-                        if (testlink.url.contains("error")) null else
-                            callback(
-                                ExtractorLink(
-                                    "Fireload",
-                                    "Fireload $quality",
-                                    "https://$extractedlink",
-                                    "",
-                                    Qualities.Unknown.value,
-                                    isM3u8 = false
-                                )
-                            )
+                val sourcesRegex = Regex("player=.*&amp;code(.*)&")
+                val test = sourcesRegex.findAll(html).toList()
+                test.apmap {
+                    val codestream = it.value
+                    val fembed = if (codestream.contains("player=2&amp")) {
+                        "https://embedsito.com/v/"+cleanStreamID(codestream)
+                    } else ""
+                    val mp4Upload = if (codestream.contains("player=3&amp")) {
+                        "https://www.mp4upload.com/embed-"+cleanStreamID(codestream)+".html"
+                    } else ""
+                    val yourUpload = if (codestream.contains("player=6&amp")) {
+                        "https://www.yourupload.com/embed/"+cleanStreamID(codestream)
+                    } else ""
+                    val okru = if (codestream.contains("player=12&amp")) {
+                        "https://ok.ru/videoembed/"+cleanStreamID(codestream)
+                    } else ""
+                    val sendvid = if (codestream.contains("player=4&amp")) {
+                        "https://sendvid.com/"+cleanStreamID(codestream)
+                    } else ""
+                    val amazon =  if (codestream.contains("player=9&amp")) {
+                        "https://www.animefenix.com/stream/amz.php?v="+cleanStreamID(codestream)
+                    } else ""
+                    val amazonES =  if (codestream.contains("player=11&amp")) {
+                        "https://www.animefenix.com/stream/amz.php?v="+cleanStreamID(codestream)
+                    } else ""
+                    val fireload = if (codestream.contains("player=22&amp")) {
+                        "https://www.animefenix.com/stream/fl.php?v="+cleanStreamID(codestream)
+                    } else ""
+                    val servers = listOf(
+                        fembed,
+                        mp4Upload,
+                        yourUpload,
+                        okru,
+                        sendvid)
+                    servers.apmap { url ->
+                        loadExtractor(url, data, callback)
                     }
-                }
-                val amazonRegex = Regex("player=9&amp;code=(.*)&")
-                val link7 = amazonRegex.findAll(html).map {
-                    "https://www.animefenix.com/stream/amz.php?v="+(it.value).replace("player=9&amp;code=","").replace("&","")
-                }.toList()
-                if (link7.isNotEmpty()) {
-                    link7.apmap {
-                        val amazon = app.get(it).text
-                        val extractedlink = amazon.substringAfter("{\"file\":\"").substringBefore("\",\"type")
-                            .replace("\\/", "/")
-                        val quality = amazon.substringAfter("\"label\":\"").substringBefore("\"}")
-                        if (extractedlink.contains("amazon"))
-                            callback(
-                                ExtractorLink(
-                                    "Amazon",
-                                    "Amazon $quality",
-                                    extractedlink,
-                                    "",
-                                    Qualities.Unknown.value,
-                                    isM3u8 = false
-                                )
-                            )
+                argamap({
+                    if (amazon.isNotBlank()) {
+                        val doc = app.get(amazon).document
+                        doc.select("script").map { script ->
+                            if (script.data().contains("sources: [{\"file\"")) {
+                                val text = script.data().substringAfter("sources:").substringBefore("]").replace("[","")
+                                val json = parseJson<Amazon>(text)
+                                if (json.file != null) {
+                                    callback(
+                                        ExtractorLink(
+                                            "Amazon",
+                                            "Amazon ${json.label}",
+                                            json.file!!,
+                                            "",
+                                            Qualities.Unknown.value,
+                                            isM3u8 = false
+                                        )
+                                    )
+                                }
+                            }
+                        }
                     }
-                }
-                val amazonesRegex = Regex("player=11&amp;code=(.*)&")
-                val link8 = amazonesRegex.findAll(html).map {
-                    "https://www.animefenix.com/stream/amz.php?v="+(it.value).replace("player=11&amp;code=","").replace("&","")
-                }.toList()
-                if (link8.isNotEmpty()) {
-                    link8.apmap {
-                        val amazones = app.get("$it&ext=es").text
-                        val extractedlink = amazones.substringAfter("{\"file\":\"").substringBefore("\",\"type")
-                            .replace("\\/", "/")
-                        val quality = amazones.substringAfter("\"label\":\"").substringBefore("\"}")
-                        if (extractedlink.contains("amazon"))
-                            callback(
-                                ExtractorLink(
-                                    "AmazonES",
-                                    "AmazonES $quality",
-                                    extractedlink,
-                                    "",
-                                    Qualities.Unknown.value,
-                                    isM3u8 = false
-                                )
-                            )
+
+                    if (amazonES.isNotBlank()) {
+                        val doc = app.get("$amazonES&ext=es").document
+                        doc.select("script").map { script ->
+                            if (script.data().contains("sources: [{\"file\"")) {
+                                val text = script.data().substringAfter("sources:").substringBefore("]").replace("[","")
+                                val json = parseJson<Amazon>(text)
+                                if (json.file != null) {
+                                    callback(
+                                        ExtractorLink(
+                                            "AmazonES",
+                                            "AmazonES ${json.label}",
+                                            json.file!!,
+                                            "",
+                                            Qualities.Unknown.value,
+                                            isM3u8 = false
+                                        )
+                                    )
+                                }
+                            }
+                        }
                     }
+                    if (fireload.isNotBlank()) {
+                        val doc = app.get(fireload).document
+                        doc.select("script").map { script ->
+                            if (script.data().contains("sources: [{\"file\"")) {
+                                val text = script.data().substringAfter("sources:").substringBefore("]").replace("[","")
+                                val json = parseJson<Amazon>(text)
+                                val testurl = if (json.file?.contains("fireload") == true) {
+                                    app.get("https://${json.file}").text
+                                } else null
+                                if (testurl?.contains("error") == true) {
+                                    //
+                                } else if (json.file?.contains("fireload") == true) {
+                                    callback(
+                                        ExtractorLink(
+                                            "Fireload",
+                                            "Fireload ${json.label}",
+                                            "https://"+json.file!!,
+                                            "",
+                                            Qualities.Unknown.value,
+                                            isM3u8 = false
+                                        )
+                                    )
+
+                                }
+                            }
+                        }
+                    }
+                })
                 }
             }
         }

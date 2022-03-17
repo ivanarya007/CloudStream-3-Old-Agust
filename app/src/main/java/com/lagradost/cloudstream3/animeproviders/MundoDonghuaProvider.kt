@@ -36,9 +36,10 @@ class MundoDonghuaProvider : MainAPI() {
                     val poster = it.selectFirst(".fit-1 img").attr("src")
                     val epRegex = Regex("(\\/(\\d+)\$)")
                     val url = it.selectFirst("a").attr("href").replace(epRegex,"").replace("/ver/","/donghua/")
-                    val epnumRegex = Regex("(\\d+)\$|((\\d+) \$)")
+                    val epnumRegex = Regex("((\\d+)$)")
+                    val epNum = epnumRegex.find(title)?.value?.toIntOrNull()
                     AnimeSearchResponse(
-                        title,
+                        title.replace(Regex("Episodio|(\\d+)"),"").trim(),
                         fixUrl(url),
                         this.name,
                         TvType.Donghua,
@@ -47,6 +48,8 @@ class MundoDonghuaProvider : MainAPI() {
                         if (title.contains("Latino") || title.contains("Castellano")) EnumSet.of(
                             DubStatus.Dubbed
                         ) else EnumSet.of(DubStatus.Subbed),
+                        subEpisodes = epNum,
+                        dubEpisodes = epNum
 
                     )
                 })
@@ -116,7 +119,9 @@ class MundoDonghuaProvider : MainAPI() {
             val link = it.attr("href")
             AnimeEpisode(fixUrl(link), name)
         }.reversed()
-        return newAnimeLoadResponse(title, url, TvType.Donghua) {
+        val typeinfo = doc.select("div.row div.col-md-6.pl-15 p.fc-dark").text()
+        val tvType = if (typeinfo.contains(Regex("Tipo.*Pel.cula"))) TvType.AnimeMovie else TvType.Donghua
+        return newAnimeLoadResponse(title, url, tvType) {
             posterUrl = poster
             addEpisodes(DubStatus.Subbed, episodes)
             showStatus = status
@@ -204,8 +209,8 @@ class MundoDonghuaProvider : MainAPI() {
                                     val qualityString = if ((stream.quality ?: 0) == 0) "" else "${stream.quality}p"
                                       callback(
                                         ExtractorLink(
-                                        "Protea",
-                                        "Protea $qualityString",
+                                        "Asura",
+                                        "Asura $qualityString",
                                         stream.streamUrl,
                                         "",
                                         getQualityFromName(stream.quality.toString()),

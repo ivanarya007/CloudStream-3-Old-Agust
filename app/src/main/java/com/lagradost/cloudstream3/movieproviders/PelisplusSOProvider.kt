@@ -190,6 +190,34 @@ class PelisplusSOProvider:MainAPI() {
         }
     }
 
+    private suspend fun getPelisStream(
+        link: String,
+        callback: (ExtractorLink) -> Unit) : Boolean {
+        val soup = app.get(link).text
+        val m3u8regex = Regex("((https:|http:)\\/\\/.*m3u8.*expiry=(\\d+))")
+        val m3u8 = m3u8regex.find(soup)?.value ?: return false
+        M3u8Helper().m3u8Generation(
+            M3u8Helper.M3u8Stream(
+                m3u8,
+                headers = mapOf("Referer" to mainUrl)
+            ), true
+        )
+            .map { stream ->
+                val qualityString = if ((stream.quality ?: 0) == 0) "" else "${stream.quality}p"
+                callback(
+                    ExtractorLink(
+                        name,
+                        "$name $qualityString",
+                        stream.streamUrl,
+                        mainUrl,
+                        getQualityFromName(stream.quality.toString()),
+                        true
+                    )
+                )
+            }
+        return true
+    }
+
     override suspend fun loadLinks(
         data: String,
         isCasting: Boolean,
@@ -197,40 +225,12 @@ class PelisplusSOProvider:MainAPI() {
         callback: (ExtractorLink) -> Unit
     ): Boolean {
         val document = app.get(data).document
-       document.select(".server-item-1 li.tab-video").apmap {
+        argamap({
+            document.select(".server-item-1 li.tab-video").apmap {
            val url = fixUrl(it.attr("data-video"))
            if (url.contains("pelisplus.icu")) {
                val doc = app.get(url).document
-               doc.select("script[type=text/JavaScript]").map { script ->
-                   if (script.data().contains("var playerInstance =", ignoreCase = true))
-                   {
-                       val m3u8regex = Regex("((https:|http:)\\/\\/.*\\.m3u8.*expiry=(\\d+))")
-                       m3u8regex.findAll(script.data()).map {
-                           it.value
-                       }.forEach { file ->
-                           if (file.contains("m3u8")) {
-                               M3u8Helper().m3u8Generation(
-                                   M3u8Helper.M3u8Stream(
-                                       file,
-                                       headers = mapOf("Referer" to "https://pelisplus.icu")
-                                   ), true
-                               )
-                                   .map { stream ->
-                                       val qualityString = if ((stream.quality ?: 0) == 0) "" else "${stream.quality}p"
-                                       callback(
-                                           ExtractorLink(
-                                               name,
-                                               "$name $qualityString Latino",
-                                               stream.streamUrl,
-                                               "https://pelisplus.icu",
-                                               getQualityFromName(stream.quality.toString()),
-                                               true
-                                           ))
-                                   }
-                           }
-                       }
-                   }
-               }
+               getPelisStream(url, callback)
                doc.select("ul.list-server-items li").map {
                    val secondurl = fixUrl(it.attr("data-video"))
                    for (extractor in extractorApis) {
@@ -256,36 +256,7 @@ class PelisplusSOProvider:MainAPI() {
             val url = fixUrl(it.attr("data-video"))
             if (url.contains("pelisplus.icu")) {
                 val doc = app.get(url).document
-                doc.select("script[type=text/JavaScript]").map { script ->
-                    if (script.data().contains("var playerInstance =", ignoreCase = true))
-                    {
-                        val m3u8regex = Regex("((https:|http:)\\/\\/.*\\.m3u8.*expiry=(\\d+))")
-                        m3u8regex.findAll(script.data()).map {
-                            it.value
-                        }.forEach { file ->
-                            if (file.contains("m3u8")) {
-                                M3u8Helper().m3u8Generation(
-                                    M3u8Helper.M3u8Stream(
-                                        file,
-                                        headers = mapOf("Referer" to "https://pelisplus.icu")
-                                    ), true
-                                )
-                                    .map { stream ->
-                                        val qualityString = if ((stream.quality ?: 0) == 0) "" else "${stream.quality}p"
-                                        callback(
-                                            ExtractorLink(
-                                                name,
-                                                "$name $qualityString Subtitulado",
-                                                stream.streamUrl,
-                                                "https://pelisplus.icu",
-                                                getQualityFromName(stream.quality.toString()),
-                                                true
-                                            ))
-                                    }
-                            }
-                        }
-                    }
-                }
+                getPelisStream(url, callback)
                 doc.select("ul.list-server-items li").map {
                     val secondurl = fixUrl(it.attr("data-video"))
                     for (extractor in extractorApis) {
@@ -311,36 +282,7 @@ class PelisplusSOProvider:MainAPI() {
             val url = fixUrl(it.attr("data-video"))
             if (url.contains("pelisplus.icu")) {
                 val doc = app.get(url).document
-                doc.select("script[type=text/JavaScript]").map { script ->
-                    if (script.data().contains("var playerInstance =", ignoreCase = true))
-                    {
-                      val m3u8regex = Regex("((https:|http:)\\/\\/.*\\.m3u8.*expiry=(\\d+))")
-                       m3u8regex.findAll(script.data()).map {
-                          it.value
-                      }.forEach { file ->
-                           if (file.contains("m3u8")) {
-                               M3u8Helper().m3u8Generation(
-                                   M3u8Helper.M3u8Stream(
-                                       file,
-                                       headers = mapOf("Referer" to "https://pelisplus.icu")
-                                   ), true
-                               )
-                                   .map { stream ->
-                                       val qualityString = if ((stream.quality ?: 0) == 0) "" else "${stream.quality}p"
-                                       callback(
-                                           ExtractorLink(
-                                           name,
-                                           "$name $qualityString Castellano",
-                                           stream.streamUrl,
-                                           "https://pelisplus.icu",
-                                           getQualityFromName(stream.quality.toString()),
-                                           true
-                                       ))
-                                   }
-                           }
-                       }
-                    }
-                }
+                getPelisStream(url, callback)
                 doc.select("ul.list-server-items li").map {
                     val secondurl = fixUrl(it.attr("data-video"))
                     for (extractor in extractorApis) {
@@ -361,7 +303,7 @@ class PelisplusSOProvider:MainAPI() {
                     }
                 }
             }
-        }
+        } })
         return true
     }
 
