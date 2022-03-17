@@ -9,13 +9,20 @@ import com.lagradost.cloudstream3.utils.Qualities
 import com.lagradost.cloudstream3.utils.getPostForm
 import org.jsoup.Jsoup
 
+//class SBPlay1 : SBPlay() {
+//    override var mainUrl = "https://sbplay1.com"
+//}
 
- class SBPlay  {
-    val mainUrl = "https://sbplay.one"
-    val name = "SBPlay"
-    val requiresReferer = false
+//class SBPlay2 : SBPlay() {
+//    override var mainUrl = "https://sbplay2.com"
+//}
 
-    suspend fun getUrl(url: String, referer: String?): List<ExtractorLink> {
+open class SBPlay : ExtractorApi() {
+    override var mainUrl = "https://sbplay.one"
+    override var name = "SBPlay"
+    override val requiresReferer = false
+
+    override suspend fun getUrl(url: String, referer: String?): List<ExtractorLink> {
         val response = app.get(url, referer = referer).text
         val document = Jsoup.parse(response)
 

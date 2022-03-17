@@ -9,50 +9,50 @@ import com.lagradost.cloudstream3.utils.AppUtils.parseJson
 
 
 class StreamSB1 : StreamSB() {
-    override val mainUrl = "https://sbplay1.com"
+    override var mainUrl = "https://sbplay1.com"
 }
 
 class StreamSB2 : StreamSB() {
-    override val mainUrl = "https://sbplay2.com"
+    override var mainUrl = "https://sbplay2.com"
 }
 
 class StreamSB3 : StreamSB() {
-    override val mainUrl = "https://sbplay3.com"
+    override var mainUrl = "https://sbplay3.com"
 }
 
 class StreamSB4 : StreamSB() {
-    override val mainUrl = "https://cloudemb.com"
+    override var mainUrl = "https://cloudemb.com"
 }
 
 class StreamSB5 : StreamSB() {
-    override val mainUrl = "https://sbplay.org"
+    override var mainUrl = "https://sbplay.org"
 }
 
 class StreamSB6 : StreamSB() {
-    override val mainUrl = "https://embedsb.com"
+    override var mainUrl = "https://embedsb.com"
 }
 
 class StreamSB7 : StreamSB() {
-    override val mainUrl = "https://pelistop.co"
+    override var mainUrl = "https://pelistop.co"
 }
 
 class StreamSB8 : StreamSB() {
-    override val mainUrl = "https://streamsb.net"
+    override var mainUrl = "https://streamsb.net"
 }
 
 class StreamSB9 : StreamSB() {
-    override val mainUrl = "https://sbplay.one"
+    override var mainUrl = "https://sbplay.one"
 }
 
 class StreamSB10 : StreamSB() {
-    override val mainUrl = "https://sbplay2.xyz"
+    override var mainUrl = "https://sbplay2.xyz"
 }
 
 // This is a modified version of https://github.com/jmir1/aniyomi-extensions/blob/master/src/en/genoanime/src/eu/kanade/tachiyomi/animeextension/en/genoanime/extractors/StreamSBExtractor.kt
 // The following code is under the Apache License 2.0 https://github.com/jmir1/aniyomi-extensions/blob/master/LICENSE
 open class StreamSB : ExtractorApi() {
-    override val name = "StreamSB"
-    override val mainUrl = "https://watchsb.com"
+    override var name = "StreamSB"
+    override var mainUrl = "https://watchsb.com"
     override val requiresReferer = false
 
     private val hexArray = "0123456789ABCDEF".toCharArray()
@@ -92,29 +92,30 @@ open class StreamSB : ExtractorApi() {
         }.first()
         val bytes = id.toByteArray()
         val bytesToHex = bytesToHex(bytes)
-        val master =  "$mainUrl/sources41/6d6144797752744a454267617c7c${bytesToHex.lowercase()}7c7c4e61755a56456f34385243727c7c73747265616d7362/6b4a33767968506e4e71374f7c7c343837323439333133333462353935333633373836643638376337633462333634663539343137373761333635313533333835333763376333393636363133393635366136323733343435323332376137633763373337343732363536313664373336327c7c504d754478413835306633797c7c73747265616d7362"
+        val master = "$mainUrl/sources41/6d6144797752744a454267617c7c${bytesToHex.lowercase()}7c7c4e61755a56456f34385243727c7c73747265616d7362/6b4a33767968506e4e71374f7c7c343837323439333133333462353935333633373836643638376337633462333634663539343137373761333635313533333835333763376333393636363133393635366136323733343435323332376137633763373337343732363536313664373336327c7c504d754478413835306633797c7c73747265616d7362"
         val headers = mapOf(
-            "watchsb" to "streamsb")
+            "watchsb" to "streamsb",
+            )
         val urltext = app.get(master,
             headers = headers,
             allowRedirects = false
         ).text
         val mapped = urltext.let { parseJson<Main>(it) }
         val testurl = app.get(mapped.streamData.file, headers = headers).text
-        val urlmain = mapped.streamData.file.substringBefore("/hls/")
+        // val urlmain = mapped.streamData.file.substringBefore("/hls/")
         if (urltext.contains("m3u8") && testurl.contains("EXTM3U")) return  M3u8Helper().m3u8Generation(
             M3u8Helper.M3u8Stream(
                 mapped.streamData.file,
-                headers = headers,
+                headers = headers
             ), true
         )
             .map { stream ->
-                val cleanstreamurl = stream.streamUrl.replace(Regex("https://.*/hls/"), "$urlmain/hls/")
+               // val cleanstreamurl = stream.streamUrl.replace(Regex("https://.*/hls/"), "$urlmain/hls/")
                 val qualityString = if ((stream.quality ?: 0) == 0) "" else "${stream.quality}p"
                 ExtractorLink(
                     name,
                     "$name $qualityString",
-                    cleanstreamurl,
+                    stream.streamUrl,
                     url,
                     getQualityFromName(stream.quality.toString()),
                     true

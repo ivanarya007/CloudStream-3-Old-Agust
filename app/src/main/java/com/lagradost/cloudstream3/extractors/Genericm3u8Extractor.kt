@@ -8,9 +8,12 @@ import com.lagradost.cloudstream3.utils.ExtractorLink
 import com.lagradost.cloudstream3.utils.M3u8Helper
 import com.lagradost.cloudstream3.utils.getQualityFromName
 
-open class Genericm3u8Extractor : ExtractorApi() {
-    override val name = "Upstream"
-    override val mainUrl = "https://upstream.to"
+
+
+
+open class GenericM3U8 : ExtractorApi() {
+    override var name = "Upstream"
+    override var mainUrl = "https://upstream.to"
     override val requiresReferer = false
 
     override suspend fun getUrl(url: String, referer: String?): List<ExtractorLink> {
@@ -26,9 +29,9 @@ open class Genericm3u8Extractor : ExtractorApi() {
                 headers = response.headers.toMap()
             ), true
         )
-            .apmap { stream ->
+            .map { stream ->
                 val qualityString = if ((stream.quality ?: 0) == 0) "" else "${stream.quality}p"
-               sources.add( ExtractorLink(
+                sources.add( ExtractorLink(
                     name,
                     "$name $qualityString",
                     stream.streamUrl,
