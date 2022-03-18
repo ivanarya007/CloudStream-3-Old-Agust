@@ -215,7 +215,7 @@
      <string name="dont_show_again">No mostrar de nuevo</string>
      <string name="update">Actualizar</string>
      <string name="watch_quality_pref">Calidad Preferida</string>
-     <string name="video_buffer_size_settings">Tamñano de búfer del video</string>
+     <string name="video_buffer_size_settings">Tamaño de búfer del video</string>
      <string name="video_buffer_length_settings">Duración del búfer de vídeo</string>
      <string name="video_buffer_disk_settings">Caché de video en memoria</string>
      <string name="video_buffer_clear_settings">Limpiar caché de video e imagen</string>

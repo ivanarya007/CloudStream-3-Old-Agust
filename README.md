@@ -7,7 +7,7 @@
 
 
 **DOWNLOAD:**
-https://github.com/LagradOst/CloudStream-3/releases
+https://github.com/Stormunblessed/CloudStream-3/releases
 
 
 ***Features:***
