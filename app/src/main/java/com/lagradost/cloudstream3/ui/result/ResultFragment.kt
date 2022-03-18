@@ -1089,7 +1089,6 @@ class ResultFragment : Fragment(), PanelsChildGestureRegionObserver.GestureRegio
                             handleAction(EpisodeClickEvent(ACTION_PLAY_EPISODE_IN_PLAYER, it))
                         }
                     }
-
                     result_resume_series_title?.text =
                         if (resume.season == null)
                             "${getString(R.string.episode)} ${resume.episode}"
@@ -1194,7 +1193,11 @@ class ResultFragment : Fragment(), PanelsChildGestureRegionObserver.GestureRegio
 
         observe(viewModel.dubStatus)
         { status ->
-            result_dub_select?.text = status.toString()
+            val dubstatusName = if (status.name == "Subbed") getString(R.string.dub_status_subbed)
+            else if (status.name == "Dubbed") getString(R.string.dub_status_dubbed)
+            else if (status.name == "Premium") getString(R.string.dub_status_premium)
+            else ""
+            result_dub_select?.text = dubstatusName
         }
 
         observe(viewModel.dubSubSelections)
@@ -1207,9 +1210,13 @@ class ResultFragment : Fragment(), PanelsChildGestureRegionObserver.GestureRegio
             val ranges = dubRange
             if (ranges != null) {
                 it.popupMenuNoIconsAndNoStringRes(ranges.map { status ->
+                    val dubstatusName = if (status.name == "Subbed") getString(R.string.dub_status_subbed)
+                    else if (status.name == "Dubbed") getString(R.string.dub_status_dubbed)
+                    else if (status.name == "Premium") getString(R.string.dub_status_premium)
+                    else ""
                     Pair(
                         status.ordinal,
-                        status.toString()
+                        dubstatusName,
                     )
                 }
                     .toList()) {

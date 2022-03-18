@@ -64,29 +64,24 @@ class JKAnimeProvider : MainAPI() {
                     )
                 })
         )
-
-        for (i in urls) {
-            try {
-                val home = app.get(i.first).document.select(".g-0").map {
-                    val title = it.selectFirst("h5 a").text()
-                    val poster = it.selectFirst("img").attr("src")
-                    AnimeSearchResponse(
-                        title,
-                        fixUrl(it.selectFirst("a").attr("href")),
-                        this.name,
-                        TvType.Anime,
-                        fixUrl(poster),
-                        null,
-                        if (title.contains("Latino") || title.contains("Castellano")) EnumSet.of(
-                            DubStatus.Dubbed
-                        ) else EnumSet.of(DubStatus.Subbed),
-                    )
-                }
-
-                items.add(HomePageList(i.second, home))
-            } catch (e: Exception) {
-                e.printStackTrace()
+        urls.apmap { (url, name) ->
+            val soup = app.get(url).document
+            val home = soup.select(".g-0").map {
+                val title = it.selectFirst("h5 a").text()
+                val poster = it.selectFirst("img").attr("src")
+                AnimeSearchResponse(
+                    title,
+                    fixUrl(it.selectFirst("a").attr("href")),
+                    this.name,
+                    TvType.Anime,
+                    fixUrl(poster),
+                    null,
+                    if (title.contains("Latino") || title.contains("Castellano")) EnumSet.of(
+                        DubStatus.Dubbed
+                    ) else EnumSet.of(DubStatus.Subbed),
+                )
             }
+            items.add(HomePageList(name, home))
         }
 
         if (items.size <= 0) throw ErrorLoadingException()

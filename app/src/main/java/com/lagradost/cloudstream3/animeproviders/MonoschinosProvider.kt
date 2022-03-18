@@ -41,7 +41,6 @@ class MonoschinosProvider : MainAPI() {
         )
 
         val items = ArrayList<HomePageList>()
-
         items.add(
             HomePageList(
                 "Últimos episodios",
@@ -49,12 +48,12 @@ class MonoschinosProvider : MainAPI() {
                     val title = it.selectFirst("p.animetitles").text()
                     val poster = it.selectFirst(".animeimghv").attr("data-src")
                     val epRegex = Regex("episodio-(\\d+)")
-                    val url = it.selectFirst("a").attr("href").replace("ver/", "anime/")
+                    val href = it.selectFirst("a").attr("href").replace("ver/", "anime/")
                         .replace(epRegex, "sub-espanol")
                     val epNum = it.selectFirst(".positioning h5").text().toIntOrNull()
                     AnimeSearchResponse(
                         title,
-                        url,
+                        href,
                         this.name,
                         TvType.Anime,
                         poster,
@@ -67,31 +66,24 @@ class MonoschinosProvider : MainAPI() {
                     )
                 })
         )
-
-        for (i in urls) {
-            try {
-                val home = app.get(i.first).document.select(".col-6").map {
-                    val title = it.selectFirst(".seristitles").text()
-                    val poster = it.selectFirst("img.animemainimg").attr("src")
-                    AnimeSearchResponse(
-                        title,
-                        fixUrl(it.selectFirst("a").attr("href")),
-                        this.name,
-                        TvType.Anime,
-                        fixUrl(poster),
-                        null,
-                        if (title.contains("Latino") || title.contains("Castellano")) EnumSet.of(
-                            DubStatus.Dubbed
-                        ) else EnumSet.of(DubStatus.Subbed),
-                    )
-                }
-
-                items.add(HomePageList(i.second, home))
-            } catch (e: Exception) {
-                e.printStackTrace()
+        urls.apmap { (url, name) ->
+            val home = app.get(url).document.select(".col-6").map {
+                val title = it.selectFirst(".seristitles").text()
+                val poster = it.selectFirst("img.animemainimg").attr("src")
+                AnimeSearchResponse(
+                    title,
+                    fixUrl(it.selectFirst("a").attr("href")),
+                    this.name,
+                    TvType.Anime,
+                    fixUrl(poster),
+                    null,
+                    if (title.contains("Latino") || title.contains("Castellano")) EnumSet.of(
+                        DubStatus.Dubbed
+                    ) else EnumSet.of(DubStatus.Subbed),
+                )
             }
+            items.add(HomePageList(name, home))
         }
-
         if (items.size <= 0) throw ErrorLoadingException()
         return HomePageResponse(items)
     }
@@ -158,18 +150,13 @@ class MonoschinosProvider : MainAPI() {
         subtitleCallback: (SubtitleFile) -> Unit,
         callback: (ExtractorLink) -> Unit
     ): Boolean {
+        val test =
         app.get(data).document.select("div.playother p").apmap {
             val encodedurl = it.select("p").attr("data-player")
             val urlDecoded = base64Decode(encodedurl)
             val url = (urlDecoded).replace("https://monoschinos2.com/reproductor?url=", "")
                 .replace("https://repro.monoschinos2.com/aqua/sv?url=","")
-            for (extractor in extractorApis) {
-                if (url.startsWith(extractor.mainUrl)) {
-                    extractor.getSafeUrl(url, data)?.apmap {
-                        callback(it)
-                    }
-                }
-            }
+            loadExtractor(url, data, callback)
         }
         return true
     }

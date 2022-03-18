@@ -265,6 +265,9 @@
 
     <string name="status_ongoing">Ongoing</string>
     <string name="status_completed">Completed</string>
+    <string name="dub_status_subbed">Subbed</string>
+    <string name="dub_status_dubbed">Dubbed</string>
+    <string name="dub_status_premium">Premium</string>
     <string name="status">Status</string>
     <string name="year">Year</string>
     <string name="rating">Rating</string>

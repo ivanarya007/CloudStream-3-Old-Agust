@@ -31,6 +31,8 @@
      <string name="type_watching">Viendo</string>
      <string name="type_on_hold">En espera</string>
      <string name="type_completed">Completada</string>
+    <string name="dub_status_subbed">Subtitulado</string>
+    <string name="dub_status_dubbed">Doblaje</string>
      <string name="type_dropped">Dejada</string>
      <string name="type_plan_to_watch">Se planea ver</string>
      <string name="type_none">Ninguno</string>

@@ -1,12 +1,12 @@
 package com.lagradost.cloudstream3.animeproviders
 
-import com.fasterxml.jackson.module.kotlin.readValue
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.json.JsonMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.utils.*
+import com.lagradost.cloudstream3.utils.AppUtils.parseJson
 import org.jsoup.Jsoup
 import java.util.*
 
@@ -27,9 +27,21 @@ class KrunchyGeoBypasser {
         val session = HttpSession()
     }
 
-    private fun getSessionId(): Boolean {
+    data class KrunchySession (
+        @JsonProperty("data") var data :DataInfo? = DataInfo(),
+        @JsonProperty("error") var error : Boolean? = null,
+        @JsonProperty("code") var code  : String?  = null
+    )
+    data class DataInfo (
+        @JsonProperty("session_id") var sessionId : String? = null,
+        @JsonProperty("country_code") var countryCode  : String?  = null,
+    )
+
+    private suspend fun getSessionId(): Boolean {
         return try {
-            sessionId = khttp.get(BYPASS_SERVER, params=mapOf("version" to "1.1")).jsonObject.getJSONObject("data").getString("session_id")
+            val response = app.get(BYPASS_SERVER, params=mapOf("version" to "1.1")).text
+            val json = parseJson<KrunchySession>(response)
+            sessionId = json.data?.sessionId
             true
         } catch (e: Exception) {
             sessionId = null
@@ -37,18 +49,17 @@ class KrunchyGeoBypasser {
         }
     }
 
-    private fun autoLoadSession(): Boolean {
+    private suspend fun autoLoadSession(): Boolean {
         if (sessionId != null) return true
         getSessionId()
         return autoLoadSession()
     }
 
-    fun geoBypassRequest(url: String): khttp.responses.Response {
+    suspend fun geoBypassRequest(url: String): khttp.responses.Response {
         autoLoadSession()
         return session.get(url, headers=headers, cookies=mapOf("session_id" to sessionId!!))
     }
 }
-
 
 class KrunchyProvider : MainAPI() {
     companion object {
@@ -82,7 +93,6 @@ class KrunchyProvider : MainAPI() {
         )
 
         val items = ArrayList<HomePageList>()
-
         items.add(HomePageList("Featured", Jsoup.parse(crUnblock.geoBypassRequest(mainUrl).text).select(
             ".js-featured-show-list > li"
         ).map { anime ->
@@ -98,31 +108,25 @@ class KrunchyProvider : MainAPI() {
                 null
             )
         }))
+        urls.apmap { (url, name) ->
+            val response = crUnblock.geoBypassRequest(url)
+            val soup = Jsoup.parse(response.text)
 
-        for (i in urls) {
-            try {
-                val response = crUnblock.geoBypassRequest(i.first)
-                val soup = Jsoup.parse(response.text)
+            val episodes = soup.select("li").map {
 
-                val episodes = soup.select("li").map {
-
-                    AnimeSearchResponse(
-                        it.selectFirst("a").attr("title"),
-                        fixUrl(it.selectFirst("a").attr("href")),
-                        this.name,
-                        TvType.Anime,
-                        it.selectFirst("img").attr("src"),
-                        null,
-                        EnumSet.of(DubStatus.Subbed),
-                        null,
-                        null
-                    )
-                }
-
-                items.add(HomePageList(i.second, episodes))
-            } catch (e: Exception) {
-                e.printStackTrace()
+                AnimeSearchResponse(
+                    it.selectFirst("a").attr("title"),
+                    fixUrl(it.selectFirst("a").attr("href")),
+                    this.name,
+                    TvType.Anime,
+                    it.selectFirst("img").attr("src"),
+                    null,
+                    EnumSet.of(DubStatus.Subbed),
+                    null,
+                    null
+                )
             }
+            items.add(HomePageList(name, episodes))
         }
         if (items.size <= 0) throw ErrorLoadingException()
         return HomePageResponse(items)
@@ -155,7 +159,7 @@ class KrunchyProvider : MainAPI() {
 
     override suspend fun search(query: String): ArrayList<SearchResponse> {
         val json = crUnblock.geoBypassRequest("http://www.crunchyroll.com/ajax/?req=RpcApiSearch_GetSearchCandidates").text.split("*/")[0].replace("\\/", "/")
-        val data = mapper.readValue<CrunchyJson>(json.split("\n").mapNotNull { if (!it.startsWith("/")) it else null }.joinToString("\n")).data
+        val data = parseJson<CrunchyJson>(json.split("\n").mapNotNull { if (!it.startsWith("/")) it else null }.joinToString("\n")).data
 
         val results = getCloseMatches(query, data.map { it.name })
         if (results.isEmpty()) return ArrayList()
@@ -193,7 +197,6 @@ class KrunchyProvider : MainAPI() {
         val poster = soup.selectFirst(".poster")?.attr("src")
 
         val p = soup.selectFirst(".description")
-
         val description = if (p.selectFirst(".more") != null && !p.selectFirst(".more")?.text()?.trim().isNullOrEmpty()) {
             p.selectFirst(".more").text().trim()
         } else {
@@ -300,7 +303,7 @@ class KrunchyProvider : MainAPI() {
         val dat = contentRegex.find(response.text)?.destructured?.component1()
 
         if (!dat.isNullOrEmpty()) {
-            val json = mapper.readValue<KrunchyVideo>(dat)
+            val json = parseJson<KrunchyVideo>(dat)
             val streams = ArrayList<Streams>()
             for (stream in json.streams) {
                 if (

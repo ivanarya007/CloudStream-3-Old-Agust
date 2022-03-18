@@ -61,28 +61,24 @@ class AnimefenixProvider:MainAPI() {
                 })
         )
 
-        for (i in urls) {
-            try {
-                val response = app.get(i.first)
-                val soup = Jsoup.parse(response.text)
-                val home = soup.select(".list-series article").map {
-                    val title = it.selectFirst("h3 a").text()
-                    val poster = it.selectFirst("figure img").attr("src")
-                    AnimeSearchResponse(
-                        title,
-                        it.selectFirst("a").attr("href"),
-                        this.name,
-                        TvType.Anime,
-                        poster,
-                        null,
-                        if (title.contains("Latino")) EnumSet.of(DubStatus.Dubbed) else EnumSet.of(DubStatus.Subbed),
-                    )
-                }
-
-                items.add(HomePageList(i.second, home))
-            } catch (e: Exception) {
-                e.printStackTrace()
+        urls.apmap { (url, name) ->
+            val response = app.get(url)
+            val soup = Jsoup.parse(response.text)
+            val home = soup.select(".list-series article").map {
+                val title = it.selectFirst("h3 a").text()
+                val poster = it.selectFirst("figure img").attr("src")
+                AnimeSearchResponse(
+                    title,
+                    it.selectFirst("a").attr("href"),
+                    this.name,
+                    TvType.Anime,
+                    poster,
+                    null,
+                    if (title.contains("Latino")) EnumSet.of(DubStatus.Dubbed) else EnumSet.of(DubStatus.Subbed),
+                )
             }
+
+            items.add(HomePageList(name, home))
         }
 
         if (items.size <= 0) throw ErrorLoadingException()

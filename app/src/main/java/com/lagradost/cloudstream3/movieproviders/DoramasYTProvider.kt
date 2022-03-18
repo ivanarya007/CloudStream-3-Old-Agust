@@ -69,32 +69,25 @@ class DoramasYTProvider : MainAPI() {
                     )
                 })
         )
-
-        for ((url, name) in urls) {
-            try {
-                val posterelement = if (url.contains("/emision")) "div.animes img" else ".anithumb img"
-                val home = app.get(url, timeout = 120).document.select(".col-6").map {
-                    val title = it.selectFirst(".animedtls p").text()
-                    val poster = it.selectFirst(posterelement).attr("src")
-                    AnimeSearchResponse(
-                        title,
-                        it.selectFirst("a").attr("href"),
-                        this.name,
-                        TvType.Anime,
-                        poster,
-                        null,
-                        if (title.contains("Latino") || title.contains("Castellano")) EnumSet.of(
-                            DubStatus.Dubbed
-                        ) else EnumSet.of(DubStatus.Subbed),
-                    )
-                }
-
-                items.add(HomePageList(name, home))
-            } catch (e: Exception) {
-                e.printStackTrace()
+        urls.apmap { (url, name) ->
+            val posterelement = if (url.contains("/emision")) "div.animes img" else ".anithumb img"
+            val home = app.get(url, timeout = 120).document.select(".col-6").map {
+                val title = it.selectFirst(".animedtls p").text()
+                val poster = it.selectFirst(posterelement).attr("src")
+                AnimeSearchResponse(
+                    title,
+                    it.selectFirst("a").attr("href"),
+                    this.name,
+                    TvType.Anime,
+                    poster,
+                    null,
+                    if (title.contains("Latino") || title.contains("Castellano")) EnumSet.of(
+                        DubStatus.Dubbed
+                    ) else EnumSet.of(DubStatus.Subbed),
+                )
             }
+            items.add(HomePageList(name, home))
         }
-
         if (items.size <= 0) throw ErrorLoadingException()
         return HomePageResponse(items)
     }
@@ -156,13 +149,7 @@ class DoramasYTProvider : MainAPI() {
             val urlDecoded = base64Decode(encodedurl)
             val url = (urlDecoded).replace("https://doramasyt.com/reproductor?url=", "")
                 .replace("https://repro.monoschinos2.com/aqua/sv?url=","")
-            for (extractor in extractorApis) {
-                if (url.startsWith(extractor.mainUrl)) {
-                    extractor.getSafeUrl(url, data)?.apmap {
-                        callback(it)
-                    }
-                }
-            }
+            loadExtractor(url, data, callback)
         }
         return true
     }

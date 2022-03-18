@@ -495,8 +495,8 @@ enum class ShowStatus {
 }
 
 enum class DubStatus {
-    Dubbed,
     Subbed,
+    Dubbed,
     Premium
 }
 

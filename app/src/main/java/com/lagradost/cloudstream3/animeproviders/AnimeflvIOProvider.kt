@@ -39,28 +39,24 @@ class AnimeflvIOProvider:MainAPI() {
                 EnumSet.of(DubStatus.Subbed),
             )
         }))
-        for (i in urls) {
-            try {
-                val response = app.get(i.first)
-                val soup = Jsoup.parse(response.text)
-                val home = soup.select("div.item-pelicula").map {
-                    val title = it.selectFirst(".item-detail p").text()
-                    val poster = it.selectFirst("figure img").attr("src")
-                    AnimeSearchResponse(
-                        title,
-                        fixUrl(it.selectFirst("a").attr("href")),
-                        this.name,
-                        TvType.Anime,
-                        poster,
-                        null,
-                        if (title.contains("Latino") || title.contains("Castellano")) EnumSet.of(DubStatus.Dubbed) else EnumSet.of(DubStatus.Subbed),
-                    )
-                }
-
-                items.add(HomePageList(i.second, home))
-            } catch (e: Exception) {
-                e.printStackTrace()
+        urls.apmap { (url, name) ->
+            val response = app.get(url)
+            val soup = Jsoup.parse(response.text)
+            val home = soup.select("div.item-pelicula").map {
+                val title = it.selectFirst(".item-detail p").text()
+                val poster = it.selectFirst("figure img").attr("src")
+                AnimeSearchResponse(
+                    title,
+                    fixUrl(it.selectFirst("a").attr("href")),
+                    this.name,
+                    TvType.Anime,
+                    poster,
+                    null,
+                    if (title.contains("Latino") || title.contains("Castellano")) EnumSet.of(DubStatus.Dubbed) else EnumSet.of(DubStatus.Subbed),
+                )
             }
+
+            items.add(HomePageList(name, home))
         }
 
         if (items.size <= 0) throw ErrorLoadingException()

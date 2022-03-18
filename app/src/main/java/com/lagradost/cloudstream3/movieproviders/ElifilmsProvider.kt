@@ -19,13 +19,12 @@ class ElifilmsProvider:MainAPI() {
         val items = ArrayList<HomePageList>()
         val newest = app.get(mainUrl).document.selectFirst("a.fav_link.premiera").attr("href")
         val urls = listOf(
-            Pair("$mainUrl/", "Películas recientes"),
+            Pair(mainUrl, "Películas recientes"),
             Pair("$mainUrl/4k-peliculas/", "Películas en 4k"),
             Pair(newest, "Últimos estrenos"),
         )
-        for (i in urls) {
-            try {
-                val soup = app.get(i.first).document
+            urls.apmap { (url, name) ->
+                val soup = app.get(url).document
                 val home = soup.select("article.shortstory.cf").map {
                     val title = it.selectFirst(".short_header").text()
                     val link = it.selectFirst("div a").attr("href")
@@ -39,12 +38,8 @@ class ElifilmsProvider:MainAPI() {
                         null,
                     )
                 }
-
-                items.add(HomePageList(i.second, home))
-            } catch (e: Exception) {
-                e.printStackTrace()
+                items.add(HomePageList(name, home))
             }
-        }
         if (items.size <= 0) throw ErrorLoadingException()
         return HomePageResponse(items)
     }
