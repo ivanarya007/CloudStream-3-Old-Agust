@@ -51,6 +51,7 @@ object APIHolder {
             FmoviesToProvider(),
             CinecalidadProvider(),
             CuevanaProvider(),
+            ComamosRamenProvider(),
             DoramasYTProvider(),
             DramaSeeProvider(),
             DubbedAnimeProvider(),
