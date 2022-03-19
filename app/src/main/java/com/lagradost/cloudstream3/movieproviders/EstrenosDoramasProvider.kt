@@ -37,30 +37,24 @@ class EstrenosDoramasProvider : MainAPI() {
 
         val items = ArrayList<HomePageList>()
 
-        for (i in urls) {
-            try {
-
-                val home = app.get(i.first, timeout = 120).document.select("div.clearfix").map {
-                    val title = it.selectFirst("h3 a").text().replace(Regex("[Pp]elicula|[Pp]elicula "),"")
-                    val poster = it.selectFirst("img.cate_thumb").attr("src")
-                    AnimeSearchResponse(
-                        title,
-                        it.selectFirst("a").attr("href"),
-                        this.name,
-                        TvType.Anime,
-                        poster,
-                        null,
-                        if (title.contains("Latino") || title.contains("Castellano")) EnumSet.of(
-                            DubStatus.Dubbed
-                        ) else EnumSet.of(DubStatus.Subbed),
-                    )
-                }
-
-                items.add(HomePageList(i.second, home))
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
+       urls.apmap { (url, name) ->
+           val home = app.get(url, timeout = 120).document.select("div.clearfix").map {
+               val title = it.selectFirst("h3 a").text().replace(Regex("[Pp]elicula|[Pp]elicula "),"")
+               val poster = it.selectFirst("img.cate_thumb").attr("src")
+               AnimeSearchResponse(
+                   title,
+                   it.selectFirst("a").attr("href"),
+                   this.name,
+                   TvType.Anime,
+                   poster,
+                   null,
+                   if (title.contains("Latino") || title.contains("Castellano")) EnumSet.of(
+                       DubStatus.Dubbed
+                   ) else EnumSet.of(DubStatus.Subbed),
+               )
+           }
+           items.add(HomePageList(name, home))
+       }
 
         if (items.size <= 0) throw ErrorLoadingException()
         return HomePageResponse(items)

@@ -20,30 +20,28 @@ class PelisplusSOProvider:MainAPI() {
         TvType.Movie,
         TvType.TvSeries,
     )
-    override suspend fun getMainPage(): HomePageResponse? {
+    override suspend fun getMainPage(): HomePageResponse {
         val items = ArrayList<HomePageList>()
         val urls = listOf(
             Pair("$mainUrl/series", "Series actualizadas",),
             Pair("$mainUrl/", "Peliculas actualizadas"),
         )
+        argamap({
+            items.add(HomePageList("Estrenos", app.get(mainUrl).document.select("div#owl-demo-premiere-movies .pull-left").map{
+                val title = it.selectFirst("p").text()
+                TvSeriesSearchResponse(
+                    title,
+                    fixUrl(it.selectFirst("a").attr("href")),
+                    this.name,
+                    TvType.Movie,
+                    it.selectFirst("img").attr("src"),
+                    it.selectFirst("span.year").toString().toIntOrNull(),
+                    null,
+                )
+            }))
 
-        items.add(HomePageList("Estrenos", Jsoup.parse(app.get(mainUrl).text).select("div#owl-demo-premiere-movies .pull-left").map{
-            val title = it.selectFirst("p").text()
-            TvSeriesSearchResponse(
-                title,
-                fixUrl(it.selectFirst("a").attr("href")),
-                this.name,
-                TvType.Movie,
-                it.selectFirst("img").attr("src"),
-                it.selectFirst("span.year").toString().toIntOrNull(),
-                null,
-            )
-        }))
-
-        for (i in urls) {
-            try {
-                val response = app.get(i.first)
-                val soup = Jsoup.parse(response.text)
+            urls.apmap { (url, name) ->
+                val soup = app.get(url).document
                 val home = soup.select(".main-peliculas div.item-pelicula").map {
                     val title = it.selectFirst(".item-detail p").text()
                     val titleRegex = Regex("(\\d+)x(\\d+)")
@@ -58,11 +56,9 @@ class PelisplusSOProvider:MainAPI() {
                     )
                 }
 
-                items.add(HomePageList(i.second, home))
-            } catch (e: Exception) {
-                e.printStackTrace()
+                items.add(HomePageList(name, home))
             }
-        }
+        })
 
         if (items.size <= 0) throw ErrorLoadingException()
         return HomePageResponse(items)

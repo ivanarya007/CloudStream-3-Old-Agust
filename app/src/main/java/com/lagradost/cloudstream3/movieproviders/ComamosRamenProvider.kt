@@ -6,6 +6,8 @@ import com.lagradost.cloudstream3.utils.AppUtils.parseJson
 import com.lagradost.cloudstream3.utils.AppUtils.toJson
 import com.lagradost.cloudstream3.utils.ExtractorLink
 import com.lagradost.cloudstream3.utils.loadExtractor
+import java.util.*
+import kotlin.collections.ArrayList
 
 class ComamosRamenProvider : MainAPI() {
     override var mainUrl = "https://comamosramen.com"
@@ -58,7 +60,7 @@ class ComamosRamenProvider : MainAPI() {
     )
     override suspend fun getMainPage(): HomePageResponse {
         val items = ArrayList<HomePageList>()
-        val tvseries = ArrayList<TvSeriesSearchResponse>()
+        val tvseries = ArrayList<AnimeSearchResponse>()
         val test = app.get(mainUrl).document
             test.select("script[type=application/json]").map { script ->
                 if (script.data().contains("pageProps")) {
@@ -68,14 +70,19 @@ class ComamosRamenProvider : MainAPI() {
                             val title = data.title
                             val link = "$mainUrl/v/${data.Id}/${title.replace(" ","-")}"
                             val img = "https://img.comamosramen.com/${data.img.vertical}-high.jpg"
-                            tvseries.add(TvSeriesSearchResponse(
+                            val epnumRegex = Regex("(\\d+\$)")
+                            val lastepisode = epnumRegex.find(data.lastEpisodeEdited!!)?.value?.toIntOrNull()
+                            tvseries.add(
+                                AnimeSearchResponse(
                                 title,
                                 link,
                                 this.name,
                                 TvType.TvSeries,
                                 img,
                                 null,
-                                null
+                                if (title.contains("Latino")) EnumSet.of(DubStatus.Dubbed) else EnumSet.of(DubStatus.Subbed),
+                                subEpisodes = lastepisode,
+                                dubEpisodes = lastepisode,
                             ))
                         }
                     }
@@ -104,27 +111,27 @@ class ComamosRamenProvider : MainAPI() {
     data class DatumSearch (
         @JsonProperty("_id") var Id    : String? = null,
         @JsonProperty("img") var img   : Img?    = Img(),
-        @JsonProperty("title") var title : String? = null
+        @JsonProperty("title") var title : String,
     )
 
     override suspend fun search(query: String): List<SearchResponse> {
         val url = "$mainUrl/buscar/${query}"
         val document = app.get(url).document
-        val search = ArrayList<TvSeriesSearchResponse>()
+        val search = ArrayList<AnimeSearchResponse>()
          document.select("script[type=application/json]").map { script ->
             val json = parseJson<SearchOb>(script.data())
               json.props?.pageProps?.data?.datum?.map {
                  val title = it.title
                  val img = "https://img.comamosramen.com/${it.img?.vertical}-high.jpg"
-                 val link = "$mainUrl/v/${it.Id}/${title?.replace(" ", "-")}"
-                 search.add(TvSeriesSearchResponse(
-                     title!!,
+                 val link = "$mainUrl/v/${it.Id}/${title.replace(" ", "-")}"
+                 search.add(AnimeSearchResponse(
+                     title,
                      link,
                      this.name,
                      TvType.TvSeries,
                      img,
                      null,
-                     null
+                     if (title.contains("Latino")) EnumSet.of(DubStatus.Dubbed) else EnumSet.of(DubStatus.Subbed),
                  ))
              }
         }
@@ -215,22 +222,12 @@ class ComamosRamenProvider : MainAPI() {
         val scriptdoc = document.select("script[type=application/json]").map { script -> script.data() }.first()
         val json = parseJson<LoadMain>(scriptdoc)
         val title = json.props?.pageProps?.data?.title
-        val desc = json.props?.pageProps?.data?.description
+        val desc = json.props?.pageProps?.data?.description?.substringAfter("Sinopsis")?.trim()
         val movieID = json.props?.pageProps?.data?.Id
         val img = "https://img.comamosramen.com/${json.props?.pageProps?.data?.img?.vertical}-high.jpg"
         val tags = json.props?.pageProps?.data?.metadata?.tags
         val status = if (json.props?.pageProps?.data?.status?.isOnAir == true) ShowStatus.Ongoing else ShowStatus.Completed
         val year = json.props?.pageProps?.data?.metadata?.year
-        val test = json.props?.pageProps?.data?.seasons?.map {
-            val sss = it.season
-            it.episodes.map {
-                 Triple(sss, it.episode, it.players)
-            }.toJson().replace("first","SeasonID")
-                .replace("second","EpisodeID")
-                .replace("third","Servers")
-                .removePrefix("[")
-                .removeSuffix("]")
-        }
          json.props?.pageProps?.data?.seasons?.map { seasons ->
             val seasonID = seasons.season
             seasons.episodes.map { episodes ->
@@ -260,13 +257,14 @@ class ComamosRamenProvider : MainAPI() {
         }
 
     data class LoadLinksMain (
-        @JsonProperty("SeasonID"  ) var SeasonID  : Int?               = null,
-        @JsonProperty("EpisodeID" ) var EpisodeID : Int?               = null,
-        @JsonProperty("Servers"   ) var Servers   : ArrayList<Servers> = arrayListOf()
+        @JsonProperty("SeasonID") var SeasonID  : Int?               = null,
+        @JsonProperty("EpisodeID") var EpisodeID : Int?               = null,
+        @JsonProperty("Servers") var Servers   : ArrayList<Servers> = arrayListOf()
     )
+
     data class Servers (
-        @JsonProperty("id"   ) var id   : String? = null,
-        @JsonProperty("name" ) var name : String? = null
+        @JsonProperty("id") var id   : String? = null,
+        @JsonProperty("name") var name : String? = null
     )
     override suspend fun loadLinks(
         data: String,
@@ -275,33 +273,33 @@ class ComamosRamenProvider : MainAPI() {
         callback: (ExtractorLink) -> Unit
     ): Boolean {
         val doc = app.get(data).document
-
+        //println(data)
         val script = doc.select("script[type=application/json]").map { it.data() }.first()
         val json = parseJson<LoadMain>(script)
-        val movieID = json.props?.pageProps?.data?.Id
-        val title = (json.props?.pageProps?.data?.title)?.replace(" ","-")
-        val validdata = data.replace(Regex("$movieID|$title|$mainUrl|/|v"),"")
-        val tesatt = validdata.let { str ->
-            str.split("-").mapNotNull { subStr -> subStr.toIntOrNull() }
+        val dataRegex = Regex("(\\d+)-(\\d+)$")
+        val tesatt = dataRegex.find(data)?.value.let { str ->
+            str?.split("-")?.mapNotNull { subStr -> subStr.toIntOrNull() }
         }
-        val seasonid = tesatt.getOrNull(0)
-        val epID = tesatt.getOrNull(1)
-        val test = json.props?.pageProps?.data?.seasons?.map {
-            val sss = it.season
-            it.episodes.map {
-                Triple(sss, it.episode, it.players)
+        val epID = tesatt?.getOrNull(1)
+        val seasonid = tesatt?.getOrNull(0)
+        //println("SEASON ID = $seasonid EPISODEID = $epID")
+        val seasonsJson = json.props?.pageProps?.data?.seasons?.map { seasons ->
+            val sss = seasons.season
+            seasons.episodes.map { ep ->
+                Triple(sss, ep.episode, ep.players)
             }.toJson().replace("first","SeasonID")
                 .replace("second","EpisodeID")
                 .replace("third","Servers")
                 .removePrefix("[")
                 .removeSuffix("]")
         }
-        val aaaaa = "["+test?.first()+"]"
-        val jsonservers = parseJson<List<LoadLinksMain>>(aaaaa)
+        val serversinfo = "["+seasonsJson?.first()+"]"
+        val jsonservers = parseJson<List<LoadLinksMain>>(serversinfo)
          jsonservers.forEach { info ->
             val episodeID = info.EpisodeID
             val seasonID = info.SeasonID
             if (seasonID == seasonid && episodeID == epID) {
+                println(info.Servers)
                 info.Servers.apmap { servers ->
                     val validserver = servers.name
                         ?.replace("SB","https://sbplay2.xyz/e/")
@@ -312,7 +310,6 @@ class ComamosRamenProvider : MainAPI() {
                     val validid = servers.id?.replace("/v/","")?.replace("v/","")
                         ?.replace("/","")?.replace(".html","")
                     val link = validserver+validid
-                    println(link)
                     loadExtractor(link, data, callback)
                 }
             }
