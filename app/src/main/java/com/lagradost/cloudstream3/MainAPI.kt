@@ -97,6 +97,7 @@ object APIHolder {
             SoaptwoDayProvider(),
             TwoEmbedProvider(),
             ApiMDBProvider(),
+            TheFlixToProvider(),
         )
     }
 
