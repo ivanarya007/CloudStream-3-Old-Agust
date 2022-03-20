@@ -10,15 +10,14 @@ import java.util.*
 import kotlin.collections.ArrayList
 
 class ComamosRamenProvider : MainAPI() {
-    override var mainUrl = "https://comamosramen.com"
+    override var mainUrl = "https://m.comamosramen.com"
     override var name = "ComamosRamen"
     override val lang = "es"
     override val hasMainPage = true
     override val hasChromecastSupport = true
     override val hasDownloadSupport = true
     override val supportedTypes = setOf(
-        TvType.Movie,
-        TvType.TvSeries,
+        TvType.AsianDrama,
     )
 
     data class HomeMain (
@@ -27,10 +26,11 @@ class ComamosRamenProvider : MainAPI() {
 
     data class HomeProps (
         @JsonProperty("pageProps") var pageProps : HomePageProps? = HomePageProps(),
+
     )
 
     data class HomePageProps (
-        @JsonProperty("data") var data : HomeData? = HomeData()
+        @JsonProperty("data") var data : HomeData? = HomeData(),
     )
 
     data class HomeData (
@@ -38,7 +38,8 @@ class ComamosRamenProvider : MainAPI() {
     )
 
     data class HomeSections (
-        @JsonProperty("data") var data : List<HomeDatum> = listOf()
+        @JsonProperty("data") var data : List<HomeDatum> = listOf(),
+        @JsonProperty("name"     ) var name     : String?             = null,
     )
     data class HomeDatum (
         @JsonProperty("_id") var Id                : String,
@@ -60,35 +61,35 @@ class ComamosRamenProvider : MainAPI() {
     )
     override suspend fun getMainPage(): HomePageResponse {
         val items = ArrayList<HomePageList>()
-        val tvseries = ArrayList<AnimeSearchResponse>()
         val test = app.get(mainUrl).document
             test.select("script[type=application/json]").map { script ->
                 if (script.data().contains("pageProps")) {
                     val json = parseJson<HomeMain>(script.data())
-                     json.props?.pageProps?.data?.sections?.map { sections ->
-                        sections.data.map { data ->
-                            val title = data.title
-                            val link = "$mainUrl/v/${data.Id}/${title.replace(" ","-")}"
-                            val img = "https://img.comamosramen.com/${data.img.vertical}-high.jpg"
-                            val epnumRegex = Regex("(\\d+\$)")
-                            val lastepisode = epnumRegex.find(data.lastEpisodeEdited!!)?.value?.toIntOrNull()
-                            tvseries.add(
-                                AnimeSearchResponse(
-                                title,
-                                link,
-                                this.name,
-                                TvType.TvSeries,
-                                img,
-                                null,
-                                if (title.contains("Latino")) EnumSet.of(DubStatus.Dubbed) else EnumSet.of(DubStatus.Subbed),
-                                subEpisodes = lastepisode,
-                                dubEpisodes = lastepisode,
-                            ))
+                    json.props?.pageProps?.data?.sections?.map { sectionss ->
+                       val a = Pair(sectionss.data, sectionss.name)
+                       val home = a.first.map { data ->
+                           val title = data.title
+                           val link = "$mainUrl/v/${data.Id}/${title.replace(" ","-")}"
+                           val img = "https://img.comamosramen.com/${data.img.vertical}-high.jpg"
+                           val epnumRegex = Regex("(\\d+\$)")
+                           val lastepisode = epnumRegex.find(data.lastEpisodeEdited!!)?.value?.toIntOrNull()
+                               AnimeSearchResponse(
+                                   title,
+                                   link,
+                                   this.name,
+                                   TvType.AsianDrama,
+                                   img,
+                                   null,
+                                   if (title.contains("Latino")) EnumSet.of(DubStatus.Dubbed) else EnumSet.of(DubStatus.Subbed),
+                                   subEpisodes = lastepisode,
+                                   dubEpisodes = lastepisode,
+                               )
                         }
+                        items.add(HomePageList(a.second!!, home))
                     }
                 }
             }
-        items.add(HomePageList("Doramas", tvseries))
+
 
         if (items.size <= 0) throw ErrorLoadingException()
         return HomePageResponse(items)
@@ -115,7 +116,7 @@ class ComamosRamenProvider : MainAPI() {
     )
 
     override suspend fun search(query: String): List<SearchResponse> {
-        val url = "$mainUrl/buscar/${query}"
+        val url = "${mainUrl.replace("m.","")}/buscar/${query}"
         val document = app.get(url).document
         val search = ArrayList<AnimeSearchResponse>()
          document.select("script[type=application/json]").map { script ->
@@ -128,7 +129,7 @@ class ComamosRamenProvider : MainAPI() {
                      title,
                      link,
                      this.name,
-                     TvType.TvSeries,
+                     TvType.AsianDrama,
                      img,
                      null,
                      if (title.contains("Latino")) EnumSet.of(DubStatus.Dubbed) else EnumSet.of(DubStatus.Subbed),
@@ -244,7 +245,7 @@ class ComamosRamenProvider : MainAPI() {
             title!!,
             url,
             this.name,
-            TvType.TvSeries,
+            TvType.AsianDrama,
             epi,
             img,
             year,

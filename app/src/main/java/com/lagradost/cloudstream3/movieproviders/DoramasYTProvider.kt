@@ -13,7 +13,7 @@ class DoramasYTProvider : MainAPI() {
         fun getType(t: String): TvType {
             return if (t.contains("OVA") || t.contains("Especial")) TvType.OVA
             else if (t.contains("Pelicula")) TvType.Movie
-            else TvType.TvSeries
+            else TvType.AsianDrama
         }
     }
 
@@ -24,8 +24,7 @@ class DoramasYTProvider : MainAPI() {
     override val hasChromecastSupport = true
     override val hasDownloadSupport = true
     override val supportedTypes = setOf(
-        TvType.TvSeries,
-        TvType.Movie,
+        TvType.AsianDrama,
     )
 
     override suspend fun getMainPage(): HomePageResponse {
@@ -58,7 +57,7 @@ class DoramasYTProvider : MainAPI() {
                         title,
                         url,
                         this.name,
-                        TvType.Anime,
+                        TvType.AsianDrama,
                         poster,
                         null,
                         if (title.contains("Latino") || title.contains("Castellano")) EnumSet.of(
@@ -78,7 +77,7 @@ class DoramasYTProvider : MainAPI() {
                     title,
                     it.selectFirst("a").attr("href"),
                     this.name,
-                    TvType.Anime,
+                    TvType.AsianDrama,
                     poster,
                     null,
                     if (title.contains("Latino") || title.contains("Castellano")) EnumSet.of(
@@ -101,7 +100,7 @@ class DoramasYTProvider : MainAPI() {
                 title,
                 href,
                 this.name,
-                TvType.Anime,
+                TvType.AsianDrama,
                 image,
                 null,
                 if (title.contains("Latino") || title.contains("Castellano")) EnumSet.of(

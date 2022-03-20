@@ -16,7 +16,7 @@ class AsiaFlixProvider : MainAPI() {
     override val hasQuickSearch = false
     override val hasMainPage = true
     override val hasChromecastSupport = false
-    override val supportedTypes = setOf(TvType.TvSeries)
+    override val supportedTypes = setOf(TvType.AsianDrama)
 
     private val apiUrl = "https://api.asiaflix.app/api/v2"
 

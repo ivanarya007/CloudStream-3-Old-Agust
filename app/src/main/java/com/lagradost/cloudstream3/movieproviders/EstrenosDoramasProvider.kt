@@ -25,8 +25,7 @@ class EstrenosDoramasProvider : MainAPI() {
     override val hasChromecastSupport = true
     override val hasDownloadSupport = true
     override val supportedTypes = setOf(
-        TvType.TvSeries,
-        TvType.Movie,
+        TvType.AsianDrama,
     )
 
     override suspend fun getMainPage(): HomePageResponse {
@@ -45,7 +44,7 @@ class EstrenosDoramasProvider : MainAPI() {
                    title,
                    it.selectFirst("a").attr("href"),
                    this.name,
-                   TvType.Anime,
+                   TvType.AsianDrama,
                    poster,
                    null,
                    if (title.contains("Latino") || title.contains("Castellano")) EnumSet.of(
@@ -72,7 +71,7 @@ class EstrenosDoramasProvider : MainAPI() {
                     title,
                     href,
                     this.name,
-                    TvType.Anime,
+                    TvType.AsianDrama,
                     image,
                     null,
                     if (title.contains("Latino") || title.contains("Castellano")) EnumSet.of(
@@ -120,8 +119,8 @@ class EstrenosDoramasProvider : MainAPI() {
         }.reversed()
 
 
-        return when (val type = if (episodes.isEmpty()) TvType.Movie else TvType.TvSeries) {
-            TvType.TvSeries -> {
+        return when (val type = if (episodes.isEmpty()) TvType.Movie else TvType.AsianDrama) {
+            TvType.AsianDrama -> {
                 return newAnimeLoadResponse(title, url, type) {
                     japName = null
                     engName = title.replace(Regex("[Pp]elicula |[Pp]elicula"),"")

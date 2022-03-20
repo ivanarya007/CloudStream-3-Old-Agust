@@ -237,6 +237,8 @@ class ResultFragment : Fragment(), PanelsChildGestureRegionObserver.GestureRegio
                 TvType.Documentary -> "Documentaries"
                 TvType.Mirror -> "Mirror"
                 TvType.Donghua -> "Donghua"
+                TvType.AsianDrama -> "Asian Drama"
+
             }
 
             val src = "$DOWNLOAD_NAVIGATE_TO/$parentId" // url ?: return@let
@@ -1595,6 +1597,7 @@ class ResultFragment : Fragment(), PanelsChildGestureRegionObserver.GestureRegio
                                 TvType.Torrent -> R.string.torrent_singular
                                 TvType.Mirror -> R.string.mirror_singular
                                 TvType.Donghua -> R.string.donghua_singular
+                                TvType.AsianDrama -> R.string.asian_dramas_singular
                             }
                         )?.let {
                             result_meta_type?.text = it

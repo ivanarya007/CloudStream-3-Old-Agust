@@ -16,7 +16,7 @@ class DramaSeeProvider : MainAPI() {
     override val hasMainPage = true
     override val hasChromecastSupport = false
     override val hasDownloadSupport = true
-    override val supportedTypes = setOf(TvType.TvSeries, TvType.Movie)
+    override val supportedTypes = setOf(TvType.AsianDrama)
 
     override suspend fun getMainPage(): HomePageResponse {
         val headers = mapOf("X-Requested-By" to "dramasee.net")

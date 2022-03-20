@@ -20,7 +20,7 @@ class KdramaHoodProvider : MainAPI() {
     override val hasMainPage = true
     override val hasChromecastSupport = false
     override val hasDownloadSupport = true
-    override val supportedTypes = setOf(TvType.TvSeries, TvType.Movie)
+    override val supportedTypes = setOf(TvType.AsianDrama)
 
     private data class ResponseDatas(
         @JsonProperty("label") val label: String,

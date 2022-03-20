@@ -330,7 +330,8 @@ abstract class MainAPI {
         TvType.Anime,
         TvType.OVA,
         TvType.Mirror,
-        TvType.Donghua
+        TvType.Donghua,
+        TvType.AsianDrama
     )
 
     open val vpnStatus = VPNStatus.None
@@ -512,7 +513,8 @@ enum class TvType {
     Torrent,
     Documentary,
     Mirror,
-    Donghua
+    Donghua,
+    AsianDrama
 }
 
 // IN CASE OF FUTURE ANIME MOVIE OR SMTH
