@@ -18,21 +18,20 @@ class TheFlixToProvider : MainAPI() {
     )
 
     data class HomeJson (
-        @JsonProperty("props") var props         : HomeProps?         = HomeProps(),
+        @JsonProperty("props") var props         : HomeProps         = HomeProps(),
     )
 
     data class HomeProps (
-        @JsonProperty("pageProps" ) var pageProps : PageProps? = PageProps(),
+        @JsonProperty("pageProps" ) var pageProps : PageProps = PageProps(),
     )
 
     data class PageProps (
-        @JsonProperty("moviesListTrending"     ) var moviesListTrending     : MoviesListTrending?    = MoviesListTrending(),
-        @JsonProperty("moviesListNewArrivals"  ) var moviesListNewArrivals  : MoviesListNewArrivals? = MoviesListNewArrivals(),
-        @JsonProperty("moviesBasePageSegments" ) var moviesBasePageSegments : ArrayList<String>      = arrayListOf(),
-        @JsonProperty("tvsListTrending"        ) var tvsListTrending        : TvsListTrending?       = TvsListTrending(),
-        @JsonProperty("tvsListNewEpisodes"     ) var tvsListNewEpisodes     : TvsListNewEpisodes?    = TvsListNewEpisodes(),
-        @JsonProperty("tvsBasePageSegments"    ) var tvsBasePageSegments    : ArrayList<String>      = arrayListOf()
+        @JsonProperty("moviesListTrending"     ) var moviesListTrending     : MoviesListTrending    = MoviesListTrending(),
+        @JsonProperty("moviesListNewArrivals"  ) var moviesListNewArrivals  : MoviesListNewArrivals = MoviesListNewArrivals(),
+        @JsonProperty("tvsListTrending"        ) var tvsListTrending        : TvsListTrending      = TvsListTrending(),
+        @JsonProperty("tvsListNewEpisodes"     ) var tvsListNewEpisodes     : TvsListNewEpisodes    = TvsListNewEpisodes(),
     )
+
 
     data class MoviesListTrending (
         @JsonProperty("docs"  ) var docs  : ArrayList<Docs> = arrayListOf(),
@@ -71,7 +70,7 @@ class TheFlixToProvider : MainAPI() {
     )
 
     data class Docs (
-        @JsonProperty("name"             ) var name             : String?           = null,
+        @JsonProperty("name"             ) var name             : String           = String(),
         @JsonProperty("originalLanguage" ) var originalLanguage : String?           = null,
         @JsonProperty("popularity"       ) var popularity       : Double?           = null,
         @JsonProperty("runtime"          ) var runtime          : Int?              = null,
@@ -98,29 +97,30 @@ class TheFlixToProvider : MainAPI() {
             if (script.data().contains("moviesListTrending")) {
                 val text = script.data()
                 val json = parseJson<HomeJson>(text)
+                val homePageProps = json.props.pageProps
                  listOf(
-                    Triple(json.props?.pageProps?.moviesListNewArrivals?.docs, json.props?.pageProps?.moviesListNewArrivals?.type, "New Movie arrivals"),
-                    Triple(json.props?.pageProps?.moviesListTrending?.docs, json.props?.pageProps?.moviesListTrending?.type, "Trending Movies"),
-                    Triple(json.props?.pageProps?.tvsListTrending?.docs, json.props?.pageProps?.tvsListTrending?.type, "Trending TV Series"),
-                    Triple(json.props?.pageProps?.tvsListNewEpisodes?.docs, json.props?.pageProps?.tvsListNewEpisodes?.type, "New Episodes")
+                    Triple(homePageProps.moviesListNewArrivals.docs, homePageProps.moviesListNewArrivals.type, "New Movie arrivals"),
+                    Triple(homePageProps.moviesListTrending.docs, homePageProps.moviesListTrending.type, "Trending Movies"),
+                    Triple(homePageProps.tvsListTrending.docs, homePageProps.tvsListTrending.type, "Trending TV Series"),
+                    Triple(homePageProps.tvsListNewEpisodes.docs, homePageProps.tvsListNewEpisodes.type, "New Episodes")
                 ).map { (docs, type, homename) ->
-                    val home = docs?.map { info ->
+                    val home = docs.map { info ->
                         val title = info.name
                         val poster = info.posterUrl
                         val typeinfo = if (type?.contains("TV") == true) TvType.TvSeries else TvType.Movie
-                        val link = if (typeinfo == TvType.Movie) "$mainUrl/movie/${info.id}-${cleanLink(title)}"
-                        else "$mainUrl/tv-show/${info.id}-${cleanLink(title)}/season-1/episode-1"
+                        val link = if (typeinfo == TvType.Movie) "$mainUrl/movie/${info.id}-${cleanTitle(title)}"
+                        else "$mainUrl/tv-show/${info.id}-${cleanTitle(title)}/season-1/episode-1"
                          TvSeriesSearchResponse(
-                            title!!,
+                            title,
                             link,
                             this.name,
-                            if (link.contains("/movie/")) TvType.Movie else TvType.TvSeries,
+                            typeinfo,
                             poster,
                             null,
                             null,
                         )
                     }
-                    items.add(HomePageList(homename, home!!))
+                    items.add(HomePageList(homename, home))
                 }
 
                 }
@@ -132,15 +132,15 @@ class TheFlixToProvider : MainAPI() {
     }
 
     data class SearchJson (
-        @JsonProperty("props"         ) var props         : SearchProps?         = SearchProps(),
+        @JsonProperty("props"         ) var props         : SearchProps         = SearchProps(),
     )
 
     data class SearchProps (
-        @JsonProperty("pageProps" ) var pageProps : SearchPageProps? = SearchPageProps(),
+        @JsonProperty("pageProps" ) var pageProps : SearchPageProps = SearchPageProps(),
     )
 
     data class SearchPageProps (
-        @JsonProperty("mainList"            ) var mainList            : SearchMainList?             = SearchMainList(),
+        @JsonProperty("mainList"            ) var mainList            : SearchMainList             = SearchMainList(),
     )
 
     data class SearchMainList (
@@ -165,19 +165,20 @@ class TheFlixToProvider : MainAPI() {
                 if (script.data().contains("pageProps")) {
                     val text = script.data()
                     val json = parseJson<SearchJson>(text)
-                    val pair = listOf(Pair(json.props?.pageProps?.mainList?.docs, json.props?.pageProps?.mainList?.type))
+                    val searchPageProps = json.props.pageProps
+                    val pair = listOf(Pair(searchPageProps.mainList.docs, searchPageProps.mainList.type))
                     pair.map { (docs, type) ->
-                         docs?.map { info ->
+                         docs.map { info ->
                             val title = info.name
                             val poster = info.posterUrl
                             val typeinfo = if (type?.contains("TV") == true) TvType.TvSeries else TvType.Movie
-                            val link = if (typeinfo == TvType.Movie) "$mainUrl/movie/${info.id}-${cleanLink(title)}"
-                            else "$mainUrl/tv-show/${info.id}-${cleanLink(title)}/season-1/episode-1"
+                            val link = if (typeinfo == TvType.Movie) "$mainUrl/movie/${info.id}-${cleanTitle(title)}"
+                            else "$mainUrl/tv-show/${info.id}-${cleanTitle(title)}/season-1/episode-1"
                              val isMovie = link.contains("movie")
                              if (isMovie) {
                                  search.add(
                                      MovieSearchResponse(
-                                     title!!,
+                                     title,
                                      link,
                                      this.name,
                                      TvType.Movie,
@@ -188,7 +189,7 @@ class TheFlixToProvider : MainAPI() {
                              } else {
                                  search.add(
                                      TvSeriesSearchResponse(
-                                     title!!,
+                                     title,
                                      link,
                                      this.name,
                                      TvType.TvSeries,
@@ -208,10 +209,10 @@ class TheFlixToProvider : MainAPI() {
 
 
     data class LoadMain (
-        @JsonProperty("props") var props : LoadProps? = LoadProps(),
+        @JsonProperty("props") var props : LoadProps = LoadProps(),
     )
     data class LoadProps (
-        @JsonProperty("pageProps" ) var pageProps : LoadPageProps? = LoadPageProps(),
+        @JsonProperty("pageProps" ) var pageProps : LoadPageProps = LoadPageProps(),
     )
 
     data class LoadPageProps (
@@ -223,7 +224,7 @@ class TheFlixToProvider : MainAPI() {
 
     data class SelectedTv (
         @JsonProperty("episodeRuntime"   ) var episodeRuntime   : Int?               = null,
-        @JsonProperty("name"             ) var name             : String?            = null,
+        @JsonProperty("name"             ) var name             : String           = String(),
         @JsonProperty("numberOfSeasons"  ) var numberOfSeasons  : Int?               = null,
         @JsonProperty("numberOfEpisodes" ) var numberOfEpisodes : Int?               = null,
         @JsonProperty("originalLanguage" ) var originalLanguage : String?            = null,
@@ -284,7 +285,7 @@ class TheFlixToProvider : MainAPI() {
     )
 
     data class Movie (
-        @JsonProperty("name"             ) var name             : String?           = null,
+        @JsonProperty("name"             ) var name             : String           = String(),
         @JsonProperty("originalLanguage" ) var originalLanguage : String?           = null,
         @JsonProperty("popularity"       ) var popularity       : Double?           = null,
         @JsonProperty("runtime"          ) var runtime          : Int?              = null,
@@ -315,7 +316,7 @@ class TheFlixToProvider : MainAPI() {
     )
 
     data class LoadDocs (
-        @JsonProperty("name"             ) var name             : String?           = null,
+        @JsonProperty("name"             ) var name             : String           = String(),
         @JsonProperty("originalLanguage" ) var originalLanguage : String?           = null,
         @JsonProperty("popularity"       ) var popularity       : Double?           = null,
         @JsonProperty("runtime"          ) var runtime          : Int?              = null,
@@ -333,67 +334,75 @@ class TheFlixToProvider : MainAPI() {
         @JsonProperty("available"        ) var available        : Boolean?          = null,
     )
 
-    private fun cleanLink(link: String?): String? = link?.replace(Regex("(:|-&)"),"")?.lowercase()
-        ?.replace("-&","")?.replace(" ","-")?.replace("'","-")
-
+    private fun cleanTitle(title: String): String =
+        (title.replace(" - ","-").replace(" ","-").replace("-&","").replace(Regex("(:|-&)"),"")
+            .replace("'","-")).lowercase()
     override suspend fun load(url: String): LoadResponse? {
         val soup = app.get(url).document
         val scripttext = soup.select("script[type=application/json]").map { it.data() }.first()
         val tvtype = if (url.contains("movie")) TvType.Movie else TvType.TvSeries
         val json = parseJson<LoadMain>(scripttext)
         val episodes = ArrayList<TvSeriesEpisode>()
+        val pageMain = json.props.pageProps
 
-        val available = if (tvtype == TvType.Movie) json.props?.pageProps?.movie?.available
-        else json.props?.pageProps?.selectedTv?.available
+        val available = if (tvtype == TvType.Movie) pageMain.movie?.available
+        else pageMain.selectedTv?.available
         val typetext = if (tvtype == TvType.Movie) "This movie is not available on the site."
         else "This tv show has no episodes available on the site."
         if (available == false) throw ErrorLoadingException(typetext)
 
-        val movieId = if (tvtype == TvType.Movie) json.props?.pageProps?.movie?.id else
-            json.props?.pageProps?.selectedTv?.id
+        val movieId = if (tvtype == TvType.Movie) pageMain.movie?.id else
+            pageMain.selectedTv?.id
 
-        val movietitle = if (tvtype == TvType.Movie) json.props?.pageProps?.movie?.name else
-            json.props?.pageProps?.selectedTv?.name
+        val movietitle = if (tvtype == TvType.Movie) pageMain.movie?.name else
+            pageMain.selectedTv?.name
+        val poster = if (tvtype == TvType.Movie) pageMain.movie?.posterUrl else
+            pageMain.selectedTv?.posterUrl
 
-        val poster = if (tvtype == TvType.Movie) json.props?.pageProps?.movie?.posterUrl else
-            json.props?.pageProps?.selectedTv?.posterUrl
 
-
-        val description = if (tvtype == TvType.Movie) json.props?.pageProps?.movie?.overview else
-            json.props?.pageProps?.selectedTv?.overview
+        val description = if (tvtype == TvType.Movie) pageMain.movie?.overview else
+            pageMain.selectedTv?.overview
 
          if (tvtype == TvType.TvSeries) {
-            json.props?.pageProps?.selectedTv?.seasons?.map { seasons ->
+            pageMain.selectedTv?.seasons?.map { seasons ->
                 val seasonPoster = seasons.posterUrl
                 seasons.episodes.forEach { epi ->
                     val episodenu = epi.episodeNumber
                     val seasonum = epi.seasonNumber
                     val title = epi.name
                     val epDesc = epi.overview
-                    episodes.add(TvSeriesEpisode(
+                    val test = epi.videos
+                    val rating = (epi.voteAverage)?.times(10)?.toInt()
+                    val eps = TvSeriesEpisode(
                         title,
                         seasonum,
                         episodenu,
-                        "$mainUrl/tv-show/$movieId-${cleanLink(movietitle)}/season-$seasonum/episode-$episodenu",
+                        "$mainUrl/tv-show/$movieId-${cleanTitle(movietitle!!)}/season-$seasonum/episode-$episodenu",
                         description = epDesc!!,
-                        posterUrl = seasonPoster
-                    ))
+                        posterUrl = seasonPoster,
+                        rating = rating,
+                    )
+                    if (test.isEmpty()) {
+                        //
+                    } else {
+                        episodes.add(eps)
+                    }
                 }
             }
         }
-        val rating = if (tvtype == TvType.Movie) (json.props?.pageProps?.movie?.voteAverage)?.toFloat()?.times(1000)?.toInt() else
-            (json.props?.pageProps?.selectedTv?.voteAverage)?.toFloat()?.times(1000)?.toInt()
+        val rating = if (tvtype == TvType.Movie) (pageMain.movie?.voteAverage)?.toFloat()?.times(1000)?.toInt() else
+            (pageMain.selectedTv?.voteAverage)?.toFloat()?.times(1000)?.toInt()
 
-        val tags = if (tvtype == TvType.Movie) json.props?.pageProps?.movie?.genres?.map { it.name }
-        else json.props?.pageProps?.selectedTv?.genres?.map { it.name }
+        val tags = if (tvtype == TvType.Movie) pageMain.movie?.genres?.map { it.name }
+        else pageMain.selectedTv?.genres?.map { it.name }
 
-        val recommendationsitem =  json.props?.pageProps?.recommendationsList?.docs?.map { loadDocs ->
+        val recommendationsitem =  pageMain.recommendationsList?.docs?.map { loadDocs ->
             val title = loadDocs.name
             val posterrec = loadDocs.posterUrl
-            val link = if (tvtype == TvType.Movie) "$mainUrl/movie/${loadDocs.id}-${cleanLink(title)}"
-            else "$mainUrl/tv-show/${loadDocs.id}-${cleanLink(title)}/season-1/episode-1"
+            val link = if (tvtype == TvType.Movie) "$mainUrl/movie/${loadDocs.id}-${cleanTitle(title)}"
+            else "$mainUrl/tv-show/${loadDocs.id}-${cleanTitle(title)}/season-1/episode-1"
             MovieSearchResponse(
-                title!!,
+                title,
                 link,
                 this.name,
                 tvtype,
@@ -401,6 +410,27 @@ class TheFlixToProvider : MainAPI() {
                 year = null
             )
         }
+
+        val castlist = if (tvtype == TvType.Movie) pageMain.movie?.cast?.split(",")?.map { cast ->
+            ActorData(
+                Actor(
+                    name = cast
+                )
+            )
+        } else
+            pageMain.selectedTv?.cast?.split(",")?.map { cast ->
+                ActorData(
+                    Actor(
+                        name = cast
+                    )
+                )
+            }
+
+        val year = if (tvtype == TvType.Movie) pageMain.movie?.releaseDate?.substringBefore("-") else
+            pageMain.selectedTv?.releaseDate?.substringBefore("-")
+
+       val runtime = if (tvtype == TvType.Movie) (pageMain.movie?.runtime)?.div(60) else
+           (pageMain.selectedTv?.episodeRuntime)?.div(60)
 
         return when (tvtype) {
             TvType.TvSeries -> {
@@ -411,13 +441,16 @@ class TheFlixToProvider : MainAPI() {
                     tvtype,
                     episodes,
                     poster,
-                    null,
+                    year?.toIntOrNull(),
                     description,
                     null,
                     null,
                     rating,
                     tags,
-                    recommendations = recommendationsitem
+                    recommendations = recommendationsitem,
+                    actors = castlist,
+                    duration = runtime
+
                 )
             }
             TvType.Movie -> {
@@ -428,12 +461,14 @@ class TheFlixToProvider : MainAPI() {
                     tvtype,
                     url,
                     poster,
-                    null,
+                    year?.toIntOrNull(),
                     description,
                     null,
                     rating,
                     tags,
-                    recommendations = recommendationsitem
+                    recommendations = recommendationsitem,
+                    actors = castlist,
+                    duration = runtime
                 )
             }
             else -> null
@@ -450,7 +485,7 @@ class TheFlixToProvider : MainAPI() {
         val doc = app.get(data).document
         val script = doc.select("script[type=application/json]").map { it.data() }.first()
         val json = parseJson<LoadMain>(script)
-        val extractedLink = json.props?.pageProps?.videoUrl
+        val extractedLink = json.props.pageProps.videoUrl
         val qualityReg = Regex("(\\d+p)")
         if (extractedLink != null) {
             val quality = qualityReg.find(extractedLink)?.value ?: ""
