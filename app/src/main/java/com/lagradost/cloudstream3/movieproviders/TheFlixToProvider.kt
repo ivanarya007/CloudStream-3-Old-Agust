@@ -333,8 +333,8 @@ class TheFlixToProvider : MainAPI() {
         @JsonProperty("available"        ) var available        : Boolean?          = null,
     )
 
-    private fun cleanLink(link: String?): String? = link?.replace(Regex("\\'|:"),"")?.lowercase()
-        ?.replace("-&","")?.replace(" ","-")
+    private fun cleanLink(link: String?): String? = link?.replace(Regex("(:|-&)"),"")?.lowercase()
+        ?.replace("-&","")?.replace(" ","-")?.replace("'","-")
 
     override suspend fun load(url: String): LoadResponse? {
         val soup = app.get(url).document
