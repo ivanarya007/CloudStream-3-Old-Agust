@@ -66,7 +66,7 @@ It merely scrapes 3rd-party websites that are publicly accessable via any regula
 - [animeflick.net](https://animeflick.net) 
 - [asianembed.io](https://asianembed.io) 
 - [fmovies.to](https://fmovies.to) 
-- [comamosramen.com](https://comamosramen.com) 
+- [m.comamosramen.com](https://m.comamosramen.com) 
 - [doramasyt.com](https://doramasyt.com) 
 - [dramasee.net](https://dramasee.net) 
 - [bestdubbedanime.com](https://bestdubbedanime.com) 
