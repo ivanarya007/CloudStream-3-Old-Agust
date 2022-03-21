@@ -17,7 +17,7 @@ class SflixProProvider : BflixProvider() {
 }
 
 open class BflixProvider() : MainAPI() {
-    override var mainUrl = "https://bflix.ru"
+    override var mainUrl = "https://www6.bflix.to"
     override var name = "Bflix"
     override val hasMainPage = true
     override val hasChromecastSupport = true

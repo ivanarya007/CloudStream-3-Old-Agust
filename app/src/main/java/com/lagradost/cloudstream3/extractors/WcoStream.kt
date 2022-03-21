@@ -17,6 +17,10 @@ class Vizcloud2 : WcoStream() {
     override var mainUrl = "https://vizcloud2.online"
 }
 
+class VizcloudOnline : WcoStream() {
+    override var mainUrl = "https://vizcloud.online"
+}
+
 open class WcoStream : ExtractorApi() {
     override var name = "VidStream" //Cause works for animekisa and wco
     override var mainUrl = "https://vidstream.pro"
@@ -54,8 +58,8 @@ open class WcoStream : ExtractorApi() {
 
         if (mapped.success) {
             mapped.media.sources.apmap {
-                if (mainUrl == "https://vizcloud2.ru") {
-                    if (it.file.contains("vizcloud2.ru")) {
+                if (mainUrl == "https://vizcloud2.ru" || mainUrl == "https://vizcloud.online") {
+                    if (it.file.contains("vizcloud2.ru") || it.file.contains("vizcloud.online")) {
                         //Had to do this thing 'cause "list.m3u8#.mp4" gives 404 error so no quality is added
                         val link1080 = it.file.replace("list.m3u8#.mp4","H4/v.m3u8")
                         val link720 = it.file.replace("list.m3u8#.mp4","H3/v.m3u8")
