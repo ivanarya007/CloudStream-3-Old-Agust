@@ -222,14 +222,15 @@ class ComamosRamenProvider : MainAPI() {
         val epi = ArrayList<TvSeriesEpisode>()
         val scriptdoc = document.select("script[type=application/json]").map { script -> script.data() }.first()
         val json = parseJson<LoadMain>(scriptdoc)
-        val title = json.props?.pageProps?.data?.title
-        val desc = json.props?.pageProps?.data?.description?.substringAfter("Sinopsis")?.trim()
-        val movieID = json.props?.pageProps?.data?.Id
-        val img = "https://img.comamosramen.com/${json.props?.pageProps?.data?.img?.vertical}-high.jpg"
-        val tags = json.props?.pageProps?.data?.metadata?.tags
-        val status = if (json.props?.pageProps?.data?.status?.isOnAir == true) ShowStatus.Ongoing else ShowStatus.Completed
-        val year = json.props?.pageProps?.data?.metadata?.year
-         json.props?.pageProps?.data?.seasons?.map { seasons ->
+        val metadataLoad = json.props?.pageProps?.data
+        val title = metadataLoad?.title
+        val desc = metadataLoad?.description?.substringAfter("Sinopsis")?.trim()
+        val movieID = metadataLoad?.Id
+        val img = "https://img.comamosramen.com/${metadataLoad?.img?.vertical}-high.jpg"
+        val tags = metadataLoad?.metadata?.tags
+        val status = if (metadataLoad?.status?.isOnAir == true) ShowStatus.Ongoing else ShowStatus.Completed
+        val year = metadataLoad?.metadata?.year
+         metadataLoad?.seasons?.map { seasons ->
             val seasonID = seasons.season
             seasons.episodes.map { episodes ->
                 val epnum = episodes.episode
