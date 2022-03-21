@@ -223,7 +223,7 @@ object APIHolder {
     fun Context.getApiProviderLangSettings(): HashSet<String> {
         val settingsManager = PreferenceManager.getDefaultSharedPreferences(this)
         val hashSet = HashSet<String>()
-        hashSet.add("en") // def is only en
+        hashSet.add("es") // def is only en
         val list = settingsManager.getStringSet(
             this.getString(R.string.provider_lang_key),
             hashSet.toMutableSet()
@@ -262,8 +262,8 @@ object APIHolder {
             allApis
         } else {
             // Filter API depending on preferred media type
-            val listEnumAnime = listOf(TvType.Anime, TvType.AnimeMovie, TvType.OVA)
-            val listEnumMovieTv = listOf(TvType.Movie, TvType.TvSeries, TvType.Cartoon)
+            val listEnumAnime = listOf(TvType.Anime, TvType.AnimeMovie, TvType.OVA, TvType.Donghua)
+            val listEnumMovieTv = listOf(TvType.Movie, TvType.TvSeries, TvType.Cartoon, TvType.AsianDrama, TvType.Mirror)
             val mediaTypeList = if (currentPrefMedia == 1) listEnumMovieTv else listEnumAnime
 
             val filteredAPI =
