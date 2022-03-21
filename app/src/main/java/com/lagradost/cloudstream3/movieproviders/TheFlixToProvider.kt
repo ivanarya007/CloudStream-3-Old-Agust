@@ -334,9 +334,17 @@ class TheFlixToProvider : MainAPI() {
         @JsonProperty("available"        ) var available        : Boolean?          = null,
     )
 
-    private fun cleanTitle(title: String): String =
-        (title.replace(" - ","-").replace(" ","-").replace("-&","").replace(Regex("(:|-&)"),"")
+    private fun cleanTitle(title: String): String {
+       val dotTitle = title.substringBefore("/season")
+       if (dotTitle.contains(".")) {
+           val cleanDot = (dotTitle.removeSuffix(".").replace(" - ","-").replace(".","-").replace(" ","-").replace("-&","").replace(Regex("(:|-&)"),"")
+               .replace("'","-")).lowercase()
+          return cleanDot
+       }
+        return (title.replace(" - ","-").replace(" ","-").replace("-&","").replace(Regex("(:|-&)"),"")
             .replace("'","-")).lowercase()
+    }
+
     override suspend fun load(url: String): LoadResponse? {
         val soup = app.get(url).document
         val scripttext = soup.select("script[type=application/json]").map { it.data() }.first()

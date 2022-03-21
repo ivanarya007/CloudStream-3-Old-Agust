@@ -34,70 +34,70 @@ object APIHolder {
 
     val allProviders by lazy {
         arrayListOf(
-            // Movie providers
-            PelisplusProvider(),
-            PelisplusHDProvider(),
-            PeliSmartProvider(),
-            MeloMovieProvider(), // Captcha for links
-            DoramasYTProvider(),
-            CinecalidadProvider(),
-            CuevanaProvider(),
-            EntrepeliculasyseriesProvider(),
-            PelisflixProvider(),
-            SeriesflixProvider(),
-            IHaveNoTvProvider(), // Documentaries provider
-            LookMovieProvider(), // RECAPTCHA (Please allow up to 5 seconds...)
-            VMoveeProvider(),
-            AllMoviesForYouProvider(),
-            VidEmbedProvider(),
-            VfFilmProvider(),
-            VfSerieProvider(),
-            FrenchStreamProvider(),
-            AsianLoadProvider(),
-            AsiaFlixProvider(), // restricted
-            BflixProvider(),
-            FmoviesToProvider(),
-            SflixProProvider(),
-            FilmanProvider(),
-            SflixProvider(),
-            DopeboxProvider(),
-            SolarmovieProvider(),
-            PinoyMoviePediaProvider(),
-            PinoyHDXyzProvider(),
-            PinoyMoviesEsProvider(),
-            TrailersTwoProvider(),
-            TwoEmbedProvider(),
-            DramaSeeProvider(),
-            WatchAsianProvider(),
-            KdramaHoodProvider(),
+            // HenaojaraProvider(), removed due to scraping providers that are already implemented
             AkwamProvider(),
-            MyCimaProvider(),
-            EgyBestProvider(),
-            SoaptwoDayProvider(),
-            HDMProvider(),// disabled due to cloudflare
-
-            // Metadata providers
-            //TmdbProvider(),
-            CrossTmdbProvider(),
-            ApiMDBProvider(),
-
-            // Anime providers
-            WatchCartoonOnlineProvider(),
-            GogoanimeProvider(),
             AllAnimeProvider(),
             AnimekisaProvider(),
-            //ShiroProvider(), // v2 fucked me
+            AllMoviesForYouProvider(),
+            AnimefenixProvider(),
             AnimeFlickProvider(),
+            AnimeflvIOProvider(),
             AnimeflvnetProvider(),
-            TenshiProvider(),
-            WcoProvider(),
+            AnimeIDProvider(),
+            AnimeonlineProvider(),
             AnimePaheProvider(),
-            NineAnimeProvider(),
-            AnimeWorldProvider(),
-            ZoroProvider(),
+            AsianLoadProvider(),
+            BflixProvider(),
+            FmoviesToProvider(),
+            CinecalidadProvider(),
+            CuevanaProvider(),
+            ComamosRamenProvider(),
+            DoramasYTProvider(),
+            DramaSeeProvider(),
             DubbedAnimeProvider(),
+            ElifilmsProvider(),
+            EntrepeliculasyseriesProvider(),
+            EstrenosDoramasProvider(),
+            FilmanProvider(),
+            FrenchStreamProvider(),
+            GogoanimeProvider(),
+            IHaveNoTvProvider(), // Documentaries provider
+            KdramaHoodProvider(),
+            KrunchyProvider(),
             MonoschinosProvider(),
-            KawaiifuProvider(), // disabled due to cloudflare
+            MundoDonghuaProvider(),
+            NineAnimeProvider(),
+            PelisflixProvider(),
+            PeliSmartProvider(),
+            PelisplusHDProvider(),
+            PelisplusSOProvider(),
+            PinoyHDXyzProvider(),
+            PinoyMoviePediaProvider(),
+            PinoyMoviesEsProvider(),
+            SeriesflixProvider(),
+            SflixProvider(),
+            TenshiProvider(),
+            TrailersTwoProvider(),
+            TioAnimeProvider(),
+            VfFilmProvider(),
+            VfSerieProvider(),
+            VidEmbedProvider(),
+            VMoveeProvider(),
+            WatchAsianProvider(),
+            WatchCartoonOnlineProvider(),
+            WcoProvider(),
+            JKAnimeProvider(),
+            ZoroProvider(),
+            YesMoviesProviders(), //Sflix mirror
+            HDTodayProvider(),
+            MoviesJoyProvider(),
+            MyflixerToProvider(),
+
+            FmoviesProvider(), //Sflix mirror
+            SoaptwoDayProvider(),
+            TwoEmbedProvider(),
+            ApiMDBProvider(),
+            TheFlixToProvider(),
         )
     }
 
@@ -339,6 +339,9 @@ abstract class MainAPI {
         TvType.Cartoon,
         TvType.Anime,
         TvType.OVA,
+        TvType.Mirror,
+        TvType.Donghua,
+        TvType.AsianDrama
     )
 
     open val vpnStatus = VPNStatus.None
@@ -507,6 +510,7 @@ enum class ShowStatus {
 enum class DubStatus {
     Dubbed,
     Subbed,
+    Premium
 }
 
 enum class TvType {
@@ -518,6 +522,9 @@ enum class TvType {
     OVA,
     Torrent,
     Documentary,
+    Mirror,
+    Donghua,
+    AsianDrama
 }
 
 // IN CASE OF FUTURE ANIME MOVIE OR SMTH
@@ -527,7 +534,7 @@ fun TvType.isMovieType(): Boolean {
 
 // returns if the type has an anime opening
 fun TvType.isAnimeOp(): Boolean {
-    return this == TvType.Anime || this == TvType.OVA
+    return this == TvType.Anime || this == TvType.OVA || this == TvType.Donghua
 }
 
 data class SubtitleFile(val lang: String, val url: String)
@@ -707,7 +714,7 @@ fun LoadResponse?.isAnimeBased(): Boolean {
 
 fun TvType?.isEpisodeBased(): Boolean {
     if (this == null) return false
-    return (this == TvType.TvSeries || this == TvType.Anime)
+    return (this == TvType.TvSeries || this == TvType.Anime || this == TvType.Donghua || this == TvType.AsianDrama)
 }
 
 data class AnimeEpisode(
