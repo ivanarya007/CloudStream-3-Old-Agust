@@ -312,15 +312,15 @@ class TheFlixToProvider : MainAPI() {
     )
 
     private fun cleanTitle(title: String): String {
-       val dotTitle = title.substringBefore("/season")
-       if (dotTitle.contains(Regex("\\..\\."))) { //For titles containing more than two dots (S.W.A.T.)
-           return (dotTitle.removeSuffix(".")
-               .replace(" - ", "-")
-               .replace(".", "-").replace(" ", "-")
-               .replace("-&", "")
-               .replace(Regex("(:|-&)"), "")
-               .replace("'", "-")).lowercase()
-       }
+        val dotTitle = title.substringBefore("/season")
+        if (dotTitle.contains(Regex("\\..\\."))) { //For titles containing more than two dots (S.W.A.T.)
+            return (dotTitle.removeSuffix(".")
+                .replace(" - ", "-")
+                .replace(".", "-").replace(" ", "-")
+                .replace("-&", "")
+                .replace(Regex("(:|-&)"), "")
+                .replace("'", "-")).lowercase()
+        }
         return (title
             .replace(" - ","-")
             .replace(" ","-")
@@ -353,33 +353,33 @@ class TheFlixToProvider : MainAPI() {
 
         val description = metadata.overview
 
-         if (!isMovie) {
-             metadata.seasons.map { seasons ->
-                 val seasonPoster = seasons.posterUrl ?: metadata.posterUrl
-                 seasons.episodes.forEach { epi ->
-                     val episodenu = epi.episodeNumber
-                     val seasonum = epi.seasonNumber
-                     val title = epi.name
-                     val epDesc = epi.overview
-                     val test = epi.videos
-                     val ratinginfo = (epi.voteAverage)?.times(10)?.toInt()
-                     val rating = if (ratinginfo?.equals(0) == true) null else ratinginfo
-                     val eps = TvSeriesEpisode(
-                         title,
-                         seasonum,
-                         episodenu,
-                         "$mainUrl/tv-show/$movieId-${cleanTitle(movietitle)}/season-$seasonum/episode-$episodenu",
-                         description = epDesc!!,
-                         posterUrl = seasonPoster,
-                         rating = rating,
-                     )
-                     if (test.isNotEmpty()) {
-                         episodes.add(eps)
-                     } else {
-                         //Nothing, will prevent seasons/episodes with no videos to be added
-                     }
-                 }
-             }
+        if (!isMovie) {
+            metadata.seasons.map { seasons ->
+                val seasonPoster = seasons.posterUrl ?: metadata.posterUrl
+                seasons.episodes.forEach { epi ->
+                    val episodenu = epi.episodeNumber
+                    val seasonum = epi.seasonNumber
+                    val title = epi.name
+                    val epDesc = epi.overview
+                    val test = epi.videos
+                    val ratinginfo = (epi.voteAverage)?.times(10)?.toInt()
+                    val rating = if (ratinginfo?.equals(0) == true) null else ratinginfo
+                    val eps = TvSeriesEpisode(
+                        title,
+                        seasonum,
+                        episodenu,
+                        "$mainUrl/tv-show/$movieId-${cleanTitle(movietitle)}/season-$seasonum/episode-$episodenu",
+                        description = epDesc!!,
+                        posterUrl = seasonPoster,
+                        rating = rating,
+                    )
+                    if (test.isNotEmpty()) {
+                        episodes.add(eps)
+                    } else {
+                        //Nothing, will prevent seasons/episodes with no videos to be added
+                    }
+                }
+            }
         }
         val rating = metadata.voteAverage?.toFloat()?.times(1000)?.toInt()
 

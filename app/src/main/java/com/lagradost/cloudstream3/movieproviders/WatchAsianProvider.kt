@@ -187,7 +187,7 @@ class WatchAsianProvider : MainAPI() {
             name = title,
             url = url,
             apiName = this.name,
-            type = TvType.TvSeries,
+            type = TvType.AsianDrama,
             episodes = episodeList.reversed(),
             posterUrl = poster,
             year = year,

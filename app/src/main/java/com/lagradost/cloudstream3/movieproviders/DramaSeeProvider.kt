@@ -3,7 +3,7 @@ package com.lagradost.cloudstream3.movieproviders
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.animeproviders.GogoanimeProvider.Companion.extractVidstream
-import com.lagradost.cloudstream3.extractors.*
+import com.lagradost.cloudstream3.extractors.XStreamCdn
 import com.lagradost.cloudstream3.extractors.helper.AsianEmbedHelper
 import com.lagradost.cloudstream3.utils.AppUtils.toJson
 import com.lagradost.cloudstream3.utils.ExtractorLink
@@ -43,7 +43,7 @@ class DramaSeeProvider : MainAPI() {
                             name,
                             link,
                             this.name,
-                            TvType.TvSeries,
+                            TvType.AsianDrama,
                             image,
                             year = null,
                             id = null,
@@ -173,7 +173,7 @@ class DramaSeeProvider : MainAPI() {
             name = title,
             url = url,
             apiName = this.name,
-            type = TvType.TvSeries,
+            type = TvType.AsianDrama,
             episodes = episodeList.reversed(),
             posterUrl = poster,
             year = year,

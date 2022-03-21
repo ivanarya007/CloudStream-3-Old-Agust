@@ -145,17 +145,15 @@ class HomeFragment : Fragment() {
             tvs: MaterialButton?,
             docs: MaterialButton?,
             movies: MaterialButton?,
-            mirror: MaterialButton?,
-            asian_dramas: MaterialButton?
+            asian: MaterialButton?,
         ): List<Pair<MaterialButton?, List<TvType>>> {
             return listOf(
-                Pair(anime, listOf(TvType.Anime, TvType.OVA, TvType.AnimeMovie, TvType.Donghua)),
+                Pair(anime, listOf(TvType.Anime, TvType.OVA, TvType.AnimeMovie)),
                 Pair(cartoons, listOf(TvType.Cartoon)),
                 Pair(tvs, listOf(TvType.TvSeries)),
                 Pair(docs, listOf(TvType.Documentary)),
                 Pair(movies, listOf(TvType.Movie, TvType.Torrent)),
-                Pair(mirror, listOf(TvType.Mirror)),
-                Pair(asian_dramas, listOf(TvType.AsianDrama)),
+                Pair(asian, listOf(TvType.AsianDrama)),
             )
         }
 
@@ -187,11 +185,11 @@ class HomeFragment : Fragment() {
                 val tvs = dialog.findViewById<MaterialButton>(R.id.home_select_tv_series)
                 val docs = dialog.findViewById<MaterialButton>(R.id.home_select_documentaries)
                 val movies = dialog.findViewById<MaterialButton>(R.id.home_select_movies)
+                val asian = dialog.findViewById<MaterialButton>(R.id.home_select_asian)
                 val cancelBtt = dialog.findViewById<MaterialButton>(R.id.cancel_btt)
                 val applyBtt = dialog.findViewById<MaterialButton>(R.id.apply_btt)
-                val mirror = dialog.findViewById<MaterialButton>(R.id.home_select_mirror)
-                val asian_dramas = dialog.findViewById<MaterialButton>(R.id.home_select_asian_dramas)
-                val pairList = getPairList(anime, cartoons, tvs, docs, movies, mirror, asian_dramas)
+
+                val pairList = getPairList(anime, cartoons, tvs, docs, movies, asian)
 
                 cancelBtt?.setOnClickListener {
                     dialog.dismissSafe()
@@ -308,6 +306,7 @@ class HomeFragment : Fragment() {
             homeViewModel.loadAndCancel(api)
         }
         /*val validAPIs = view.context?.filterProviderByPreferredMedia()?.toMutableList() ?: mutableListOf()
+
         validAPIs.add(0, randomApi)
         validAPIs.add(0, noneApi)
         view.popupMenuNoIconsAndNoStringRes(validAPIs.mapIndexed { index, api -> Pair(index, api.name) }) {
@@ -381,9 +380,9 @@ class HomeFragment : Fragment() {
                     Pair(R.string.tv_series, listOf(TvType.TvSeries)),
                     Pair(R.string.documentaries, listOf(TvType.Documentary)),
                     Pair(R.string.cartoons, listOf(TvType.Cartoon)),
-                    Pair(R.string.anime, listOf(TvType.Anime, TvType.OVA, TvType.AnimeMovie, TvType.Donghua)),
+                    Pair(R.string.anime, listOf(TvType.Anime, TvType.OVA, TvType.AnimeMovie)),
                     Pair(R.string.torrent, listOf(TvType.Torrent)),
-                    Pair(R.string.mirror, listOf(TvType.Mirror)),
+                    Pair(R.string.asian_drama, listOf(TvType.AsianDrama)),
                 ).filter { item -> currentApi.supportedTypes.any { type -> item.second.contains(type) } }
                 home_provider_meta_info?.text =
                     typeChoices.joinToString(separator = ", ") { getString(it.first) }
@@ -806,7 +805,7 @@ class HomeFragment : Fragment() {
             if (ctx.isTvSettings()) {
                 home_api_fab?.isVisible = false
                 home_change_api?.isVisible = true
-                if(ctx.isTrueTvSettings()) {
+                if (ctx.isTrueTvSettings()) {
                     home_change_api_loading?.isVisible = true
                     home_change_api_loading?.isFocusable = true
                     home_change_api_loading?.isFocusableInTouchMode = true
