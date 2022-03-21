@@ -1199,7 +1199,8 @@ class ResultFragment : Fragment(), PanelsChildGestureRegionObserver.GestureRegio
         { status ->
             val dubstatusName = if (status.name == "Subbed") getString(R.string.dub_status_subbed)
             else if (status.name == "Dubbed") getString(R.string.dub_status_dubbed)
-            else if (status.name == "Premium") getString(R.string.dub_status_premium)
+            else if (status.name == "PremiumDub") getString(R.string.dub_status_premium)
+            else if (status.name == "PremiumSub") getString(R.string.sub_status_premium)
             else ""
             result_dub_select?.text = dubstatusName
         }
@@ -1216,7 +1217,8 @@ class ResultFragment : Fragment(), PanelsChildGestureRegionObserver.GestureRegio
                 it.popupMenuNoIconsAndNoStringRes(ranges.map { status ->
                     val dubstatusName = if (status.name == "Subbed") getString(R.string.dub_status_subbed)
                     else if (status.name == "Dubbed") getString(R.string.dub_status_dubbed)
-                    else if (status.name == "Premium") getString(R.string.dub_status_premium)
+                    else if (status.name == "PremiumDub") getString(R.string.dub_status_premium)
+                    else if (status.name == "PremiumSub") getString(R.string.sub_status_premium)
                     else ""
                     Pair(
                         status.ordinal,

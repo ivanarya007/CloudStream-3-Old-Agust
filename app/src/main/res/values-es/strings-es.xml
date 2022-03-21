@@ -33,6 +33,8 @@
      <string name="type_completed">Completada</string>
     <string name="dub_status_subbed">Subtitulado</string>
     <string name="dub_status_dubbed">Doblaje</string>
+    <string name="dub_status_premium">Doblaje (Premium)</string>
+    <string name="sub_status_premium">Subtitulado (Premium)</string>
      <string name="type_dropped">Dejada</string>
      <string name="type_plan_to_watch">Se planea ver</string>
      <string name="type_none">Ninguno</string>
@@ -248,5 +250,6 @@
      <string name="downloaded_file">Archivo descargado</string>
      <string name="subtitles_example_text">Jovencillo emponzoñado de whisky, qué mala figurota exhibes.</string>
      <string name="home_source">Fuente</string>
+    <string name="coming_soon">Próximamente…</string>
 
 </resources>
