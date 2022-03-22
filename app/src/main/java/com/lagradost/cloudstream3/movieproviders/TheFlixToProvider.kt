@@ -11,7 +11,7 @@ import com.lagradost.cloudstream3.utils.getQualityFromName
 class TheFlixToProvider : MainAPI() {
     override var name = "TheFlix.to"
     override var mainUrl = "https://theflix.to"
-    override val instantLinkLoading = false
+    override val instantLinkLoading = true
     override val hasMainPage = true
     override val supportedTypes = setOf(
         TvType.Movie,
@@ -266,7 +266,7 @@ class TheFlixToProvider : MainAPI() {
     )
 
     data class LoadDocs (
-        @JsonProperty("name"             ) val name             : String           = String(),
+        @JsonProperty("name"             ) val name             : String            = String(),
         @JsonProperty("originalLanguage" ) val originalLanguage : String?           = null,
         @JsonProperty("popularity"       ) val popularity       : Double?           = null,
         @JsonProperty("runtime"          ) val runtime          : Int?              = null,
@@ -286,13 +286,13 @@ class TheFlixToProvider : MainAPI() {
 
 
     data class TheFlixMetadata (
-        @JsonProperty("episodeRuntime"   ) val episodeRuntime   : Int?               = null,
-        @JsonProperty("name"             ) val name             : String           = String(),
+        @JsonProperty("episodeRuntime"   ) val episodeRuntime   : Int?              = null,
+        @JsonProperty("name"             ) val name             : String            = String(),
         @JsonProperty("originalLanguage" ) val originalLanguage : String?           = null,
         @JsonProperty("popularity"       ) val popularity       : Double?           = null,
         @JsonProperty("runtime"          ) val runtime          : Int?              = null,
-        @JsonProperty("numberOfSeasons"  ) val numberOfSeasons  : Int?               = null,
-        @JsonProperty("numberOfEpisodes" ) val numberOfEpisodes : Int?               = null,
+        @JsonProperty("numberOfSeasons"  ) val numberOfSeasons  : Int?              = null,
+        @JsonProperty("numberOfEpisodes" ) val numberOfEpisodes : Int?              = null,
         @JsonProperty("status"           ) val status           : String?           = null,
         @JsonProperty("voteAverage"      ) val voteAverage      : Double?           = null,
         @JsonProperty("voteCount"        ) val voteCount        : Int?              = null,
@@ -338,10 +338,12 @@ class TheFlixToProvider : MainAPI() {
         val episodes = ArrayList<TvSeriesEpisode>()
         val isMovie = tvtype == TvType.Movie
         val pageMain = json.props.pageProps
+        val movieData = if (isMovie) "Movie:"+pageMain.videoUrl else null
 
         val metadata: TheFlixMetadata? = if (isMovie) pageMain.movie else pageMain.selectedTv
 
         val available = metadata?.available
+
 
         val comingsoon = !available!!
 
@@ -364,12 +366,14 @@ class TheFlixToProvider : MainAPI() {
                     val test = epi.videos
                     val ratinginfo = (epi.voteAverage)?.times(10)?.toInt()
                     val rating = if (ratinginfo?.equals(0) == true) null else ratinginfo
+                    val dateinfo = epi.releaseDate?.substringBefore("T")
+                    val date = if (dateinfo != null) "\nRelease Date: $dateinfo" else ""
                     val eps = TvSeriesEpisode(
                         title,
                         seasonum,
                         episodenu,
                         "$mainUrl/tv-show/$movieId-${cleanTitle(movietitle)}/season-$seasonum/episode-$episodenu",
-                        description = epDesc!!,
+                        description = epDesc!!+date,
                         posterUrl = seasonPoster,
                         rating = rating,
                     )
@@ -401,7 +405,6 @@ class TheFlixToProvider : MainAPI() {
         }
 
         val year = metadata.releaseDate?.substringBefore("-")
-
         val runtime = metadata.runtime?.div(60) ?: metadata.episodeRuntime?.div(60)
         val cast = metadata.cast?.split(",")
 
@@ -420,7 +423,7 @@ class TheFlixToProvider : MainAPI() {
                 }
             }
             TvType.Movie -> {
-                newMovieLoadResponse(movietitle, url, TvType.Movie, url) {
+                newMovieLoadResponse(movietitle, url, TvType.Movie, movieData!!) {
                     this.year = year?.toIntOrNull()
                     this.posterUrl = poster
                     this.plot = description
@@ -436,6 +439,25 @@ class TheFlixToProvider : MainAPI() {
         }
     }
 
+    private fun callbackForUrl(
+        url: String?,
+        callback: (ExtractorLink) -> Unit
+    ): Boolean {
+        val qualityReg = Regex("(\\d+p)")
+        if (url != null) {
+            val quality = qualityReg.find(url)?.value ?: ""
+            callback(
+                ExtractorLink(
+                    name,
+                    "$name $quality",
+                    url,
+                    "",
+                    getQualityFromName(quality),
+                    false
+                ))
+        }
+        return true
+    }
 
     override suspend fun loadLinks(
         data: String,
@@ -443,22 +465,17 @@ class TheFlixToProvider : MainAPI() {
         subtitleCallback: (SubtitleFile) -> Unit,
         callback: (ExtractorLink) -> Unit
     ): Boolean {
+        val isMovie = data.contains("Movie")
+        if (isMovie) {
+            val url = data.replace("Movie:","")
+            callbackForUrl(url, callback)
+        }
+        if (!isMovie) {
         val doc = app.get(data).document
         val script = doc.selectFirst("script[type=application/json]").data()
         val json = parseJson<LoadMain>(script)
         val extractedLink = json.props.pageProps.videoUrl
-        val qualityReg = Regex("(\\d+p)")
-        if (extractedLink != null) {
-            val quality = qualityReg.find(extractedLink)?.value ?: ""
-            callback(
-                ExtractorLink(
-                    name,
-                    "$name $quality",
-                    extractedLink,
-                    "",
-                    getQualityFromName(quality),
-                    false
-                ))
+        callbackForUrl(extractedLink, callback)
         }
         return true
     }

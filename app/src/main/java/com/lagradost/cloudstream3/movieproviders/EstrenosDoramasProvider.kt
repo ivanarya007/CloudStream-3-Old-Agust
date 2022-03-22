@@ -174,7 +174,7 @@ class EstrenosDoramasProvider : MainAPI() {
             "Sec-Fetch-Site" to "same-origin",
             "Cache-Control" to "max-age=0",)
 
-        val document = app.get(data).document
+      val document = app.get(data).document
        document.select("div.tab_container iframe").apmap { container ->
             val directlink = container.attr("src").replace("//ok.ru","https://ok.ru")
             for (extractor in extractorApis) {

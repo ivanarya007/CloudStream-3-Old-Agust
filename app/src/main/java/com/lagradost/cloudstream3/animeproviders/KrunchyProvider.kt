@@ -46,7 +46,7 @@ class KrunchyGeoBypasser {
             true
         } catch (e: Exception) {
             sessionId = null
-            false
+             false
         }
     }
 
@@ -92,11 +92,9 @@ class KrunchyProvider : MainAPI() {
             Pair("$mainUrl/videos/anime/popular/ajax_page?pg=3", "Popular 3"),
             Pair("$mainUrl/videos/anime/simulcasts/ajax_page", "Simulcasts"),
         )
-
+        val doc = Jsoup.parse(crUnblock.geoBypassRequest(mainUrl).text)
         val items = ArrayList<HomePageList>()
-        items.add(HomePageList("Featured", Jsoup.parse(crUnblock.geoBypassRequest(mainUrl).text).select(
-            ".js-featured-show-list > li"
-        ).map { anime ->
+        val featured = doc.select(".js-featured-show-list > li").map { anime ->
             AnimeSearchResponse(
                 anime.selectFirst("img").attr("alt"),
                 fixUrl(anime.selectFirst("a").attr("href")),
@@ -108,7 +106,9 @@ class KrunchyProvider : MainAPI() {
                 null,
                 null
             )
-        }))
+        }
+        items.add(HomePageList("Featured", featured))
+
         urls.apmap { (url, name) ->
             val response = crUnblock.geoBypassRequest(url)
             val soup = Jsoup.parse(response.text)
@@ -206,7 +206,6 @@ class KrunchyProvider : MainAPI() {
 
         val genres = soup.select(".large-margin-bottom > ul:nth-child(2) li:nth-child(2) a").map { it.text() }
         val year = genres.filter { it.toIntOrNull() != null }.map { it.toInt() }.sortedBy { it }.getOrNull(0)
-        println("YEAR $year")
         val subEpisodes = ArrayList<AnimeEpisode>()
         val dubEpisodes = ArrayList<AnimeEpisode>()
         val premiumSubEpisodes = ArrayList<AnimeEpisode>()
@@ -250,16 +249,38 @@ class KrunchyProvider : MainAPI() {
                 }
             }
         }
+
+
+        val recommendations =
+            soup.select(".other-series > ul li")?.mapNotNull { element ->
+                val recTitle = element.select("span.ellipsis[dir=auto]").text() ?: return@mapNotNull null
+                val image = element.select("img")?.attr("src")
+                val recUrl = fixUrl(element.select("a").attr("href"))
+                AnimeSearchResponse(
+                    recTitle,
+                    fixUrl(recUrl),
+                    this.name,
+                    TvType.Anime,
+                    fixUrl(image!!),
+                    dubStatus =
+                    if (recTitle.contains("(DUB)") || recTitle.contains("Dub")) EnumSet.of(
+                        DubStatus.Dubbed
+                    ) else EnumSet.of(DubStatus.Subbed),
+                )
+            }
+
+
         return newAnimeLoadResponse(title.toString(), url, TvType.Anime) {
-            posterUrl = posterU
-            engName = title
+            this.posterUrl = posterU
+            this.engName = title
            if (subEpisodes.isNotEmpty()) addEpisodes(DubStatus.Subbed, subEpisodes.reversed())
            if (dubEpisodes.isNotEmpty()) addEpisodes(DubStatus.Dubbed, dubEpisodes.reversed())
            if (premiumDubEpisodes.isNotEmpty()) addEpisodes(DubStatus.PremiumDub, premiumDubEpisodes.reversed())
            if (premiumSubEpisodes.isNotEmpty()) addEpisodes(DubStatus.PremiumSub, premiumSubEpisodes.reversed())
-            plot = description
+            this.plot = description
             this.tags = genres
             this.year = year
+            this.recommendations = recommendations
         }
     }
 
