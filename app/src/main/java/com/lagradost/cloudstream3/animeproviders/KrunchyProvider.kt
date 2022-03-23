@@ -107,7 +107,7 @@ class KrunchyProvider : MainAPI() {
                 null
             )
         }
-        val recent = doc.select("div.welcome-countdown-day:nth-child(3) li").map {
+        val recent = doc.select("div.welcome-countdown-day:nth-child(3) li")?.mapNotNull {
             val link = fixUrl(it.selectFirst("a").attr("href"))
             val name = it.selectFirst("span.welcome-countdown-name").text()
             val img = it.selectFirst("img").attr("src").replace("medium","full")
@@ -127,7 +127,7 @@ class KrunchyProvider : MainAPI() {
                 dubEpisodes = epnum.toIntOrNull()
             )
         }
-        if (recent.isNotEmpty()) {
+        if (recent!!.isNotEmpty()) {
             items.add(HomePageList("Now Showing", recent))
         }
         items.add(HomePageList("Featured", featured))
