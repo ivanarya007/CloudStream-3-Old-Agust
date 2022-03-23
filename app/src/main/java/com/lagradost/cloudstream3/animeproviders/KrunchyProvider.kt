@@ -241,7 +241,7 @@ class KrunchyProvider : MainAPI() {
                  else if (isPremiumDub) {
                      premiumSubEpisodes.add(epi)
                  }
-                 else if (seasonName!!.contains("Dub")) {
+                 else if (seasonName != null && (seasonName!!.contains("Dub"))) {
                      dubEpisodes.add(epi)
                  }
                  else {
