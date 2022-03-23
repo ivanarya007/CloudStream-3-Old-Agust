@@ -5,11 +5,11 @@ import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.json.JsonMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.lagradost.cloudstream3.*
-import com.lagradost.cloudstream3.LoadResponse.Companion.addActors
 import com.lagradost.cloudstream3.utils.*
 import com.lagradost.cloudstream3.utils.AppUtils.parseJson
 import org.jsoup.Jsoup
 import java.util.*
+import kotlin.collections.ArrayList
 
 private fun String.toAscii() = this.map { it.toInt() }.joinToString()
 
@@ -107,8 +107,30 @@ class KrunchyProvider : MainAPI() {
                 null
             )
         }
+        val recent = doc.select("div.welcome-countdown-day:nth-child(3) li").map {
+            val link = fixUrl(it.selectFirst("a").attr("href"))
+            val name = it.selectFirst("span.welcome-countdown-name").text()
+            val img = it.selectFirst("img").attr("src").replace("medium","full")
+            val dubstat = if (name.contains("dub",true)) EnumSet.of(DubStatus.Dubbed) else
+                EnumSet.of(DubStatus.Subbed)
+            val details = it.selectFirst("span.welcome-countdown-details").text()
+            val epnum = episodeNumRegex.find(details)?.value?.replace("Episode ","") ?: ""
+            AnimeSearchResponse(
+                "★ $name ★",
+                link.replace(Regex("(\\/episode.*)"),""),
+                this.name,
+                TvType.Anime,
+                fixUrl(img),
+                null,
+                dubstat,
+                subEpisodes = epnum.toIntOrNull(),
+                dubEpisodes = epnum.toIntOrNull()
+            )
+        }
+        if (recent.isNotEmpty()) {
+            items.add(HomePageList("Now Showing", recent))
+        }
         items.add(HomePageList("Featured", featured))
-
         urls.apmap { (url, name) ->
             val response = crUnblock.geoBypassRequest(url)
             val soup = Jsoup.parse(response.text)
@@ -135,10 +157,10 @@ class KrunchyProvider : MainAPI() {
 
     private fun getCloseMatches(sequence: String, items: Collection<String>): ArrayList<String> {
         val closeMatches = ArrayList<String>()
-        val a = sequence.trim().toLowerCase()
+        val a = sequence.trim().lowercase()
 
         for (item in items) {
-            val b = item.trim().toLowerCase()
+            val b = item.trim().lowercase()
             if (b.contains(a)) {
                 closeMatches.add(item)
             } else if (a.contains(b)) {
@@ -172,6 +194,8 @@ class KrunchyProvider : MainAPI() {
                 break
             }
             if (anime.name == results[count]) {
+                val dubstat = if (anime.name.contains("dub",true)) EnumSet.of(DubStatus.Dubbed) else
+                    EnumSet.of(DubStatus.Subbed)
                 anime.link = fixUrl(anime.link)
                 anime.img = anime.img.replace("small", "full")
                 searchResutls.add(AnimeSearchResponse(
@@ -181,7 +205,7 @@ class KrunchyProvider : MainAPI() {
                     TvType.Anime,
                     anime.img,
                     null,
-                    EnumSet.of(DubStatus.Subbed),
+                    dubstat,
                     null,
                     null
                 ))
@@ -218,12 +242,12 @@ class KrunchyProvider : MainAPI() {
                 val epNum = episodeNumRegex.find(ep.selectFirst("span.ellipsis")?.text().toString())?.destructured?.component1()
                 var poster = ep.selectFirst("img.landscape")?.attr("data-thumbnailurl")
                 val poster2 = ep.selectFirst("img")?.attr("src")
-                if (poster == "") { poster = poster2}
+                if (poster.isNullOrBlank()) { poster = poster2}
 
                 var epDesc = (if (epNum == null) "" else "Episode $epNum") + (if (!seasonName.isNullOrEmpty()) " - $seasonName" else "")
-                val isPremiumDub = poster?.contains("widestar", ignoreCase = true) == true
-                if (isPremiumDub) {
-                    epDesc =  "★ "+epDesc+" ★"
+                val isPremium = poster?.contains("widestar", ignoreCase = true) == true
+                if (isPremium) {
+                    epDesc = "★ $epDesc ★"
                 }
 
                 val epi = AnimeEpisode(
@@ -235,13 +259,13 @@ class KrunchyProvider : MainAPI() {
                     epDesc,
                     null
                 )
-                if (isPremiumDub && seasonName != null && (seasonName.contains("Dub") || seasonName.contains("Russian") || seasonName.contains("Spanish"))) {
+                if (isPremium && seasonName != null && (seasonName.contains("Dub") || seasonName.contains("Russian") || seasonName.contains("Spanish"))) {
                     premiumDubEpisodes.add(epi)
                 }
-                 else if (isPremiumDub) {
+                 else if (isPremium) {
                      premiumSubEpisodes.add(epi)
                  }
-                 else if (seasonName != null && (seasonName!!.contains("Dub"))) {
+                 else if (seasonName != null && (seasonName.contains("Dub"))) {
                      dubEpisodes.add(epi)
                  }
                  else {
