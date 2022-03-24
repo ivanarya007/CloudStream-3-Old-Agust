@@ -107,11 +107,11 @@ class KrunchyProvider : MainAPI() {
                 null
             )
         }
-        val recent = doc.select("div.welcome-countdown-day:nth-child(3) li")?.mapNotNull {
+        val recent = doc.select("div.welcome-countdown-day:contains(Now Showing) li")?.mapNotNull {
             val link = fixUrl(it.selectFirst("a").attr("href"))
             val name = it.selectFirst("span.welcome-countdown-name").text()
             val img = it.selectFirst("img").attr("src").replace("medium","full")
-            val dubstat = if (name.contains("(dub",true)) EnumSet.of(DubStatus.Dubbed) else
+            val dubstat = if (name.contains("Dub)",true)) EnumSet.of(DubStatus.Dubbed) else
                 EnumSet.of(DubStatus.Subbed)
             val details = it.selectFirst("span.welcome-countdown-details").text()
             val epnum = episodeNumRegex.find(details)?.value?.replace("Episode ","") ?: ""
@@ -194,7 +194,7 @@ class KrunchyProvider : MainAPI() {
                 break
             }
             if (anime.name == results[count]) {
-                val dubstat = if (anime.name.contains("dub",true)) EnumSet.of(DubStatus.Dubbed) else
+                val dubstat = if (anime.name.contains("Dub)",true)) EnumSet.of(DubStatus.Dubbed) else
                     EnumSet.of(DubStatus.Subbed)
                 anime.link = fixUrl(anime.link)
                 anime.img = anime.img.replace("small", "full")

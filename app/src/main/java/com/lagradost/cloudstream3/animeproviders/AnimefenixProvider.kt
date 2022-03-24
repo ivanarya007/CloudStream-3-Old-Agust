@@ -191,7 +191,7 @@ class AnimefenixProvider:MainAPI() {
                         "https://www.yourupload.com/embed/"+cleanStreamID(codestream)
                     } else ""
                     val okru = if (codestream.contains("player=12&amp")) {
-                        "https://ok.ru/videoembed/"+cleanStreamID(codestream)
+                        "http://ok.ru/videoembed/"+cleanStreamID(codestream)
                     } else ""
                     val sendvid = if (codestream.contains("player=4&amp")) {
                         "https://sendvid.com/"+cleanStreamID(codestream)
