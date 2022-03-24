@@ -57,6 +57,7 @@ It merely scrapes 3rd-party websites that are publicly accessable via any regula
 
 
 ***Sites used:***
+https://lagradost.github.io/CloudStream-3/
 <!-- Do not remove those two comments -->
 <!--SITE LIST START-->
 - [akwam.to](https://akwam.to) 
