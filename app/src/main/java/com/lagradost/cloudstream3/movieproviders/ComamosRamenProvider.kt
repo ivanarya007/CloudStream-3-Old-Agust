@@ -275,7 +275,6 @@ class ComamosRamenProvider : MainAPI() {
         callback: (ExtractorLink) -> Unit
     ): Boolean {
         val doc = app.get(data).document
-        //println(data)
         val script = doc.select("script[type=application/json]").map { it.data() }.first()
         val json = parseJson<LoadMain>(script)
         val dataRegex = Regex("(\\d+)-(\\d+)$")
@@ -284,7 +283,6 @@ class ComamosRamenProvider : MainAPI() {
         }
         val epID = tesatt?.getOrNull(1)
         val seasonid = tesatt?.getOrNull(0)
-        //println("SEASON ID = $seasonid EPISODEID = $epID")
         val seasonsJson = json.props?.pageProps?.data?.seasons?.map { seasons ->
             val sss = seasons.season
             seasons.episodes.map { ep ->

@@ -149,7 +149,7 @@ class MundoDonghuaProvider : MainAPI() {
         callback: (ExtractorLink) -> Unit
     ): Boolean {
         app.get(data).document.select("script").apmap { script ->
-            if (script.data().contains("eval(function(p,a,c,k,e,d)")) {
+            if (script.data().contains("eval(function(p,a,c,k,e")) {
                 val packedRegex = Regex("eval\\(function\\(p,a,c,k,e,.*\\)\\)")
                 packedRegex.findAll(script.data()).map {
                     it.value
@@ -163,7 +163,7 @@ class MundoDonghuaProvider : MainAPI() {
                         val slug = protearegex.findAll(unpack).map {
                             it.value.replace(Regex("(protea_tab.*slug\":\")"),"").replace("\"},type","")
                         }.first()
-                        val requestlink = "https://www.mundodonghua.com/api_donghua.php?slug=$slug"
+                        val requestlink = "$mainUrl/api_donghua.php?slug=$slug"
                         val response = app.get(requestlink, headers =
                         mapOf("Host" to "www.mundodonghua.com",
                             "User-Agent" to "Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0",

@@ -10,7 +10,7 @@ import java.util.*
 import kotlin.collections.ArrayList
 
 class AnimeflvIOProvider:MainAPI() {
-    override var mainUrl = "https://animeflv.io"
+    override var mainUrl = "https://animeflv.io" //Also scrapes from animeid.to
     override var name = "Animeflv.io"
     override val lang = "es"
     override val hasMainPage = true
@@ -40,8 +40,7 @@ class AnimeflvIOProvider:MainAPI() {
             )
         }))
         urls.apmap { (url, name) ->
-            val response = app.get(url)
-            val soup = Jsoup.parse(response.text)
+            val soup = app.get(url).document
             val home = soup.select("div.item-pelicula").map {
                 val title = it.selectFirst(".item-detail p").text()
                 val poster = it.selectFirst("figure img").attr("src")
@@ -75,11 +74,10 @@ class AnimeflvIOProvider:MainAPI() {
             "Referer" to "https://animeflv.io",
         )
         val url = "${mainUrl}/search.html?keyword=${query}"
-        val html = app.get(
+        val document = app.get(
             url,
             headers = headers
-        ).text
-        val document = Jsoup.parse(html)
+        ).document
          val episodes = document.select(".item-pelicula.pull-left").map {
             val title = it.selectFirst("div.item-detail p").text()
             val href = fixUrl(it.selectFirst("a").attr("href"))
@@ -230,13 +228,7 @@ class AnimeflvIOProvider:MainAPI() {
                     }
                 }
             }
-            for (extractor in extractorApis) {
-                if (url.startsWith(extractor.mainUrl)) {
-                    extractor.getSafeUrl(url, data)?.apmap {
-                        callback(it)
-                    }
-                }
-            }
+            loadExtractor(url, data, callback)
         }
         return true
     }

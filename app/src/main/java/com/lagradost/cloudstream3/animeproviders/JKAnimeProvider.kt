@@ -46,7 +46,7 @@ class JKAnimeProvider : MainAPI() {
                 app.get(mainUrl).document.select(".listadoanime-home a.bloqq").map {
                     val title = it.selectFirst("h5").text()
                     val poster = it.selectFirst(".anime__sidebar__comment__item__pic img").attr("src")
-                    val epRegex = Regex("/(\\d+)/|/especial/")
+                    val epRegex = Regex("/(\\d+)/|/especial/|/ova/")
                     val url = it.attr("href").replace(epRegex, "")
                     val epNum = it.selectFirst("h6").text().replace("Episodio ", "").toIntOrNull()
                     AnimeSearchResponse(
@@ -114,7 +114,7 @@ class JKAnimeProvider : MainAPI() {
     )
 
     override suspend fun search(query: String): ArrayList<SearchResponse> {
-        val main = app.get("https://jkanime.net/ajax/ajax_search/?q=$query").text
+        val main = app.get("$mainUrl/ajax/ajax_search/?q=$query").text
         val json = parseJson<MainSearch>(main)
         val search = ArrayList<AnimeSearchResponse>()
          json.animes.forEach {
@@ -153,7 +153,7 @@ class JKAnimeProvider : MainAPI() {
             else -> null
         }
         val animeID = doc.selectFirst("div.ml-2").attr("data-anime").toInt()
-        val animeeps = "https://jkanime.net/ajax/last_episode/$animeID/"
+        val animeeps = "$mainUrl/ajax/last_episode/$animeID/"
         val jsoneps = app.get(animeeps).text
         val episodes = ArrayList<AnimeEpisode>()
         val json = jsoneps.substringAfter("{\"number\":\"").substringBefore("\",\"title\"").toInt()
@@ -187,16 +187,16 @@ class JKAnimeProvider : MainAPI() {
             if (script.data().contains("var video = []")) {
                 val videos = script.data().replace("\\/", "/")
                 fetchUrls(videos).map {
-                    it.replace("https://jkanime.net/jkfembed.php?u=","https://embedsito.com/v/")
-                        .replace("https://jkanime.net/jkokru.php?u=","http://ok.ru/videoembed/")
-                        .replace("https://jkanime.net/jkvmixdrop.php?u=","https://mixdrop.co/e/")
-                        .replace("https://jkanime.net/jk.php?u=","$mainUrl/")
+                    it.replace("$mainUrl/jkfembed.php?u=","https://embedsito.com/v/")
+                        .replace("$mainUrl/jkokru.php?u=","http://ok.ru/videoembed/")
+                        .replace("$mainUrl/jkvmixdrop.php?u=","https://mixdrop.co/e/")
+                        .replace("$mainUrl/jk.php?u=","$mainUrl/")
                 }.toList().apmap { link ->
                     loadExtractor(link, data, callback)
                     if (link.contains("um2.php")) {
                         val doc = app.get(link, referer = data).document
                         val gsplaykey = doc.select("form input[value]").attr("value")
-                        val postgsplay = app.post("https://jkanime.net/gsplay/redirect_post.php",
+                        val postgsplay = app.post("$mainUrl/gsplay/redirect_post.php",
                         headers = mapOf(
                             "Host" to "jkanime.net",
                             "User-Agent" to USER_AGENT,
@@ -217,7 +217,7 @@ class JKAnimeProvider : MainAPI() {
                         data = mapOf(Pair("data",gsplaykey)),
                         allowRedirects = false).response.headers.values("location").apmap { loc ->
                             val postkey = loc.replace("/gsplay/player.html#","")
-                            val nozomitext = app.post("https://jkanime.net/gsplay/api.php",
+                            val nozomitext = app.post("$mainUrl/gsplay/api.php",
                             headers = mapOf(
                                 "Host" to "jkanime.net",
                                 "User-Agent" to "Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0",

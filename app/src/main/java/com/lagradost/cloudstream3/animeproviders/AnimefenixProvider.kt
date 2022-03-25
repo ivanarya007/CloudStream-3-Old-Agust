@@ -1,13 +1,10 @@
 package com.lagradost.cloudstream3.animeproviders
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.module.kotlin.readValue
 import com.lagradost.cloudstream3.*
-import com.lagradost.cloudstream3.extractors.*
 import com.lagradost.cloudstream3.utils.*
 import com.lagradost.cloudstream3.utils.AppUtils.parseJson
 import org.jsoup.Jsoup
-import java.net.URLDecoder
 import java.util.*
 import kotlin.collections.ArrayList
 
@@ -174,46 +171,46 @@ class AnimefenixProvider:MainAPI() {
         subtitleCallback: (SubtitleFile) -> Unit,
         callback: (ExtractorLink) -> Unit
     ): Boolean {
-        app.get(data).document.select(".player-container script").apmap { script ->
-            if (script.data().contains("var tabsArray =")) {
-                val html = script.data()
-                val sourcesRegex = Regex("player=.*&amp;code(.*)&")
-                val test = sourcesRegex.findAll(html).toList()
-                test.apmap {
-                    val codestream = it.value
-                    val fembed = if (codestream.contains("player=2&amp")) {
-                        "https://embedsito.com/v/"+cleanStreamID(codestream)
-                    } else ""
-                    val mp4Upload = if (codestream.contains("player=3&amp")) {
-                        "https://www.mp4upload.com/embed-"+cleanStreamID(codestream)+".html"
-                    } else ""
-                    val yourUpload = if (codestream.contains("player=6&amp")) {
-                        "https://www.yourupload.com/embed/"+cleanStreamID(codestream)
-                    } else ""
-                    val okru = if (codestream.contains("player=12&amp")) {
-                        "http://ok.ru/videoembed/"+cleanStreamID(codestream)
-                    } else ""
-                    val sendvid = if (codestream.contains("player=4&amp")) {
-                        "https://sendvid.com/"+cleanStreamID(codestream)
-                    } else ""
-                    val amazon =  if (codestream.contains("player=9&amp")) {
-                        "https://www.animefenix.com/stream/amz.php?v="+cleanStreamID(codestream)
-                    } else ""
-                    val amazonES =  if (codestream.contains("player=11&amp")) {
-                        "https://www.animefenix.com/stream/amz.php?v="+cleanStreamID(codestream)
-                    } else ""
-                    val fireload = if (codestream.contains("player=22&amp")) {
-                        "https://www.animefenix.com/stream/fl.php?v="+cleanStreamID(codestream)
-                    } else ""
-                    val servers = listOf(
-                        fembed,
-                        mp4Upload,
-                        yourUpload,
-                        okru,
-                        sendvid)
-                    servers.apmap { url ->
-                        loadExtractor(url, data, callback)
-                    }
+        val soup = app.get(data).document
+        val script = soup.selectFirst(".player-container script").data()
+        if (script.contains("var tabsArray =")) {
+            val sourcesRegex = Regex("player=.*&amp;code(.*)&")
+            val test = sourcesRegex.findAll(script).toList()
+            test.apmap {
+                val codestream = it.value
+                val fembed = if (codestream.contains("player=2&amp")) {
+                    "https://embedsito.com/v/"+cleanStreamID(codestream)
+                } else ""
+                val mp4Upload = if (codestream.contains("player=3&amp")) {
+                    "https://www.mp4upload.com/embed-"+cleanStreamID(codestream)+".html"
+                } else ""
+                val yourUpload = if (codestream.contains("player=6&amp")) {
+                    "https://www.yourupload.com/embed/"+cleanStreamID(codestream)
+                } else ""
+                val okru = if (codestream.contains("player=12&amp")) {
+                    "http://ok.ru/videoembed/"+cleanStreamID(codestream)
+                } else ""
+                val sendvid = if (codestream.contains("player=4&amp")) {
+                    "https://sendvid.com/"+cleanStreamID(codestream)
+                } else ""
+                val amazon =  if (codestream.contains("player=9&amp")) {
+                    "https://www.animefenix.com/stream/amz.php?v="+cleanStreamID(codestream)
+                } else ""
+                val amazonES =  if (codestream.contains("player=11&amp")) {
+                    "https://www.animefenix.com/stream/amz.php?v="+cleanStreamID(codestream)
+                } else ""
+                val fireload = if (codestream.contains("player=22&amp")) {
+                    "https://www.animefenix.com/stream/fl.php?v="+cleanStreamID(codestream)
+                } else ""
+                val servers = listOf(
+                    fembed,
+                    mp4Upload,
+                    yourUpload,
+                    okru,
+                    sendvid)
+                servers.apmap { url ->
+                    loadExtractor(url, data, callback)
+                }
                 argamap({
                     if (amazon.isNotBlank()) {
                         val doc = app.get(amazon).document
@@ -286,8 +283,7 @@ class AnimefenixProvider:MainAPI() {
                         }
                     }
                 })
-                }
-            }
+        }
         }
         return true
     }

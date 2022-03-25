@@ -177,13 +177,7 @@ class EstrenosDoramasProvider : MainAPI() {
       val document = app.get(data).document
        document.select("div.tab_container iframe").apmap { container ->
             val directlink = container.attr("src").replace("//ok.ru","https://ok.ru")
-            for (extractor in extractorApis) {
-                if (directlink.startsWith(extractor.mainUrl)) {
-                    extractor.getSafeUrl(directlink, data)?.apmap {
-                        callback(it)
-                    }
-                }
-            }
+            loadExtractor(directlink, data, callback)
 
            if (directlink.contains("/repro/amz/")) {
                val amzregex = Regex("https:\\/\\/repro3\\.estrenosdoramas\\.us\\/repro\\/amz\\/examples\\/.*\\.php\\?key=.*\$")
@@ -192,23 +186,7 @@ class EstrenosDoramasProvider : MainAPI() {
                }.toList().apmap { key ->
                    println(key)
                    val response = app.post("https://repro3.estrenosdoramas.us/repro/amz/examples/player/api/indexDCA.php",
-                   headers = mapOf(
-                       "Host" to "repro3.estrenosdoramas.us",
-                       "User-Agent" to "Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0",
-                       "Accept" to "*/*",
-                       "Accept-Language" to "en-US,en;q=0.5",
-                       "Accept-Encoding" to "gzip, deflate, br",
-                       "Content-Type" to "application/x-www-form-urlencoded; charset=UTF-8",
-                       "X-Requested-With" to "XMLHttpRequest",
-                       "Origin" to "https://repro3.estrenosdoramas.us",
-                       "DNT" to "1",
-                       "Connection" to "keep-alive",
-                       "Sec-Fetch-Dest" to "empty",
-                       "Sec-Fetch-Mode" to "no-cors",
-                       "Sec-Fetch-Site" to "same-origin",
-                       "Cache-Control" to "max-age=0, no-cache",
-                       "TE" to "trailers",
-                       "Pragma" to "no-cache",),
+                   headers = headers,
                        data = mapOf(
                            Pair("key",key),
                            Pair("token","MDAwMDAwMDAwMA=="),
@@ -249,13 +227,7 @@ class EstrenosDoramasProvider : MainAPI() {
                    ).text
                    val extracteklink = link.substringAfter("\"urlremoto\":\"").substringBefore("\"}")
                        .replace("\\/", "/").replace("//ok.ru/","http://ok.ru/")
-                   for (extractor in extractorApis) {
-                       if (extracteklink.startsWith(extractor.mainUrl)) {
-                           extractor.getSafeUrl(extracteklink, data)?.apmap {
-                               callback(it)
-                           }
-                       }
-                   }
+                   loadExtractor(extracteklink, data, callback)
                }
            }
 

@@ -10,25 +10,19 @@ open class YourUpload : ExtractorApi() {
     override val mainUrl = "https://www.yourupload.com"
     override val requiresReferer = false
 
-    private val linkRegex =
-        Regex("""(video" content="https:\/\/.*?\.mp4)""")
-
     override suspend fun getUrl(url: String, referer: String?): List<ExtractorLink>? {
-        with(app.get(url)) {
-            linkRegex.find(this.text)?.let { link ->
-                val extractedlink = link.value.replace("video\" content=\"","")
-                return listOf(
-                    ExtractorLink(
-                        name,
-                        name,
-                        extractedlink,
-                        url,
-                        Qualities.Unknown.value,
-                        isM3u8 = false
-                    )
-                )
-            }
-        }
-        return null
+       val doc = app.get(url).document
+       val link = doc.selectFirst("meta[property=og:video]").attr("content") ?: return null
+       val extractedlink = app.get(link, referer = url).url
+        return listOf(
+            ExtractorLink(
+                name,
+                name,
+                extractedlink,
+                url,
+                Qualities.Unknown.value,
+                extractedlink.contains(".m3u8")
+            )
+        )
     }
 }

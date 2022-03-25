@@ -10,7 +10,7 @@ import org.jsoup.Jsoup
 import java.util.*
 
 class PelisplusSOProvider:MainAPI() {
-    override var mainUrl = "https://www2.pelisplus.so"
+    override var mainUrl = "https://pelisplus.so"
     override var name = "Pelisplus.so"
     override val lang = "es"
     override val hasMainPage = true
@@ -65,9 +65,8 @@ class PelisplusSOProvider:MainAPI() {
     }
 
     override suspend fun search(query: String): List<SearchResponse> {
-        val url = "https://www2.pelisplus.so/search.html?keyword=${query}"
+        val url = "$mainUrl/search.html?keyword=${query}"
         val headers = mapOf(
-            "Host" to "www2.pelisplus.so",
             "User-Agent" to "Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0",
             "Accept" to "*/*",
             "Accept-Language" to "en-US,en;q=0.5",
@@ -115,8 +114,7 @@ class PelisplusSOProvider:MainAPI() {
         }
     }
     override suspend fun load(url: String): LoadResponse? {
-        val html = app.get(url).text
-        val soup = Jsoup.parse(html)
+        val soup = app.get(url).document
 
         val title = soup.selectFirst(".info-content h1").text()
 
@@ -141,7 +139,6 @@ class PelisplusSOProvider:MainAPI() {
 
         val year = Regex("(\\d*)").find(soup.select(".info-half").text())
 
-        // Make sure to get the type right to display the correct UI.
         val tvType = if (url.contains("/pelicula/")) TvType.Movie else TvType.TvSeries
         val tags = soup.select(".content-type-a a")
             .map { it?.text()?.trim().toString().replace(", ","") }
