@@ -62,33 +62,37 @@ class ComamosRamenProvider : MainAPI() {
     override suspend fun getMainPage(): HomePageResponse {
         val items = ArrayList<HomePageList>()
         val test = app.get(mainUrl).document
-            test.select("script[type=application/json]").map { script ->
+        val aaa = app.get("https://comamosramen.com").document
+        listOf(aaa, test).map { doc ->
+            doc.select("script[type=application/json]").map { script ->
                 if (script.data().contains("pageProps")) {
                     val json = parseJson<HomeMain>(script.data())
                     json.props?.pageProps?.data?.sections?.map { sectionss ->
-                       val a = Pair(sectionss.data, sectionss.name)
-                       val home = a.first.map { data ->
-                           val title = data.title
-                           val link = "$mainUrl/v/${data.Id}/${title.replace(" ","-")}"
-                           val img = "https://img.comamosramen.com/${data.img.vertical}-high.jpg"
-                           val epnumRegex = Regex("(\\d+\$)")
-                           val lastepisode = epnumRegex.find(data.lastEpisodeEdited!!)?.value?.toIntOrNull()
-                               AnimeSearchResponse(
-                                   title,
-                                   link,
-                                   this.name,
-                                   TvType.AsianDrama,
-                                   img,
-                                   null,
-                                   if (title.contains("Latino")) EnumSet.of(DubStatus.Dubbed) else EnumSet.of(DubStatus.Subbed),
-                                   subEpisodes = lastepisode,
-                                   dubEpisodes = lastepisode,
-                               )
+                        val a = Pair(sectionss.data, sectionss.name)
+                        val home = a.first.map { data ->
+                            val title = data.title
+                            val link = "$mainUrl/v/${data.Id}/${title.replace(" ","-")}"
+                            val img = "https://img.comamosramen.com/${data.img.vertical}-high.jpg"
+                            val epnumRegex = Regex("(\\d+\$)")
+                            val lastepisode = epnumRegex.find(data.lastEpisodeEdited!!)?.value?.toIntOrNull()
+                            AnimeSearchResponse(
+                                title,
+                                link,
+                                this.name,
+                                TvType.AsianDrama,
+                                img,
+                                null,
+                                if (title.contains("Latino")) EnumSet.of(DubStatus.Dubbed) else EnumSet.of(DubStatus.Subbed),
+                                subEpisodes = lastepisode,
+                                dubEpisodes = lastepisode,
+                            )
                         }
                         items.add(HomePageList(a.second!!, home))
                     }
                 }
             }
+        }
+
 
 
         if (items.size <= 0) throw ErrorLoadingException()
@@ -299,7 +303,6 @@ class ComamosRamenProvider : MainAPI() {
             val episodeID = info.EpisodeID
             val seasonID = info.SeasonID
             if (seasonID == seasonid && episodeID == epID) {
-                println(info.Servers)
                 info.Servers.apmap { servers ->
                     val validserver = servers.name
                         ?.replace("SB","https://sbplay2.xyz/e/")
