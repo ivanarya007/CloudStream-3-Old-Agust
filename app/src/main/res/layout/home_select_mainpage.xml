@@ -78,7 +78,7 @@
                     android:nextFocusRight="@id/home_select_cartoons"
 
                     android:id="@+id/home_select_asian"
-                    android:text="@string/asian_dramas"
+                    android:text="@string/asian_drama"
                     style="@style/RoundedSelectableButton" />
 
             <com.google.android.material.button.MaterialButton

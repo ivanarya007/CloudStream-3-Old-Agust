@@ -1687,7 +1687,7 @@ class ResultFragment : Fragment(), PanelsChildGestureRegionObserver.GestureRegio
                                 TvType.Torrent -> R.string.torrent_singular
                                 TvType.Mirror -> R.string.mirror_singular
                                 TvType.Donghua -> R.string.donghua_singular
-                                TvType.AsianDrama -> R.string.asian_dramas_singular
+                                TvType.AsianDrama -> R.string.asian_drama_singular
 
                             }
                         )?.let {
