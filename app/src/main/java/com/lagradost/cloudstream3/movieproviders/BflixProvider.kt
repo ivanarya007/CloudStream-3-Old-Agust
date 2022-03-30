@@ -17,7 +17,7 @@ class SflixProProvider : BflixProvider() {
 }
 
 open class BflixProvider() : MainAPI() {
-    override var mainUrl = "https://www6.bflix.to"
+    override var mainUrl = "https://bflix.to"
     override var name = "Bflix"
     override val hasMainPage = true
     override val hasChromecastSupport = true
@@ -43,7 +43,8 @@ open class BflixProvider() : MainAPI() {
             val test = soup.select(element).map {
                 val title = it.selectFirst("h3 a").text()
                 val link = fixUrl(it.selectFirst("a").attr("href"))
-                // val quality = it.selectFirst("div.quality").text()
+                val qualityInfo = it.selectFirst("div.quality").text()
+                val quality = getQualityFromString(qualityInfo)
                 TvSeriesSearchResponse(
                     title,
                     link,
@@ -52,6 +53,7 @@ open class BflixProvider() : MainAPI() {
                     it.selectFirst("a.poster img").attr("src"),
                     null,
                     null,
+                    quality = quality
                 )
             }
             items.add(HomePageList(name, test))
@@ -178,6 +180,8 @@ open class BflixProvider() : MainAPI() {
             val href = fixUrl(it.selectFirst("a").attr("href"))
             val image = it.selectFirst("a.poster img").attr("src")
             val isMovie = href.contains("/movie/")
+            val qualityInfo = it.selectFirst("div.quality").text()
+            val quality = getQualityFromString(qualityInfo)
 
             if (isMovie) {
                 MovieSearchResponse(
@@ -186,7 +190,8 @@ open class BflixProvider() : MainAPI() {
                     this.name,
                     TvType.Movie,
                     image,
-                    null
+                    null,
+                    quality = quality
                 )
             } else {
                 TvSeriesSearchResponse(
@@ -196,7 +201,8 @@ open class BflixProvider() : MainAPI() {
                     TvType.TvSeries,
                     image,
                     null,
-                    null
+                    null,
+                    quality = quality
                 )
             }
         }
@@ -266,7 +272,7 @@ open class BflixProvider() : MainAPI() {
         val yearegex = Regex("<span>(\\d+)<\\/span>")
         val duration = if (durationdoc.contains("na min")) null
         else durationregex.find(durationdoc)?.destructured?.component1()?.replace(" min","")?.toIntOrNull()
-        val year = if (mainUrl == "https://bflix.ru") { yearegex.find(durationdoc)?.destructured?.component1()
+        val year = if (mainUrl.contains("bflix")) { yearegex.find(durationdoc)?.destructured?.component1()
             ?.replace(Regex("<span>|<\\/span>"),"") } else null
         return when (tvType) {
             TvType.TvSeries -> {

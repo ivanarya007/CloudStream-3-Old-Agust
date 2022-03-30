@@ -46,7 +46,7 @@ object APIHolder {
             AnimeflvnetProvider(),
             AnimeIDProvider(),
             AnimeonlineProvider(),
-            AnimePaheProvider(),
+            //AnimePaheProvider(),
             AsianLoadProvider(),
             BflixProvider(),
             FmoviesToProvider(),
