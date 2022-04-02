@@ -204,9 +204,6 @@ class NineAnimeProvider : MainAPI() {
             val link = it?.attr("href") ?: return@mapNotNull null
             val name = it.text()
             val epnum = it.attr("data-base") ?: it.attr("data-name-normalized")
-            val test = epnum.toCharArray().forEach {
-                println(it)
-            }
             AnimeEpisode(link, null, episode = epnum.toIntOrNull())
         } ?: return null
 

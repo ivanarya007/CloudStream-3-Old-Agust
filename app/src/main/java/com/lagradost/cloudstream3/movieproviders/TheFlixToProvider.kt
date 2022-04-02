@@ -345,18 +345,18 @@ class TheFlixToProvider : MainAPI() {
         val available = metadata?.available
 
 
-        val comingsoon = !available!!
+        val comingsoon = available == false
 
-        val movieId = metadata.id
+        val movieId = metadata?.id
 
-        val movietitle = metadata.name
+        val movietitle = metadata?.name
 
-        val poster = metadata.posterUrl
+        val poster = metadata?.posterUrl
 
-        val description = metadata.overview
+        val description = metadata?.overview
 
         if (!isMovie) {
-            metadata.seasons.map { seasons ->
+            metadata?.seasons?.map { seasons ->
                 val seasonPoster = seasons.posterUrl ?: metadata.posterUrl
                 seasons.episodes.forEach { epi ->
                     val episodenu = epi.episodeNumber
@@ -372,7 +372,7 @@ class TheFlixToProvider : MainAPI() {
                         title,
                         seasonum,
                         episodenu,
-                        "$mainUrl/tv-show/$movieId-${cleanTitle(movietitle)}/season-$seasonum/episode-$episodenu",
+                        "$mainUrl/tv-show/$movieId-${cleanTitle(movietitle!!)}/season-$seasonum/episode-$episodenu",
                         description = epDesc!!+date,
                         posterUrl = seasonPoster,
                         rating = rating,
@@ -385,9 +385,9 @@ class TheFlixToProvider : MainAPI() {
                 }
             }
         }
-        val rating = metadata.voteAverage?.toFloat()?.times(1000)?.toInt()
+        val rating = metadata?.voteAverage?.toFloat()?.times(1000)?.toInt()
 
-        val tags = metadata.genres.map { it.name }
+        val tags = metadata?.genres?.map { it.name }
 
         val recommendationsitem =  pageMain.recommendationsList?.docs?.map { loadDocs ->
             val title = loadDocs.name
@@ -404,13 +404,13 @@ class TheFlixToProvider : MainAPI() {
             )
         }
 
-        val year = metadata.releaseDate?.substringBefore("-")
-        val runtime = metadata.runtime?.div(60) ?: metadata.episodeRuntime?.div(60)
-        val cast = metadata.cast?.split(",")
+        val year = metadata?.releaseDate?.substringBefore("-")
+        val runtime = metadata?.runtime?.div(60) ?: metadata?.episodeRuntime?.div(60)
+        val cast = metadata?.cast?.split(",")
 
         return when (tvtype) {
             TvType.TvSeries -> {
-                return newTvSeriesLoadResponse(movietitle, url, TvType.TvSeries, episodes) {
+                return newTvSeriesLoadResponse(movietitle!!, url, TvType.TvSeries, episodes) {
                     this.posterUrl = poster
                     this.year = year?.toIntOrNull()
                     this.plot = description
@@ -423,7 +423,7 @@ class TheFlixToProvider : MainAPI() {
                 }
             }
             TvType.Movie -> {
-                newMovieLoadResponse(movietitle, url, TvType.Movie, movieData!!) {
+                newMovieLoadResponse(movietitle!!, url, TvType.Movie, movieData!!) {
                     this.year = year?.toIntOrNull()
                     this.posterUrl = poster
                     this.plot = description
