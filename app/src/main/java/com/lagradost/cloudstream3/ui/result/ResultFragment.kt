@@ -11,15 +11,15 @@ import android.content.res.ColorStateList
 import android.content.res.Configuration
 import android.graphics.Rect
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.text.Editable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.View.GONE
 import android.view.View.VISIBLE
 import android.view.ViewGroup
-import android.widget.ImageView
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.FileProvider
@@ -27,6 +27,7 @@ import androidx.core.graphics.drawable.toBitmap
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import androidx.core.widget.NestedScrollView
+import androidx.core.widget.doOnTextChanged
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.preference.PreferenceManager
@@ -47,8 +48,6 @@ import com.lagradost.cloudstream3.AcraApplication.Companion.setKey
 import com.lagradost.cloudstream3.CommonActivity.getCastSession
 import com.lagradost.cloudstream3.CommonActivity.showToast
 import com.lagradost.cloudstream3.mvvm.*
-import com.lagradost.cloudstream3.syncproviders.OAuth2API.Companion.SyncApis
-import com.lagradost.cloudstream3.syncproviders.SyncAPI
 import com.lagradost.cloudstream3.ui.WatchType
 import com.lagradost.cloudstream3.ui.download.DOWNLOAD_ACTION_DOWNLOAD
 import com.lagradost.cloudstream3.ui.download.DOWNLOAD_NAVIGATE_TO
@@ -60,6 +59,7 @@ import com.lagradost.cloudstream3.ui.player.SubtitleData
 import com.lagradost.cloudstream3.ui.quicksearch.QuickSearchFragment
 import com.lagradost.cloudstream3.ui.search.SearchAdapter
 import com.lagradost.cloudstream3.ui.search.SearchHelper
+import com.lagradost.cloudstream3.ui.settings.SettingsFragment
 import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.isTrueTvSettings
 import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.isTvSettings
 import com.lagradost.cloudstream3.ui.subtitles.SubtitlesFragment.Companion.getDownloadSubsLanguageISO639_1
@@ -73,8 +73,6 @@ import com.lagradost.cloudstream3.utils.CastHelper.startCast
 import com.lagradost.cloudstream3.utils.Coroutines.main
 import com.lagradost.cloudstream3.utils.DataStore.getFolderName
 import com.lagradost.cloudstream3.utils.DataStore.setKey
-import com.lagradost.cloudstream3.utils.DataStoreHelper.addSync
-import com.lagradost.cloudstream3.utils.DataStoreHelper.getSync
 import com.lagradost.cloudstream3.utils.DataStoreHelper.getViewPos
 import com.lagradost.cloudstream3.utils.SingleSelectionHelper.showBottomDialog
 import com.lagradost.cloudstream3.utils.UIHelper.checkWrite
@@ -93,6 +91,7 @@ import com.lagradost.cloudstream3.utils.UIHelper.setImageBlur
 import com.lagradost.cloudstream3.utils.VideoDownloadManager.sanitizeFilename
 import kotlinx.android.synthetic.main.fragment_result.*
 import kotlinx.android.synthetic.main.fragment_result_swipe.*
+import kotlinx.android.synthetic.main.result_sync.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.withContext
@@ -374,6 +373,7 @@ class ResultFragment : Fragment(), PanelsChildGestureRegionObserver.GestureRegio
     private var currentLoadingCount =
         0 // THIS IS USED TO PREVENT LATE EVENTS, AFTER DISMISS WAS CLICKED
     private lateinit var viewModel: ResultViewModel //by activityViewModels()
+    private lateinit var syncModel: SyncViewModel
     private var currentHeaderName: String? = null
     private var currentType: TvType? = null
     private var currentEpisodes: List<ResultEpisode>? = null
@@ -386,6 +386,9 @@ class ResultFragment : Fragment(), PanelsChildGestureRegionObserver.GestureRegio
     ): View? {
         viewModel =
             ViewModelProvider(this)[ResultViewModel::class.java]
+        syncModel =
+            ViewModelProvider(this)[SyncViewModel::class.java]
+
         return inflater.inflate(R.layout.fragment_result_swipe, container, false)
     }
 
@@ -471,16 +474,6 @@ class ResultFragment : Fragment(), PanelsChildGestureRegionObserver.GestureRegio
     var startAction: Int? = null
     private var startValue: Int? = null
 
-    private fun updateSync(id: Int) {
-        val syncList = getSync(id, SyncApis.map { it.idPrefix }) ?: return
-        val list = ArrayList<Pair<SyncAPI, String>>()
-        for (i in 0 until SyncApis.count()) {
-            val res = syncList[i] ?: continue
-            list.add(Pair(SyncApis[i], res))
-        }
-        viewModel.updateSync(context, list)
-    }
-
     private fun setFormatText(textView: TextView?, @StringRes format: Int, arg: Any?) {
         // java.util.IllegalFormatConversionException: f != java.lang.Integer
         // This can fail with malformed formatting
@@ -525,6 +518,16 @@ class ResultFragment : Fragment(), PanelsChildGestureRegionObserver.GestureRegio
 
     private fun setRating(rating: Int?) {
         setFormatText(result_meta_rating, R.string.rating_format, rating?.div(1000f))
+    }
+
+    private fun setMalSync(id: String?): Boolean {
+        syncModel.setMalId(id ?: return false)
+        return true
+    }
+
+    private fun setAniListSync(id: String?): Boolean {
+        syncModel.setAniListId(id ?: return false)
+        return true
     }
 
     private fun setActors(actors: List<ActorData>?) {
@@ -1149,6 +1152,120 @@ class ResultFragment : Fragment(), PanelsChildGestureRegionObserver.GestureRegio
             }
         }
 
+        context?.let { ctx ->
+            val arrayAdapter = ArrayAdapter<String>(ctx, R.layout.sort_bottom_single_choice)
+            /*
+            -1 -> None
+            0 -> Watching
+            1 -> Completed
+            2 -> OnHold
+            3 -> Dropped
+            4 -> PlanToWatch
+            5 -> ReWatching
+            */
+            val items = listOf(
+                R.string.none,
+                R.string.type_watching,
+                R.string.type_completed,
+                R.string.type_on_hold,
+                R.string.type_dropped,
+                R.string.type_plan_to_watch,
+                R.string.type_re_watching
+            ).map { ctx.getString(it) }
+            arrayAdapter.addAll(items)
+            result_sync_check?.choiceMode = AbsListView.CHOICE_MODE_SINGLE
+            result_sync_check?.adapter = arrayAdapter
+            UIHelper.setListViewHeightBasedOnItems(result_sync_check)
+
+            result_sync_check?.setOnItemClickListener { _, _, which, _ ->
+                syncModel.setStatus(which - 1)
+            }
+
+            result_sync_rating?.addOnChangeListener { _, value, _ ->
+                syncModel.setScore(value.toInt())
+            }
+
+            result_sync_add_episode?.setOnClickListener {
+                syncModel.setEpisodesDelta(1)
+            }
+
+            result_sync_sub_episode?.setOnClickListener {
+                syncModel.setEpisodesDelta(-1)
+            }
+
+            result_sync_current_episodes?.doOnTextChanged { text, start, before, count ->
+                if(count == before) return@doOnTextChanged
+                text?.toString()?.toIntOrNull()?.let { ep ->
+                    syncModel.setEpisodes(ep)
+                }
+            }
+        }
+
+        observe(syncModel.metadata) { meta ->
+            when (meta) {
+                is Resource.Success -> {
+                    val d = meta.value
+                    result_sync_episodes?.max = (d.totalEpisodes ?: 0)*1000
+                    normalSafeApiCall {
+                        val ctx = result_sync_max_episodes?.context
+                        result_sync_max_episodes?.text =
+                            d.totalEpisodes?.let {
+                                ctx?.getString(R.string.sync_total_episodes_some)?.format(it)
+                            } ?: run {
+                                ctx?.getString(R.string.sync_total_episodes_none)
+                            }
+                    }
+                }
+                is Resource.Loading -> {
+                    result_sync_max_episodes?.text =
+                        result_sync_max_episodes?.context?.getString(R.string.sync_total_episodes_none)
+                }
+                else -> {}
+            }
+        }
+
+        observe(syncModel.userData) { status ->
+            var closed = false
+            when (status) {
+                is Resource.Failure -> {
+                    result_sync_loading_shimmer?.stopShimmer()
+                    result_sync_loading_shimmer?.isVisible = false
+                    result_sync_holder?.isVisible = false
+                }
+                is Resource.Loading -> {
+                    result_sync_loading_shimmer?.startShimmer()
+                    result_sync_loading_shimmer?.isVisible = true
+                    result_sync_holder?.isVisible = false
+                }
+                is Resource.Success -> {
+                    result_sync_loading_shimmer?.stopShimmer()
+                    result_sync_loading_shimmer?.isVisible = false
+                    result_sync_holder?.isVisible = true
+
+                    val d = status.value
+                    result_sync_rating?.value = d.score?.toFloat() ?: 0.0f
+                    result_sync_check?.setItemChecked(d.status + 1, true)
+                    val watchedEpisodes = d.watchedEpisodes ?: 0
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                        result_sync_episodes?.setProgress(watchedEpisodes * 1000, true)
+                    } else {
+                        result_sync_episodes?.progress = watchedEpisodes * 1000
+                    }
+                    result_sync_current_episodes?.text =
+                        Editable.Factory.getInstance()?.newEditable(watchedEpisodes.toString())
+                    normalSafeApiCall { // format might fail
+                        context?.getString(R.string.sync_score_format)?.format(d.score ?: 0)?.let {
+                            result_sync_score_text?.text = it
+                        }
+                    }
+                }
+                null -> {
+                    closed = false
+                }
+            }
+            result_overlapping_panels?.setStartPanelLockState(if (closed) OverlappingPanelsLayout.LockState.CLOSE else OverlappingPanelsLayout.LockState.UNLOCKED)
+        }
+
         observe(viewModel.episodes) { episodeList ->
             lateFixDownloadButton(episodeList.size <= 1) // movies can have multible parts but still be *movies* this will fix this
             var isSeriesVisible = false
@@ -1269,7 +1386,7 @@ class ResultFragment : Fragment(), PanelsChildGestureRegionObserver.GestureRegio
         observe(viewModel.dubSubSelections) { range ->
             dubRange = range
 
-            if (preferDub && dubRange?.contains(DubStatus.Dubbed) == true){
+            if (preferDub && dubRange?.contains(DubStatus.Dubbed) == true) {
                 viewModel.changeDubStatus(DubStatus.Dubbed)
             }
 
@@ -1309,7 +1426,7 @@ class ResultFragment : Fragment(), PanelsChildGestureRegionObserver.GestureRegio
             }
         }
 
-        result_episode_select.setOnClickListener {
+        result_episode_select?.setOnClickListener {
             val ranges = episodeRanges
             if (ranges != null) {
                 it.popupMenuNoIconsAndNoStringRes(ranges.mapIndexed { index, s -> Pair(index, s) }
@@ -1317,6 +1434,10 @@ class ResultFragment : Fragment(), PanelsChildGestureRegionObserver.GestureRegio
                     viewModel.changeRange(itemId)
                 }
             }
+        }
+
+        result_sync_set_score?.setOnClickListener {
+            syncModel.publishUserData()
         }
 
         observe(viewModel.publicEpisodesCount) { count ->
@@ -1331,19 +1452,6 @@ class ResultFragment : Fragment(), PanelsChildGestureRegionObserver.GestureRegio
 
         observe(viewModel.id) {
             currentId = it
-        }
-
-        observe(viewModel.sync) { sync ->
-            for (s in sync) {
-                when (s) {
-                    is Resource.Success -> {
-                        val d = s.value ?: continue
-                        setDuration(d.duration)
-                        setRating(d.publicScore)
-                    }
-                    else -> Unit
-                }
-            }
         }
 
         observe(viewModel.resultResponse) { data ->
@@ -1411,33 +1519,30 @@ class ResultFragment : Fragment(), PanelsChildGestureRegionObserver.GestureRegio
                             }
                         }
 
-                        updateSync(d.getId())
-                        result_add_sync?.setOnClickListener {
-                            QuickSearchFragment.pushSync(activity, d.name) { click ->
-                                addSync(d.getId(), click.card.apiName, click.card.url)
-
-                                showToast(
-                                    activity,
-                                    context?.getString(R.string.added_sync_format)
-                                        ?.format(click.card.name),
-                                    Toast.LENGTH_SHORT
-                                )
-
-                                updateSync(d.getId())
-                            }
-                        }
-
                         val showStatus = when (d) {
                             is TvSeriesLoadResponse -> d.showStatus
                             is AnimeLoadResponse -> d.showStatus
                             else -> null
                         }
+
                         setShow(showStatus)
                         setDuration(d.duration)
                         setYear(d.year)
                         setRating(d.rating)
                         setRecommendations(d.recommendations)
                         setActors(d.actors)
+
+                        if (SettingsFragment.accountEnabled)
+                            if (d is AnimeLoadResponse) {
+                                if (
+                                    setMalSync(d.malId?.toString())
+                                    ||
+                                    setAniListSync(d.anilistId?.toString())
+                                ) {
+                                    syncModel.updateMetadata()
+                                    syncModel.updateUserData()
+                                }
+                            }
 
                         result_meta_site?.text = d.apiName
 
