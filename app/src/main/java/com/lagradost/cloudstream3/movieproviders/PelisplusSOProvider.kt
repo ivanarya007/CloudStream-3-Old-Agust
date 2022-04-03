@@ -158,7 +158,6 @@ class PelisplusSOProvider:MainAPI() {
                     description,
                     ShowStatus.Ongoing,
                     null,
-                    null,
                     tags,
                 )
             }
@@ -172,7 +171,6 @@ class PelisplusSOProvider:MainAPI() {
                     poster,
                     year.toString().toIntOrNull(),
                     description,
-                    null,
                     null,
                     tags,
                     duration.toString().toIntOrNull(),

@@ -157,7 +157,6 @@ class AnimeflvIOProvider:MainAPI() {
                     year.toString().toIntOrNull(),
                     description,
                     null,
-                    null,
                     genre,
                     duration.toString().toIntOrNull(),
                     )

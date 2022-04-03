@@ -149,8 +149,8 @@ class AnimefenixProvider:MainAPI() {
                     null,
                     description,
                     null,
-                    null,
                     genres,
+                    null,
                 )
             }
             else -> null

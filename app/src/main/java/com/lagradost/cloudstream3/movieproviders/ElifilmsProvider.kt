@@ -71,7 +71,6 @@ class ElifilmsProvider:MainAPI() {
             poster,
             null,
             desc,
-            null,
             rating,
             tags
         )

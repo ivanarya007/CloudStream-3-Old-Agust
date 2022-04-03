@@ -257,7 +257,6 @@ class ComamosRamenProvider : MainAPI() {
             desc,
             status,
             null,
-            null,
             tags
         )
         }

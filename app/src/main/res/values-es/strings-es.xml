@@ -210,7 +210,8 @@
      <string name="episode_action_reload_links">Recargar links</string>
   <string name="premium_only_crunchy">Episodio disponile solo para usuarios premium,
   no es posible obtener links</string>
-     <string name="no_update_found">No se han encontrado actualizaciones</string>
+    <string name="episode_action_download_subtitle">Descargar subtítulos</string>
+    <string name="no_update_found">No se han encontrado actualizaciones</string>
      <string name="check_for_update">Buscar actualización</string>
      <string name="video_lock">Fijar</string>
      <string name="video_aspect_ratio_resize">Cambiar Tamaño</string>
