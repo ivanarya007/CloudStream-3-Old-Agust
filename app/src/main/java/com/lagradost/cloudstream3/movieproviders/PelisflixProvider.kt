@@ -159,7 +159,6 @@ class PelisflixProvider : MainAPI() {
                 year?.toIntOrNull(),
                 descipt2,
                 null,
-                null,
                 rating
             )
         } else {
