@@ -13,6 +13,14 @@ import com.lagradost.cloudstream3.utils.SyncUtil
 import kotlinx.coroutines.launch
 
 
+data class CurrentSynced(
+    val name: String,
+    val idPrefix: String,
+    val isSynced: Boolean,
+    val hasAccount: Boolean,
+    val icon : Int,
+)
+
 class SyncViewModel : ViewModel() {
     private val repos = SyncApis
 
@@ -29,19 +37,48 @@ class SyncViewModel : ViewModel() {
     // prefix, id
     private val syncIds = hashMapOf<String, String>()
 
+    private val _currentSynced: MutableLiveData<List<CurrentSynced>> =
+        MutableLiveData(getMissing())
+
+    // pair of name idPrefix isSynced
+    val synced: LiveData<List<CurrentSynced>> get() = _currentSynced
+
+    private fun getMissing(): List<CurrentSynced> {
+        return repos.map {
+            CurrentSynced(
+                it.name,
+                it.idPrefix,
+                syncIds.containsKey(it.idPrefix),
+                it.hasAccount(),
+                it.icon,
+            )
+        }
+    }
+
+    private fun updateSynced() {
+        _currentSynced.postValue(getMissing())
+    }
+
     fun setMalId(id: String?) {
         syncIds[malApi.idPrefix] = id ?: return
+        updateSynced()
     }
 
     fun setAniListId(id: String?) {
         syncIds[aniListApi.idPrefix] = id ?: return
+        updateSynced()
     }
 
-    fun addFromUrl(url : String?) = viewModelScope.launch {
+    var hasAddedFromUrl : HashSet<String> = hashSetOf()
+
+    fun addFromUrl(url: String?) = viewModelScope.launch {
+        if(url == null || hasAddedFromUrl.contains(url)) return@launch
         SyncUtil.getIdsFromUrl(url)?.let { (malId, aniListId) ->
+            hasAddedFromUrl.add(url)
+
             setMalId(malId)
             setAniListId(aniListId)
-            if(malId != null || aniListId != null) {
+            if (malId != null || aniListId != null) {
                 updateMetaAndUser()
             }
         }
@@ -101,7 +138,7 @@ class SyncViewModel : ViewModel() {
         updateUserData()
     }
 
-    fun updateUserData() = viewModelScope.launch {
+    private fun updateUserData() = viewModelScope.launch {
         _userDataResponse.postValue(Resource.Loading())
         var lastError: Resource<SyncAPI.SyncStatus> = Resource.Failure(false, null, null, "No data")
         for ((prefix, id) in syncIds) {
@@ -118,7 +155,7 @@ class SyncViewModel : ViewModel() {
         _userDataResponse.postValue(lastError)
     }
 
-    fun updateMetadata() = viewModelScope.launch {
+    private fun updateMetadata() = viewModelScope.launch {
         _metaResponse.postValue(Resource.Loading())
         var lastError: Resource<SyncAPI.SyncResult> = Resource.Failure(false, null, null, "No data")
         for ((prefix, id) in syncIds) {
