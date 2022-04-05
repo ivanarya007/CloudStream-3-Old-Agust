@@ -296,7 +296,7 @@ class ComamosRamenProvider : MainAPI() {
                 .removePrefix("[")
                 .removeSuffix("]")
         }
-        val serversinfo = "["+seasonsJson?.first()+"]"
+        val serversinfo = seasonsJson.toString().replace("[,","[")
         val jsonservers = parseJson<List<LoadLinksMain>>(serversinfo)
          jsonservers.forEach { info ->
             val episodeID = info.EpisodeID
