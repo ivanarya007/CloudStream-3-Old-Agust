@@ -74,7 +74,7 @@ class ComamosRamenProvider : MainAPI() {
                             val link = "$mainUrl/v/${data.Id}/${title.replace(" ","-")}"
                             val img = "https://img.comamosramen.com/${data.img.vertical}-high.jpg"
                             val epnumRegex = Regex("(\\d+\$)")
-                            val lastepisode = epnumRegex.find(data.lastEpisodeEdited!!)?.value?.toIntOrNull()
+                            val lastepisode = epnumRegex.find(data.lastEpisodeEdited ?: "")?.value ?: ""
                             AnimeSearchResponse(
                                 title,
                                 link,
@@ -83,8 +83,8 @@ class ComamosRamenProvider : MainAPI() {
                                 img,
                                 null,
                                 if (title.contains("Latino")) EnumSet.of(DubStatus.Dubbed) else EnumSet.of(DubStatus.Subbed),
-                                subEpisodes = lastepisode,
-                                dubEpisodes = lastepisode,
+                                subEpisodes = lastepisode.toIntOrNull(),
+                                dubEpisodes = lastepisode.toIntOrNull(),
                             )
                         }
                         items.add(HomePageList(a.second!!, home))
