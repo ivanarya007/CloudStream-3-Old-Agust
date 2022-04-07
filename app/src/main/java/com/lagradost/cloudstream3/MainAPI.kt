@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.json.JsonMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.lagradost.cloudstream3.animeproviders.*
 import com.lagradost.cloudstream3.metaproviders.CrossTmdbProvider
+import com.lagradost.cloudstream3.metaproviders.MultiAnimeProvider
 import com.lagradost.cloudstream3.movieproviders.*
 import com.lagradost.cloudstream3.syncproviders.OAuth2API.Companion.aniListApi
 import com.lagradost.cloudstream3.syncproviders.OAuth2API.Companion.malApi
@@ -38,70 +39,72 @@ object APIHolder {
 
     val allProviders by lazy {
         arrayListOf(
-            // HenaojaraProvider(), removed due to scraping providers that are already implemented
-            AkwamProvider(),
-            AllAnimeProvider(),
-            AnimekisaProvider(),
-            AllMoviesForYouProvider(),
-            AnimefenixProvider(),
-            AnimeFlickProvider(),
-            AnimeflvIOProvider(),
-            AnimeflvnetProvider(),
-            AnimeIDProvider(),
-            AnimeonlineProvider(),
-            //AnimePaheProvider(),
-            AsianLoadProvider(),
-            BflixProvider(),
-            FmoviesToProvider(),
+            // Movie providers
+            PelisplusProvider(),
+            PelisplusHDProvider(),
+            PeliSmartProvider(),
+            MeloMovieProvider(), // Captcha for links
+            DoramasYTProvider(),
             CinecalidadProvider(),
             CuevanaProvider(),
-            ComamosRamenProvider(),
-            DoramasYTProvider(),
-            DramaSeeProvider(),
-            DubbedAnimeProvider(),
-            ElifilmsProvider(),
             EntrepeliculasyseriesProvider(),
-            EstrenosDoramasProvider(),
-            FilmanProvider(),
-            FrenchStreamProvider(),
-            GogoanimeProvider(),
-            IHaveNoTvProvider(), // Documentaries provider
-            KdramaHoodProvider(),
-            KrunchyProvider(),
-            MonoschinosProvider(),
-            MundoDonghuaProvider(),
-            NineAnimeProvider(),
             PelisflixProvider(),
-            PeliSmartProvider(),
-            PelisplusHDProvider(),
-            PelisplusSOProvider(),
-            PinoyHDXyzProvider(),
-            PinoyMoviePediaProvider(),
-            PinoyMoviesEsProvider(),
             SeriesflixProvider(),
-            SflixProvider(),
-            TenshiProvider(),
-            TrailersTwoProvider(),
-            TioAnimeProvider(),
+            IHaveNoTvProvider(), // Documentaries provider
+            LookMovieProvider(), // RECAPTCHA (Please allow up to 5 seconds...)
+            VMoveeProvider(),
+            AllMoviesForYouProvider(),
+            VidEmbedProvider(),
             VfFilmProvider(),
             VfSerieProvider(),
-            VidEmbedProvider(),
-            VMoveeProvider(),
-            WatchAsianProvider(),
-            WatchCartoonOnlineProvider(),
-            WcoProvider(),
-            JKAnimeProvider(),
-            ZoroProvider(),
-            YesMoviesProviders(), //Sflix mirror
-            HDTodayProvider(),
-            MoviesJoyProvider(),
-            MyflixerToProvider(),
-
-            FmoviesProvider(), //Sflix mirror
-            SoaptwoDayProvider(),
+            FrenchStreamProvider(),
+            AsianLoadProvider(),
+            AsiaFlixProvider(), // restricted
+            BflixProvider(),
+            FmoviesToProvider(),
+            SflixProProvider(),
+            FilmanProvider(),
+            SflixProvider(),
+            DopeboxProvider(),
+            SolarmovieProvider(),
+            PinoyMoviePediaProvider(),
+            PinoyHDXyzProvider(),
+            PinoyMoviesEsProvider(),
+            TrailersTwoProvider(),
             TwoEmbedProvider(),
-            ApiMDBProvider(),
+            DramaSeeProvider(),
+            WatchAsianProvider(),
+            KdramaHoodProvider(),
+            AkwamProvider(),
+            MyCimaProvider(),
+            EgyBestProvider(),
+            SoaptwoDayProvider(),
+            HDMProvider(),// disabled due to cloudflare
             TheFlixToProvider(),
+
+            // Metadata providers
+            //TmdbProvider(),
+            CrossTmdbProvider(),
+            ApiMDBProvider(),
+
+            // Anime providers
+            WatchCartoonOnlineProvider(),
+            GogoanimeProvider(),
+            AllAnimeProvider(),
+            AnimekisaProvider(),
+            //ShiroProvider(), // v2 fucked me
+            AnimeFlickProvider(),
+            AnimeflvnetProvider(),
+            TenshiProvider(),
+            WcoProvider(),
+            AnimePaheProvider(),
+            NineAnimeProvider(),
+            AnimeWorldProvider(),
+            ZoroProvider(),
+            DubbedAnimeProvider(),
+            MonoschinosProvider(),
+            KawaiifuProvider(), // disabled due to cloudflare
+            //MultiAnimeProvider(),
         )
     }
 
@@ -227,7 +230,7 @@ object APIHolder {
     fun Context.getApiProviderLangSettings(): HashSet<String> {
         val settingsManager = PreferenceManager.getDefaultSharedPreferences(this)
         val hashSet = HashSet<String>()
-        hashSet.add("es") // def is only en
+        hashSet.add("en") // def is only en
         val list = settingsManager.getStringSet(
             this.getString(R.string.provider_lang_key),
             hashSet.toMutableSet()
@@ -266,13 +269,16 @@ object APIHolder {
             allApis
         } else {
             // Filter API depending on preferred media type
-            val listEnumAnime = listOf(TvType.Anime, TvType.AnimeMovie, TvType.OVA, TvType.Donghua)
-            val listEnumMovieTv = listOf(TvType.Movie, TvType.TvSeries, TvType.Cartoon, TvType.AsianDrama, TvType.Mirror)
-            val mediaTypeList = if (currentPrefMedia == 1) listEnumMovieTv else listEnumAnime
-
-            val filteredAPI =
-                allApis.filter { api -> api.supportedTypes.any { it in mediaTypeList } }
-            filteredAPI
+            val listEnumAnime = listOf(TvType.Anime, TvType.AnimeMovie, TvType.OVA)
+            val listEnumMovieTv =
+                listOf(TvType.Movie, TvType.TvSeries, TvType.Cartoon, TvType.AsianDrama)
+            val listEnumDoc = listOf(TvType.Documentary)
+            val mediaTypeList = when (currentPrefMedia) {
+                2 -> listEnumAnime
+                3 -> listEnumDoc
+                else -> listEnumMovieTv
+            }
+            allApis.filter { api -> api.supportedTypes.any { it in mediaTypeList } }
         }
     }
 }
@@ -343,9 +349,6 @@ abstract class MainAPI {
         TvType.Cartoon,
         TvType.Anime,
         TvType.OVA,
-        TvType.Mirror,
-        TvType.Donghua,
-        TvType.AsianDrama
     )
 
     open val vpnStatus = VPNStatus.None
@@ -517,10 +520,8 @@ enum class ShowStatus {
 }
 
 enum class DubStatus {
-    Subbed,
-    PremiumSub,
     Dubbed,
-    PremiumDub,
+    Subbed,
 }
 
 enum class TvType {
@@ -532,9 +533,7 @@ enum class TvType {
     OVA,
     Torrent,
     Documentary,
-    Mirror,
-    Donghua,
-    AsianDrama
+    AsianDrama,
 }
 
 // IN CASE OF FUTURE ANIME MOVIE OR SMTH
@@ -544,7 +543,7 @@ fun TvType.isMovieType(): Boolean {
 
 // returns if the type has an anime opening
 fun TvType.isAnimeOp(): Boolean {
-    return this == TvType.Anime || this == TvType.OVA || this == TvType.Donghua
+    return this == TvType.Anime || this == TvType.OVA
 }
 
 data class SubtitleFile(val lang: String, val url: String)
@@ -745,7 +744,7 @@ interface LoadResponse {
             this.syncData[aniListIdPrefix] = (id ?: return).toString()
         }
 
-        fun LoadResponse.addImdbUrl(url : String?) {
+        fun LoadResponse.addImdbUrl(url: String?) {
             addImdbId(imdbUrlToIdNullable(url))
         }
 
@@ -795,7 +794,7 @@ fun LoadResponse?.isAnimeBased(): Boolean {
 
 fun TvType?.isEpisodeBased(): Boolean {
     if (this == null) return false
-    return (this == TvType.TvSeries || this == TvType.Anime || this == TvType.Donghua || this == TvType.AsianDrama)
+    return (this == TvType.TvSeries || this == TvType.Anime)
 }
 
 data class AnimeEpisode(
