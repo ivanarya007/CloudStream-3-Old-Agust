@@ -227,8 +227,8 @@ class KrunchyProvider : MainAPI() {
         } else {
             p.selectFirst("span").text().trim()
         }
-        val rating = soup.selectFirst(".average-rating div meta").attr("content").toFloatOrNull()
-            ?.times(1000)?.toInt()?.times(2)
+        val rating = soup?.selectFirst(".average-rating div meta")?.attr("content")?.toFloatOrNull()
+            ?.times(1000)?.toInt()?.times(2) ?: "".toIntOrNull()
 
         val genres = soup.select(".large-margin-bottom > ul:nth-child(2) li:nth-child(2) a").map { it.text() }
         val year = genres.filter { it.toIntOrNull() != null }.map { it.toInt() }.sortedBy { it }.getOrNull(0)
