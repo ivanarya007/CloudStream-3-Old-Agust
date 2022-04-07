@@ -25,6 +25,10 @@ class VizcloudXyz : WcoStream() {
     override var mainUrl = "https://vizcloud.xyz"
 }
 
+class VizcloudLive : WcoStream() {
+    override var mainUrl = "https://vizcloud.live"
+}
+
 open class WcoStream : ExtractorApi() {
     override var name = "VidStream" //Cause works for animekisa and wco
     override var mainUrl = "https://vidstream.pro"
@@ -98,7 +102,7 @@ open class WcoStream : ExtractorApi() {
                     }
                 }
                 if (mainUrl == "https://vidstream.pro" || mainUrl == "https://vidstreamz.online" || mainUrl == "https://vizcloud2.online"
-                    || mainUrl == "https://vizcloud.xyz") {
+                    || mainUrl == "https://vizcloud.xyz" || mainUrl == "https://vizcloud.live") {
                     if (it.file.contains("vizcloud2") || it.file.contains("vizloud.xyz")) {
                         val link1080 = it.file.replace("list.m3u8#.mp4","H4/v.m3u8")
                         val link720 = it.file.replace("list.m3u8#.mp4","H3/v.m3u8")
