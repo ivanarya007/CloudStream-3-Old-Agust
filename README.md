@@ -79,7 +79,7 @@ https://lagradost.github.io/CloudStream-3/
 - [crunchyroll.com](http://www.crunchyroll.com) 
 - [monoschinos2.com](https://monoschinos2.com) 
 - [mundodonghua.com](https://www.mundodonghua.com) 
-- [9anime.center](https://9anime.center) 
+- [9anime.id](https://9anime.id) 
 - [pelisflix.li](https://pelisflix.li) 
 - [pelismart.com](https://pelismart.com) 
 - [pinoy-hd.xyz](https://www.pinoy-hd.xyz) 
