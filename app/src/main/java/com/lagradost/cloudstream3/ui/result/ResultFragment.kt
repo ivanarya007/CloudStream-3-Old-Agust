@@ -429,7 +429,8 @@ class ResultFragment : Fragment(), PanelsChildGestureRegionObserver.GestureRegio
     private var currentHeaderName: String? = null
     private var currentType: TvType? = null
     private var currentEpisodes: List<ResultEpisode>? = null
-    var downloadButton: EasyDownloadButton? = null
+    private var downloadButton: EasyDownloadButton? = null
+    private var syncdata: Map<String, String>? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -646,6 +647,7 @@ class ResultFragment : Fragment(), PanelsChildGestureRegionObserver.GestureRegio
     }
 
     private fun updateUI() {
+        syncModel.updateUserData()
         viewModel.reloadEpisodes()
     }
 
@@ -1090,10 +1092,11 @@ class ResultFragment : Fragment(), PanelsChildGestureRegionObserver.GestureRegio
                 ACTION_PLAY_EPISODE_IN_PLAYER -> {
                     viewModel.getGenerator(episodeClick.data)
                         ?.let { generator ->
+                            println("LANUCJ:::: $syncdata")
                             activity?.navigate(
                                 R.id.global_to_navigation_player,
                                 GeneratorPlayer.newInstance(
-                                    generator
+                                    generator, syncdata?.let { HashMap(it) }
                                 )
                             )
                         }
@@ -1297,8 +1300,14 @@ class ResultFragment : Fragment(), PanelsChildGestureRegionObserver.GestureRegio
                 list.filter { it.isSynced && it.hasAccount }.joinToString { it.name }
 
             val newList = list.filter { it.isSynced }
+
             result_mini_sync?.isVisible = newList.isNotEmpty()
             (result_mini_sync?.adapter as? ImageAdapter?)?.updateList(newList.map { it.icon })
+        }
+
+        observe(syncModel.syncIds) {
+            println("VALUES::: $it")
+            syncdata = it
         }
 
         var currentSyncProgress = 0
@@ -1653,12 +1662,7 @@ class ResultFragment : Fragment(), PanelsChildGestureRegionObserver.GestureRegio
                     setActors(d.actors)
 
                     if (SettingsFragment.accountEnabled) {
-                        var isValid = false
-                        for ((prefix, id) in d.syncData) {
-                            isValid = isValid || syncModel.addSync(prefix, id)
-                        }
-
-                        if (isValid) {
+                        if (syncModel.addSyncs(d.syncData)) {
                             syncModel.updateMetaAndUser()
                             syncModel.updateSynced()
                         } else {
