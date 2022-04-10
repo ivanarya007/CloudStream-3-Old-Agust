@@ -6,7 +6,6 @@ import com.lagradost.cloudstream3.utils.ExtractorLink
 import com.lagradost.cloudstream3.utils.extractorApis
 import com.lagradost.cloudstream3.utils.loadExtractor
 import java.util.*
-import kotlin.collections.ArrayList
 
 
 class MonoschinosProvider : MainAPI() {
@@ -133,7 +132,7 @@ class MonoschinosProvider : MainAPI() {
             val name = it.selectFirst("p.animetitles").text()
             val link = it.selectFirst("a").attr("href")
             val epThumb = it.selectFirst(".animeimghv").attr("data-src")
-            AnimeEpisode(link, name, posterUrl = epThumb)
+            Episode(link, name, posterUrl = epThumb)
         }
         return newAnimeLoadResponse(title, url, getType(type)) {
             posterUrl = poster
