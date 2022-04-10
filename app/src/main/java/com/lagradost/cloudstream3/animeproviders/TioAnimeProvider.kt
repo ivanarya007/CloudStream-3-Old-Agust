@@ -119,7 +119,7 @@ class TioAnimeProvider:MainAPI() {
 
     override suspend fun load(url: String): LoadResponse {
         val doc = app.get(url).document
-        val episodes = ArrayList<AnimeEpisode>()
+        val episodes = ArrayList<Episode>()
         val title = doc.selectFirst("h1.Title").text()
         val poster = doc.selectFirst("div.thumb img").attr("src")
         val description = doc.selectFirst("p.sinopsis").text()
@@ -139,7 +139,7 @@ class TioAnimeProvider:MainAPI() {
                 data.split("],").forEach {
                      it.split(",").forEach { epNum ->
                         val link = url.replace("/anime/","/ver/")+"-$epNum"
-                        episodes.add( AnimeEpisode(
+                        episodes.add( Episode(
                             link,
                             "Capítulo $epNum",
                             posterUrl = null,

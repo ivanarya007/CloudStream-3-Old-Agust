@@ -119,7 +119,7 @@ class AnimeflvIOProvider:MainAPI() {
         val episodes = soup.select(".item-season-episodes a").map { li ->
             val href = fixUrl(li.selectFirst("a").attr("href"))
             val name = li.selectFirst("a").text()
-            AnimeEpisode(
+           Episode(
                 href, name,
             )
         }.reversed()

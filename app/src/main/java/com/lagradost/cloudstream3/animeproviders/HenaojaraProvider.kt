@@ -92,10 +92,10 @@ class HenaojaraProvider: MainAPI() {
             val href = li.select("a").attr("href")
             val epThumb = li.select("a.MvTbImg img").attr("src")
             val name = li.select("a").text()
-            AnimeEpisode(
+            Episode(
                 href,
                 name,
-                epThumb
+                posterUrl = epThumb
             )
         }
         return newAnimeLoadResponse(title, url, if (episodes.isEmpty()) TvType.Movie else TvType.Anime) {

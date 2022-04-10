@@ -116,7 +116,7 @@ class AnimefenixProvider:MainAPI() {
         val episodes = doc.select(".anime-page__episode-list li").map {
             val name = it.selectFirst("span").text()
             val link = it.selectFirst("a").attr("href")
-            AnimeEpisode(link, name)
+            Episode(link, name)
         }.reversed()
 
         val href = doc.selectFirst(".anime-page__episode-list li")

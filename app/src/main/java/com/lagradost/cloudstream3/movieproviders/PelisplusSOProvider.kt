@@ -129,11 +129,12 @@ class PelisplusSOProvider:MainAPI() {
             val isValid = seasonid.size == 2
             val episode = if (isValid) seasonid.getOrNull(1) else null
             val season = if (isValid) seasonid.getOrNull(0) else null
-            TvSeriesEpisode(
-                epTitle,
-                season,
-                episode,
+            Episode(
                 href,
+                epTitle,
+                season = season,
+                episode = episode,
+
             )
         }.reversed()
 

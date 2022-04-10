@@ -100,18 +100,14 @@ open class AnimeIDProviderTemplate : MainAPI() {
 
             val epNum = Regex("""Episodio (\d+)""").find(epTitle)?.destructured?.component1()?.toIntOrNull()
 
-            AnimeEpisode(
-                fixUrl(li.selectFirst("a").attr("href")),
-                epTitle,
-                epThumb,
-                epDate,
-                null,
-                null,
-                epNum,
-            )
+            newEpisode(li.selectFirst("a").attr("href")) {
+                this.episode = epNum
+                this.posterUrl = epThumb
+                addDate(epDate)
+            }
         }.reversed()
 
-        val year = episodes.first().date?.split("-")?.get(0)?.toIntOrNull()
+
 
         // Make sure to get the type right to display the correct UI.
         val tvType = if (episodes.size == 1 && episodes[0].name == title) TvType.AnimeMovie else TvType.Anime
@@ -122,7 +118,6 @@ open class AnimeIDProviderTemplate : MainAPI() {
 
                     engName = title
                     posterUrl = poster
-                    this.year = year
                     addEpisodes(if (isDubbed) DubStatus.Dubbed else DubStatus.Subbed, episodes)
                     showStatus = null
                     plot = description
@@ -135,9 +130,9 @@ open class AnimeIDProviderTemplate : MainAPI() {
                     url,
                     this.name,
                     tvType,
-                    episodes[0].url,
+                    episodes[0].data,
                     poster,
-                    year,
+                    null,
                     description,
                     null,
                     null

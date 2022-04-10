@@ -1,6 +1,5 @@
 package com.lagradost.cloudstream3.utils
 //Credits https://github.com/ArjixWasTaken/CloudStream-3/blob/master/app/src/main/java/com/ArjixWasTaken/cloudstream3/utils/HttpSession.kt
-import com.lagradost.cloudstream3.AnimeEpisode
 import com.lagradost.cloudstream3.animeproviders.KrunchyProvider
 import khttp.responses.Response
 import khttp.structures.authorization.Authorization

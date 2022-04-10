@@ -1,7 +1,7 @@
 package com.lagradost.cloudstream3.movieproviders
 
 import com.lagradost.cloudstream3.*
-import com.lagradost.cloudstream3.LoadResponse.Companion.setDuration
+import com.lagradost.cloudstream3.LoadResponse.Companion.addDuration
 import com.lagradost.cloudstream3.mvvm.logError
 import com.lagradost.cloudstream3.utils.ExtractorLink
 import com.lagradost.cloudstream3.utils.loadExtractor
@@ -120,7 +120,7 @@ class SeriesflixProvider : MainAPI() {
             }
             if (list.isEmpty()) throw ErrorLoadingException("No Seasons Found")
 
-            val episodeList = ArrayList<TvSeriesEpisode>()
+            val episodeList = ArrayList<Episode>()
 
             list.apmap { (seasonInt, seasonUrl) ->
                 val seasonDocument = app.get(seasonUrl).document
@@ -134,13 +134,12 @@ class SeriesflixProvider : MainAPI() {
                         val href = aName.attr("href")
                         val date = episode.selectFirst("> td.MvTbTtl > span")?.text()
                         episodeList.add(
-                            TvSeriesEpisode(
-                                name,
-                                seasonInt,
-                                epNum,
+                            Episode(
                                 href,
-                                fixUrlNull(epthumb),
-                                date
+                                name,
+                                season = seasonInt,
+                                episode = epNum,
+                                posterUrl = fixUrlNull(epthumb),
                             )
                         )
                     }
@@ -169,7 +168,7 @@ class SeriesflixProvider : MainAPI() {
                 this.year = year?.toIntOrNull()
                 this.plot = descipt
                 this.rating = rating
-                setDuration(duration)
+                addDuration(duration)
             }
         }
     }

@@ -3,7 +3,7 @@ package com.lagradost.cloudstream3.movieproviders
 import android.util.Log
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.lagradost.cloudstream3.*
-import com.lagradost.cloudstream3.LoadResponse.Companion.setDuration
+import com.lagradost.cloudstream3.LoadResponse.Companion.addDuration
 import com.lagradost.cloudstream3.mvvm.suspendSafeApiCall
 import com.lagradost.cloudstream3.network.AppResponse
 import com.lagradost.cloudstream3.utils.*
@@ -173,12 +173,12 @@ open class YesMoviesProviders : MainAPI() {
                 this.year = year
                 this.posterUrl = posterUrl
                 this.plot = plot
-                setDuration(duration)
+                addDuration(duration)
                 this.recommendations = recommendations
             }
         } else {
             val seasonsDocument = app.get("$mainUrl/ajax/v2/tv/seasons/$id").document
-            val episodes = arrayListOf<TvSeriesEpisode>()
+            val episodes = arrayListOf<Episode>()
 
             seasonsDocument.select(".dropdown-menu a")
                 .forEachIndexed { season, element ->
@@ -204,13 +204,11 @@ open class YesMoviesProviders : MainAPI() {
                                 } ?: episode
 
                             episodes.add(
-                                TvSeriesEpisode(
-                                    episodeTitle.removePrefix("Eps $episodeNum: "),
-                                    season + 1,
-                                    episodeNum,
-                                    Pair(url, episodeData).toJson(),
-
-                                )
+                                newEpisode(Pair(url, episodeData)) {
+                                    this.name = episodeTitle?.removePrefix("Episode $episodeNum: ")
+                                    this.season = season + 1
+                                    this.episode = episodeNum
+                                }
                             )
                         }
                 }
@@ -218,7 +216,7 @@ open class YesMoviesProviders : MainAPI() {
                 this.posterUrl = posterUrl
                 this.year = year
                 this.plot = plot
-                setDuration(duration)
+                addDuration(duration)
             }
         }
     }

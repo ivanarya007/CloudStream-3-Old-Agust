@@ -145,10 +145,10 @@ class AnimeonlineProvider:MainAPI() {
             } catch (e: Exception) {
                 li.select("div a").text()
             }
-            AnimeEpisode(
+            Episode(
                 href,
                 name,
-                epThumb
+                posterUrl = epThumb
             )
         }
         val tvType = if (url.contains("/pelicula/")) TvType.AnimeMovie else TvType.Anime

@@ -223,7 +223,7 @@ class ComamosRamenProvider : MainAPI() {
 
     override suspend fun load(url: String): LoadResponse {
         val document = app.get(url).document
-        val epi = ArrayList<TvSeriesEpisode>()
+        val epi = ArrayList<Episode>()
         val scriptdoc = document.select("script[type=application/json]").map { script -> script.data() }.first()
         val json = parseJson<LoadMain>(scriptdoc)
         val metadataLoad = json.props?.pageProps?.data
@@ -238,11 +238,10 @@ class ComamosRamenProvider : MainAPI() {
             val seasonID = seasons.season
             seasons.episodes.map { episodes ->
                 val epnum = episodes.episode
-                epi.add(TvSeriesEpisode(
-                    null,
-                    seasonID,
-                    epnum,
+                epi.add(Episode(
                     "$mainUrl/v/$movieID/${title?.replace(" ","-")}/$seasonID-$epnum",
+                    season =seasonID,
+                    episode = epnum,
                 ))
             }
         }

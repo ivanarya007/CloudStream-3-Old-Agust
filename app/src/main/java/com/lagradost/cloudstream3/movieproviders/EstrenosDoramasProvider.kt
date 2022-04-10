@@ -105,11 +105,11 @@ class EstrenosDoramasProvider : MainAPI() {
                     .replace("</span>","").replace("Sinopsis:","")
             }.toList().first()
         }
-        val epi = ArrayList<AnimeEpisode>()
+        val epi = ArrayList<Episode>()
         val episodes = doc.select("div.post .lcp_catlist a").map {
             val name = it.selectFirst("a").text()
             val link = it.selectFirst("a").attr("href")
-            val test = AnimeEpisode(link, name)
+            val test = Episode(link, name)
             if (link.equals(url)) {
                 //nothing
             }

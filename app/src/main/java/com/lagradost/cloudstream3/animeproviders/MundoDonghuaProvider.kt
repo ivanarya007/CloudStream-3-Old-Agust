@@ -117,7 +117,7 @@ class MundoDonghuaProvider : MainAPI() {
         val episodes = doc.select("ul.donghua-list a").map {
             val name = it.selectFirst(".fs-16").text()
             val link = it.attr("href")
-            AnimeEpisode(fixUrl(link), name)
+            Episode(fixUrl(link), name)
         }.reversed()
         val typeinfo = doc.select("div.row div.col-md-6.pl-15 p.fc-dark").text()
         val tvType = if (typeinfo.contains(Regex("Tipo.*Pel.cula"))) TvType.AnimeMovie else TvType.Donghua
