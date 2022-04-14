@@ -711,7 +711,8 @@ class ResultFragment : Fragment(), PanelsChildGestureRegionObserver.GestureRegio
                         CastButtonFactory.setUpMediaRouteButton(act, media_route_button)
                         val castContext = CastContext.getSharedInstance(act.applicationContext)
 
-                        media_route_button?.isGone = castContext.castState == CastState.NO_DEVICES_AVAILABLE
+                        media_route_button?.isGone =
+                            castContext.castState == CastState.NO_DEVICES_AVAILABLE
 
                         castContext.addCastStateListener { state ->
                             media_route_button?.isGone = state == CastState.NO_DEVICES_AVAILABLE
@@ -1300,7 +1301,6 @@ class ResultFragment : Fragment(), PanelsChildGestureRegionObserver.GestureRegio
         }
 
         observe(syncModel.syncIds) {
-            println("VALUES::: $it")
             syncdata = it
         }
 
@@ -1668,8 +1668,8 @@ class ResultFragment : Fragment(), PanelsChildGestureRegionObserver.GestureRegio
 
                     val posterImageLink = d.posterUrl
                     if (!posterImageLink.isNullOrEmpty()) {
-                        result_poster?.setImage(posterImageLink)
-                        result_poster_blur?.setImageBlur(posterImageLink, 10, 3)
+                        result_poster?.setImage(posterImageLink, d.posterHeaders)
+                        result_poster_blur?.setImageBlur(posterImageLink, 10, 3, d.posterHeaders)
                         //Full screen view of Poster image
                         if (context?.isTrueTvSettings() == false) // Poster not clickable on tv
                             result_poster_holder?.setOnClickListener {
