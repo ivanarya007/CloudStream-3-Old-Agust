@@ -75,25 +75,17 @@ class ComamosRamenProvider : MainAPI() {
                             val img = "https://img.comamosramen.com/${data.img.vertical}-high.jpg"
                             val epnumRegex = Regex("(\\d+\$)")
                             val lastepisode = epnumRegex.find(data.lastEpisodeEdited ?: "")?.value ?: ""
-                            AnimeSearchResponse(
-                                title,
-                                link,
-                                this.name,
-                                TvType.AsianDrama,
-                                img,
-                                null,
-                                if (title.contains("Latino")) EnumSet.of(DubStatus.Dubbed) else EnumSet.of(DubStatus.Subbed),
-                                subEpisodes = lastepisode.toIntOrNull(),
-                                dubEpisodes = lastepisode.toIntOrNull(),
-                            )
+                            val dubstat = if (title.contains("Latino")) DubStatus.Dubbed else DubStatus.Subbed
+                            newAnimeSearchResponse(title, fixUrl(link)) {
+                                this.posterUrl = img
+                                addDubStatus(dubstat, lastepisode.toIntOrNull())
+                            }
                         }
                         items.add(HomePageList(a.second!!, home))
                     }
                 }
             }
         }
-
-
 
         if (items.size <= 0) throw ErrorLoadingException()
         return HomePageResponse(items)

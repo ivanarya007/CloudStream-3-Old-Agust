@@ -39,25 +39,19 @@ class AnimeonlineProvider:MainAPI() {
                     val epNum = it.selectFirst("h4").text().replace("Episodio ","").toIntOrNull()
                     val audio = it.selectFirst("div.poster").toString()
                     var dubstat = if (audio.contains("Latino") || audio.contains("Castellano")) {
-                        EnumSet.of(DubStatus.Dubbed)
+                        DubStatus.Dubbed
                     } else {
-                        EnumSet.of(DubStatus.Subbed)
+                       DubStatus.Subbed
                     }
                      if (audio.contains("Multi Audio")) {
-                         dubstat = EnumSet.of(DubStatus.Dubbed, DubStatus.Subbed)
+                         dubstat = DubStatus.Dubbed.also { DubStatus.Subbed }
                      }
                     val type = it.selectFirst("div.epiposter h4").text()
-                    AnimeSearchResponse(
-                        title,
-                        if (type.contains("Película")) url.replace("/online/","/pelicula/") else url,
-                        this.name,
-                        TvType.Anime,
-                        poster,
-                        null,
-                        dubstat,
-                        subEpisodes = epNum,
-                        dubEpisodes = epNum,
-                    )
+                    val urlclean = if (type.contains("Película")) url.replace("/online/","/pelicula/") else url
+                    newAnimeSearchResponse(title, urlclean) {
+                        this.posterUrl = poster
+                        addDubStatus(dubstat, epNum)
+                    }
                 })
         )
         items.add(HomePageList("Películas", app.get("$mainUrl/pelicula", timeout = 120).document.select(".animation-2.items .item.movies").map{

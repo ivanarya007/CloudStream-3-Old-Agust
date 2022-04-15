@@ -68,6 +68,10 @@ class KrunchyProvider : MainAPI() {
         val episodeNumRegex = Regex("""Episode (\d+)""")
         val mapper: JsonMapper = JsonMapper.builder().addModule(KotlinModule())
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false).build()
+        fun getDubStatus(name: String): DubStatus {
+            return if (name.contains("Dub)",true)) DubStatus.Dubbed
+            else DubStatus.Subbed
+        }
     }
 
     override var mainUrl = "http://www.crunchyroll.com"
@@ -95,37 +99,24 @@ class KrunchyProvider : MainAPI() {
         val doc = Jsoup.parse(crUnblock.geoBypassRequest(mainUrl).text)
         val items = ArrayList<HomePageList>()
         val featured = doc.select(".js-featured-show-list > li").map { anime ->
-            AnimeSearchResponse(
-                anime.selectFirst("img").attr("alt"),
-                fixUrl(anime.selectFirst("a").attr("href")),
-                this.name,
-                TvType.Anime,
-                anime.selectFirst("img").attr("src").replace("small", "full"),
-                null,
-                EnumSet.of(DubStatus.Subbed),
-                null,
-                null
-            )
+            val title =  anime.selectFirst("img").attr("alt")
+            val href = fixUrl(anime.selectFirst("a").attr("href"))
+            val img = anime.selectFirst("img").attr("src").replace("small", "full")
+            newAnimeSearchResponse(title, href) {
+                this.posterUrl = fixUrl(img)
+                addDubStatus(getDubStatus(name))
+            }
         }
         val recent = doc.select("div.welcome-countdown-day:contains(Now Showing) li")?.mapNotNull {
             val link = fixUrl(it.selectFirst("a").attr("href"))
             val name = it.selectFirst("span.welcome-countdown-name").text()
             val img = it.selectFirst("img").attr("src").replace("medium","full")
-            val dubstat = if (name.contains("Dub)",true)) EnumSet.of(DubStatus.Dubbed) else
-                EnumSet.of(DubStatus.Subbed)
             val details = it.selectFirst("span.welcome-countdown-details").text()
             val epnum = episodeNumRegex.find(details)?.value?.replace("Episode ","") ?: ""
-            AnimeSearchResponse(
-                "★ $name ★",
-                link.replace(Regex("(\\/episode.*)"),""),
-                this.name,
-                TvType.Anime,
-                fixUrl(img),
-                null,
-                dubstat,
-                subEpisodes = epnum.toIntOrNull(),
-                dubEpisodes = epnum.toIntOrNull()
-            )
+            newAnimeSearchResponse("★ $name ★", link.replace(Regex("(\\/episode.*)"),"")) {
+                this.posterUrl = fixUrl(img)
+                addDubStatus(getDubStatus(name), epnum.toIntOrNull())
+            }
         }
         if (recent!!.isNotEmpty()) {
             items.add(HomePageList("Now Showing", recent))
@@ -136,18 +127,12 @@ class KrunchyProvider : MainAPI() {
             val soup = Jsoup.parse(response.text)
 
             val episodes = soup.select("li").map {
-
-                AnimeSearchResponse(
-                    it.selectFirst("a").attr("title"),
-                    fixUrl(it.selectFirst("a").attr("href")),
-                    this.name,
-                    TvType.Anime,
-                    it.selectFirst("img").attr("src"),
-                    null,
-                    EnumSet.of(DubStatus.Subbed),
-                    null,
-                    null
-                )
+                val title = it.selectFirst("a").attr("title")
+                val href = fixUrl(it.selectFirst("a").attr("href"))
+                newAnimeSearchResponse(title, href) {
+                    this.posterUrl = fixUrl(it.selectFirst("img").attr("src"))
+                    addDubStatus(getDubStatus(name))
+                }
             }
             items.add(HomePageList(name, episodes))
         }
@@ -194,21 +179,14 @@ class KrunchyProvider : MainAPI() {
                 break
             }
             if (anime.name == results[count]) {
-                val dubstat = if (anime.name.contains("Dub)",true)) EnumSet.of(DubStatus.Dubbed) else
-                    EnumSet.of(DubStatus.Subbed)
                 anime.link = fixUrl(anime.link)
                 anime.img = anime.img.replace("small", "full")
-                searchResutls.add(AnimeSearchResponse(
-                    anime.name,
-                    anime.link,
-                    this.name,
-                    TvType.Anime,
-                    anime.img,
-                    null,
-                    dubstat,
-                    null,
-                    null
-                ))
+                searchResutls.add(
+                    newAnimeSearchResponse(anime.name, anime.link) {
+                        this.posterUrl = anime.img
+                        getDubStatus(anime.name)
+                    }
+                )
                 ++count
             }
         }

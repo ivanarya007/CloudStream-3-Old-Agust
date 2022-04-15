@@ -23,6 +23,12 @@ class AnimefenixProvider:MainAPI() {
         TvType.Anime,
     )
 
+    fun getDubStatus(title: String): DubStatus {
+        return if (title.contains("Latino") || title.contains("Castellano"))
+            DubStatus.Dubbed
+        else DubStatus.Subbed
+    }
+
     override suspend fun getMainPage(): HomePageResponse {
         val urls = listOf(
             Pair("$mainUrl/", "Animes"),
@@ -42,19 +48,10 @@ class AnimefenixProvider:MainAPI() {
                     val url = it.selectFirst("a").attr("href").replace(epRegex,"")
                         .replace("/ver/","/")
                     val epNum = it.selectFirst(".is-size-7").text().replace("Episodio ","").toIntOrNull()
-                    AnimeSearchResponse(
-                        title,
-                        url,
-                        this.name,
-                        TvType.Anime,
-                        poster,
-                        null,
-                        if (title.contains("Latino") || title.contains("Castellano")) EnumSet.of(
-                            DubStatus.Dubbed
-                        ) else EnumSet.of(DubStatus.Subbed),
-                        subEpisodes = epNum,
-                        dubEpisodes = epNum,
-                    )
+                    newAnimeSearchResponse(title, url) {
+                        this.posterUrl = poster
+                        addDubStatus(getDubStatus(title), epNum)
+                    }
                 })
         )
 

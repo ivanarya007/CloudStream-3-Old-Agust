@@ -47,19 +47,13 @@ class TioAnimeProvider:MainAPI() {
                     val epNum = epRegex.findAll(urlepnum).map {
                         it.value.replace("-","")
                     }.first().toIntOrNull()
-                    AnimeSearchResponse(
-                        title,
-                        fixUrl(url),
-                        this.name,
-                        TvType.Anime,
-                        fixUrl(poster),
-                        null,
-                        if (title.contains("Latino") || title.contains("Castellano")) EnumSet.of(
-                            DubStatus.Dubbed
-                        ) else EnumSet.of(DubStatus.Subbed),
-                        subEpisodes = epNum,
-                        dubEpisodes = epNum,
-                    )
+                    val dubstat = if (title.contains("Latino") || title.contains("Castellano"))
+                        DubStatus.Dubbed
+                     else DubStatus.Subbed
+                    newAnimeSearchResponse(title, fixUrl(url)) {
+                        this.posterUrl = fixUrl(poster)
+                        addDubStatus(dubstat, epNum)
+                    }
                 })
         )
         urls.apmap { (url, name) ->

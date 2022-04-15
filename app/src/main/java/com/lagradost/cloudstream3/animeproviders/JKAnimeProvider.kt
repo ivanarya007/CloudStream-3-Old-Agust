@@ -45,23 +45,16 @@ class JKAnimeProvider : MainAPI() {
                 "Últimos episodios",
                 app.get(mainUrl).document.select(".listadoanime-home a.bloqq").map {
                     val title = it.selectFirst("h5").text()
+                    val dubstat =if (title.contains("Latino") || title.contains("Castellano"))
+                            DubStatus.Dubbed else DubStatus.Subbed
                     val poster = it.selectFirst(".anime__sidebar__comment__item__pic img").attr("src")
                     val epRegex = Regex("/(\\d+)/|/especial/|/ova/")
                     val url = it.attr("href").replace(epRegex, "")
                     val epNum = it.selectFirst("h6").text().replace("Episodio ", "").toIntOrNull()
-                    AnimeSearchResponse(
-                        title,
-                        url,
-                        this.name,
-                        TvType.Anime,
-                        poster,
-                        null,
-                        if (title.contains("Latino") || title.contains("Castellano")) EnumSet.of(
-                            DubStatus.Dubbed
-                        ) else EnumSet.of(DubStatus.Subbed),
-                        subEpisodes = epNum,
-                        dubEpisodes = epNum,
-                    )
+                    newAnimeSearchResponse(title, url) {
+                        this.posterUrl = poster
+                        addDubStatus(dubstat, epNum)
+                    }
                 })
         )
         urls.apmap { (url, name) ->
