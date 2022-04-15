@@ -36,7 +36,7 @@ open class VoeExtractor : ExtractorApi() {
                 if (!linkUrl.isNullOrEmpty()) {
                     extractedLinksList.add(
                         ExtractorLink(
-                            name = "Voe $linkLabel",
+                            name = this.name,
                             source = this.name,
                             url = linkUrl,
                             quality = getQualityFromName(linkLabel),
