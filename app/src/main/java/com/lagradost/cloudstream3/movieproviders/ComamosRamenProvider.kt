@@ -61,9 +61,10 @@ class ComamosRamenProvider : MainAPI() {
     )
     override suspend fun getMainPage(): HomePageResponse {
         val items = ArrayList<HomePageList>()
-        val test = app.get(mainUrl).document
-        val aaa = app.get("https://comamosramen.com").document
-        listOf(aaa, test).map { doc ->
+        val urls = listOf(mainUrl,
+        "https://comamosramen.com")
+        urls.apmap { url ->
+            val doc = app.get(url).document
             doc.select("script[type=application/json]").map { script ->
                 if (script.data().contains("pageProps")) {
                     val json = parseJson<HomeMain>(script.data())

@@ -6,7 +6,7 @@ import com.lagradost.cloudstream3.utils.loadExtractor
 import org.jsoup.nodes.Element
 
 class PelisplusHDProvider:MainAPI() {
-    override var mainUrl = "https://pelisplushd.to"
+    override var mainUrl = "https://ww1.pelisplushd.nu"
     override var name = "PelisplusHD"
     override val lang = "es"
     override val hasMainPage = true
@@ -103,9 +103,10 @@ class PelisplusHDProvider:MainAPI() {
         val poster: String? = soup.selectFirst(".img-fluid").attr("src")
         val episodes = soup.select("div.tab-pane .btn").map { li ->
             val href = li.selectFirst("a").attr("href")
-            val name = li.selectFirst(".btn-primary.btn-block").text()
-            val seasonid = href.replace("/capitulo/","-")
-                .replace(Regex("$mainUrl/.*/.*/temporada/"),"").let { str ->
+            val name = li.selectFirst(".btn-primary.btn-block").text().replace(Regex("(T(\\d+).*E(\\d+):)"),"").trim()
+            val seasoninfo = href.substringAfter("temporada/").replace("/capitulo/","-")
+            val seasonid =
+                seasoninfo.let { str ->
                     str.split("-").mapNotNull { subStr -> subStr.toIntOrNull() }
                 }
             val isValid = seasonid.size == 2
@@ -165,7 +166,8 @@ class PelisplusHDProvider:MainAPI() {
     ): Boolean {
         app.get(data).document.select("div.player > script").map { script ->
             fetchUrls(script.data()
-                .replace(Regex("https://pelisplushd.net/fembed\\.php\\?url=|/fembed\\.php\\?url="),"https://www.fembed.com/v/"))
+                .replace("https://api.mycdn.moe/furl.php?id=","https://www.fembed.com/v/")
+                .replace("https://api.mycdn.moe/sblink.php?id=","https://streamsb.net/e/"))
                 .apmap {
                 loadExtractor(it, data, callback)
             }
