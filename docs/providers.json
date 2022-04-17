@@ -35,7 +35,7 @@
         "url": "https://animefenix.com"
     },
     "AnimeflvIOProvider": {
-        "name": "AnimeflvIO",
+        "name": "Animeflv.io",
         "status": 1,
         "url": "https://animeflv.io"
     },
@@ -200,7 +200,7 @@
         "url": "https://kdramahood.com"
     },
     "KrunchyProvider": {
-        "name": "Krunchy",
+        "name": "Crunchyroll",
         "status": 1,
         "url": "http://www.crunchyroll.com"
     },
@@ -270,7 +270,7 @@
         "url": "https://pelisplus.icu"
     },
     "PelisplusSOProvider": {
-        "name": "PelisplusSO",
+        "name": "Pelisplus.so",
         "status": 1,
         "url": "https://pelisplus.so"
     },
