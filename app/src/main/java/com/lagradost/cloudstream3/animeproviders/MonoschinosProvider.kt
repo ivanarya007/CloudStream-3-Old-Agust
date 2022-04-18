@@ -132,11 +132,12 @@ class MonoschinosProvider : MainAPI() {
         subtitleCallback: (SubtitleFile) -> Unit,
         callback: (ExtractorLink) -> Unit
     ): Boolean {
-        app.get(data).document.select("div.playother p").forEach {
+        app.get(data).document.select("div.playother p").apmap {
             val encodedurl = it.select("p").attr("data-player")
             val urlDecoded = base64Decode(encodedurl)
             val url = (urlDecoded).replace("https://monoschinos2.com/reproductor?url=", "")
                 .replace("https://repro.monoschinos2.com/aqua/sv?url=","")
+            println("URL $url")
             loadExtractor(url, data, callback)
         }
         return true
