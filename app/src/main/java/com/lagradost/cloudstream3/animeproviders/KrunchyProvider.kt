@@ -197,7 +197,6 @@ class KrunchyProvider : MainAPI() {
         val soup = Jsoup.parse(crUnblock.geoBypassRequest(url).text)
         val title = soup.selectFirst("#showview-content-header .ellipsis")?.text()?.trim()
         val posterU = soup.selectFirst(".poster")?.attr("src")
-
         val p = soup.selectFirst(".description")
         val description = if (p.selectFirst(".more") != null && !p.selectFirst(".more")?.text()?.trim().isNullOrEmpty()) {
             p.selectFirst(".more").text().trim()
@@ -213,9 +212,9 @@ class KrunchyProvider : MainAPI() {
         val dubEpisodes = ArrayList<Episode>()
         val premiumSubEpisodes = ArrayList<Episode>()
         val premiumDubEpisodes = ArrayList<Episode>()
-        soup.select(".season").forEach {
+        soup.select(".season").map {
             val seasonName = it.selectFirst("a.season-dropdown")?.text()?.trim()
-            it.select(".episode").forEach { ep ->
+            it.select(".episode").map { ep ->
                 val epTitle = ep.selectFirst(".short-desc")?.text()
 
                 val epNum = episodeNumRegex.find(ep.selectFirst("span.ellipsis")?.text().toString())?.destructured?.component1()
@@ -321,7 +320,7 @@ class KrunchyProvider : MainAPI() {
 
         if (!dat.isNullOrEmpty()) {
             val json = parseJson<KrunchyVideo>(dat)
-            val streams = ArrayList<Streams>()
+            val streams = ArrayList<Streams>().asReversed()
             for (stream in json.streams) {
                 if (
                     listOf(
@@ -380,7 +379,6 @@ class KrunchyProvider : MainAPI() {
                       .replace("\\/", "/")
                       .replace(Regex("\\/clipFrom.*?index.m3u8"), "").replace("'_,'", "'_'")
                       .replace(stream.url.split("/")[2], "fy.v.vrv.co")
-
                   callback(
                   ExtractorLink(
                       "Crunchyroll",
