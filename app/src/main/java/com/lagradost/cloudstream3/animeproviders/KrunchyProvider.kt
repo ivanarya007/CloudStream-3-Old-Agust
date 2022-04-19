@@ -212,6 +212,7 @@ class KrunchyProvider : MainAPI() {
         val dubEpisodes = ArrayList<Episode>()
         val premiumSubEpisodes = ArrayList<Episode>()
         val premiumDubEpisodes = ArrayList<Episode>()
+
         soup.select(".season").map {
             val seasonName = it.selectFirst("a.season-dropdown")?.text()?.trim()
             it.select(".episode").map { ep ->
@@ -229,11 +230,13 @@ class KrunchyProvider : MainAPI() {
                 }
 
                 val epi = Episode(
-                    fixUrl(ep.attr("href")),
-                    "$epTitle",
-                    posterUrl = poster?.replace("widestar","full")?.replace("wide","full"),
-                    description = epDesc,
-                )
+                        fixUrl(ep.attr("href")),
+                        "$epTitle",
+                        posterUrl = poster?.replace("widestar","full")?.replace("wide","full"),
+                        description = epDesc,
+
+                    )
+
                 if (isPremium && seasonName != null && (seasonName.contains("Dub") || seasonName.contains("Russian") || seasonName.contains("Spanish"))) {
                     premiumDubEpisodes.add(epi)
                 }
@@ -315,24 +318,28 @@ class KrunchyProvider : MainAPI() {
         val response = crUnblock.geoBypassRequest(data)
 
         val hlsHelper = M3u8Helper()
-
         val dat = contentRegex.find(response.text)?.destructured?.component1()
 
         if (!dat.isNullOrEmpty()) {
             val json = parseJson<KrunchyVideo>(dat)
-            val streams = ArrayList<Streams>().asReversed()
-            for (stream in json.streams) {
+            val streams = ArrayList<Streams>()
+            val streamsformat = listOf(
+                "adaptive_hls", "adaptive_dash",
+                "multitrack_adaptive_hls_v2",
+                "vo_adaptive_dash", "vo_adaptive_hls",
+                "trailer_hls",
+            )
+            val langlist = listOf("jaJP", "esLA", "esES", "enUS", null)
+
+            val m3u8list = listOf("m3u", "m3u8")
+
+            json.streams.apmap { stream ->
                 if (
-                    listOf(
-                        "adaptive_hls", "adaptive_dash",
-                        "multitrack_adaptive_hls_v2",
-                        "vo_adaptive_dash", "vo_adaptive_hls",
-                        "trailer_hls",
-                    ).contains(stream.format)
+                    streamsformat.contains(stream.format)
                 ) {
-                    if (stream.format!!.contains("adaptive") && listOf("jaJP", "esLA", "esES", "enUS")
-                            .contains(stream.audioLang) && (listOf("esLA", "esES", "enUS", null).contains(stream.hardsubLang))
-                        && listOf("m3u", "m3u8").contains(hlsHelper.absoluteExtensionDetermination(stream.url)))
+                    if (stream.format!!.contains("adaptive") && langlist
+                            .contains(stream.audioLang) && (langlist.contains(stream.hardsubLang))
+                        && m3u8list.contains(hlsHelper.absoluteExtensionDetermination(stream.url)))
                     {
                         stream.title = if (stream.hardsubLang == "enUS" && stream.audioLang == "jaJP") "Hardsub (English)"
                         else if (stream.hardsubLang == "esLA" && stream.audioLang == "jaJP") "Hardsub (Latino)"
@@ -344,8 +351,8 @@ class KrunchyProvider : MainAPI() {
                         streams.add(stream)
                     }
                     //Premium eps
-                    if (stream.format == "trailer_hls" && listOf("jaJP", "esLA", "esES", "enUS").contains(stream.audioLang) &&
-                        (listOf("esLA", "esES", "enUS", null).contains(stream.hardsubLang))) {
+                    if (stream.format == "trailer_hls" && langlist.contains(stream.audioLang) &&
+                        (langlist.contains(stream.hardsubLang))) {
                         stream.title =
                             if (stream.hardsubLang == "enUS" && stream.audioLang == "jaJP") "Hardsub (English)"
                             else if (stream.hardsubLang == "esLA" && stream.audioLang == "jaJP") "Hardsub (Latino)"
