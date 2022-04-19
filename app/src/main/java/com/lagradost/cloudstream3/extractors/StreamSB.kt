@@ -1,11 +1,11 @@
 package com.lagradost.cloudstream3.extractors
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.lagradost.cloudstream3.USER_AGENT
-import com.lagradost.cloudstream3.apmap
-import com.lagradost.cloudstream3.utils.*
 import com.lagradost.cloudstream3.app
 import com.lagradost.cloudstream3.utils.AppUtils.parseJson
+import com.lagradost.cloudstream3.utils.ExtractorApi
+import com.lagradost.cloudstream3.utils.ExtractorLink
+import com.lagradost.cloudstream3.utils.M3u8Helper
 
 
 class StreamSB1 : StreamSB() {
@@ -100,28 +100,16 @@ open class StreamSB : ExtractorApi() {
             headers = headers,
             allowRedirects = false
         ).text
-        if (urltext.contains("Sorry")) return null
         val mapped = urltext.let { parseJson<Main>(it) }
-        val sources = ArrayList<ExtractorLink>()
         val testurl = app.get(mapped.streamData.file, headers = headers).text
-        if (urltext.contains("m3u8") && testurl.contains("EXTM3U"))  M3u8Helper().m3u8Generation(
-            M3u8Helper.M3u8Stream(
+        // val urlmain = mapped.streamData.file.substringBefore("/hls/")
+        if (urltext.contains("m3u8") && testurl.contains("EXTM3U"))
+            return M3u8Helper.generateM3u8(
+                name,
                 mapped.streamData.file,
+                url,
                 headers = headers
-            ), true
-        )
-            .map { stream ->
-               // val cleanstreamurl = stream.streamUrl.replace(Regex("https://.*/hls/"), "$urlmain/hls/")
-                val qualityString = if ((stream.quality ?: 0) == 0) "" else "${stream.quality}p"
-                sources.add(ExtractorLink(
-                    name,
-                    "$name $qualityString",
-                    stream.streamUrl,
-                    url,
-                    getQualityFromName(stream.quality.toString()),
-                    true
-                ))
-            }
-        return sources
+            )
+        return null
     }
 }

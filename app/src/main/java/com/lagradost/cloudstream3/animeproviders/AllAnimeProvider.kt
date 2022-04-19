@@ -8,8 +8,7 @@ import com.lagradost.cloudstream3.mvvm.safeApiCall
 import com.lagradost.cloudstream3.utils.AppUtils.parseJson
 import com.lagradost.cloudstream3.utils.ExtractorLink
 import com.lagradost.cloudstream3.utils.M3u8Helper
-import com.lagradost.cloudstream3.utils.getQualityFromName
-import com.lagradost.cloudstream3.utils.loadExtractor
+import com.lagradost.cloudstream3.utils.Qualities
 import org.jsoup.Jsoup
 import org.mozilla.javascript.Context
 import org.mozilla.javascript.Scriptable
@@ -22,8 +21,6 @@ class AllAnimeProvider : MainAPI() {
     override var name = "AllAnime"
     override val hasQuickSearch = false
     override val hasMainPage = true
-
-    private val hlsHelper = M3u8Helper()
 
     private fun getStatus(t: String): ShowStatus {
         return when (t) {
@@ -126,7 +123,7 @@ class AllAnimeProvider : MainAPI() {
         val ranlink = app.get(random).text
         val jsonran = parseJson<RandomMain>(ranlink)
         val ranhome = jsonran.data?.queryRandomRecommendation?.map {
-            newAnimeSearchResponse(it.name!!,"$mainUrl/anime/${it.Id}", fix = false) {
+            newAnimeSearchResponse(it.name!!, "$mainUrl/anime/${it.Id}", fix = false) {
                 this.posterUrl = it.thumbnail
                 this.otherName = it.nativeName
             }
@@ -320,18 +317,12 @@ class AllAnimeProvider : MainAPI() {
         referer: String,
         qualityName: String,
     ): List<ExtractorLink> {
-        return hlsHelper.m3u8Generation(M3u8Helper.M3u8Stream(m3u8Link, null), true).map { stream ->
-            val qualityString = if ((stream.quality ?: 0) == 0) "" else "${stream.quality}p"
-            ExtractorLink(
-                this.name,
-                "${this.name} - $qualityName $qualityString",
-                stream.streamUrl,
-                referer,
-                getQualityFromName(stream.quality.toString()),
-                true,
-                stream.headers
-            )
-        }
+        return M3u8Helper.generateM3u8(
+            this.name,
+            m3u8Link,
+            referer,
+            name = "${this.name} - $qualityName"
+        )
     }
 
     override suspend fun loadLinks(
@@ -351,8 +342,7 @@ class AllAnimeProvider : MainAPI() {
             .map { URLDecoder.decode(it.destructured.component1().sanitize(), "UTF-8") }
         sources.apmap {
             safeApiCall {
-                var link = it.replace(" ", "%20").replace("https://ok.ru","http://ok.ru")
-                if (link.contains("ok.ru")) loadExtractor(link, data, callback)
+                var link = it.replace(" ", "%20")
                 if (URI(link).isAbsolute || link.startsWith("//")) {
                     if (link.startsWith("//")) link = "https:$it"
 
@@ -368,7 +358,7 @@ class AllAnimeProvider : MainAPI() {
                                     "",
                                     link,
                                     data,
-                                    getQualityFromName("1080"),
+                                    Qualities.P1080.value,
                                     false
                                 )
                             )
@@ -398,7 +388,7 @@ class AllAnimeProvider : MainAPI() {
                                         "$apiEndPoint/player?uri=" + (if (URI(server.link).host.isNotEmpty()) server.link else apiEndPoint + URI(
                                             server.link
                                         ).path),
-                                        getQualityFromName("1080"),
+                                        Qualities.P1080.value,
                                         false
                                     )
                                 )

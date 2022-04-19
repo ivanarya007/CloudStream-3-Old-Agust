@@ -334,7 +334,7 @@ class TenshiProvider : MainAPI() {
                 sources.addAll(qualities.map {
                     ExtractorLink(
                         this.name,
-                        "${this.name} $release - " + it.size + "p",
+                        "${this.name} $release",
                         fixUrl(it.src),
                         this.mainUrl,
                         getQualityFromName("${it.size}"),
