@@ -149,7 +149,7 @@
         "status": 1,
         "url": "https://filman.cc"
     },
-    "FmoviesProvider": {
+    "FmoviesAPPProvider": {
         "name": "Fmovies",
         "status": 1,
         "url": "https://fmovies.app"
@@ -173,6 +173,11 @@
         "name": "HD Movies",
         "status": 0,
         "url": "https://hdm.to"
+    },
+    "HDTodayProvider": {
+        "name": "HDToday",
+        "status": 1,
+        "url": "https://hdtoday.tv"
     },
     "HenaojaraProvider": {
         "name": "Henaojara",
@@ -219,6 +224,11 @@
         "status": 1,
         "url": "https://monoschinos2.com"
     },
+    "MoviesJoyProvider": {
+        "name": "Moviesjoy",
+        "status": 1,
+        "url": "https://moviesjoy.to"
+    },
     "MultiAnimeProvider": {
         "name": "MultiAnime",
         "status": 1,
@@ -233,6 +243,11 @@
         "name": "MyCima",
         "status": 1,
         "url": "https://mycima.tv"
+    },
+    "MyflixerToProvider": {
+        "name": "MyFlixer",
+        "status": 1,
+        "url": "https://myflixertv.to"
     },
     "NginxProvider": {
         "name": "Nginx",
@@ -302,7 +317,7 @@
     "SflixProvider": {
         "name": "Sflix.to",
         "status": 1,
-        "url": "https://dopebox.to"
+        "url": "https://sflix.to"
     },
     "SoaptwoDayProvider": {
         "name": "Soap2Day",
@@ -378,6 +393,11 @@
         "name": "WCO Stream",
         "status": 1,
         "url": "https://wcostream.cc"
+    },
+    "YesMoviesProvider": {
+        "name": "YesMovies",
+        "status": 1,
+        "url": "https://yesmovies.mn"
     },
     "ZoroProvider": {
         "name": "Zoro",

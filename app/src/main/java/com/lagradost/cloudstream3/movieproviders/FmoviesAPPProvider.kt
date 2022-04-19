@@ -4,14 +4,8 @@ import android.util.Log
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.LoadResponse.Companion.addDuration
-import com.lagradost.cloudstream3.movieproviders.SflixProvider.Companion.extractRabbitStream
-import com.lagradost.cloudstream3.movieproviders.SflixProvider.Companion.isValidServer
-import com.lagradost.cloudstream3.movieproviders.YesMoviesProviders.Companion.extractRabbitStream
-import com.lagradost.cloudstream3.movieproviders.YesMoviesProviders.Companion.toExtractorLink
-import com.lagradost.cloudstream3.movieproviders.YesMoviesProviders.Companion.toSubtitleFile
 import com.lagradost.cloudstream3.mvvm.suspendSafeApiCall
 import com.lagradost.cloudstream3.network.AppResponse
-import com.lagradost.cloudstream3.network.WebViewResolver
 import com.lagradost.cloudstream3.utils.AppUtils.parseJson
 import com.lagradost.cloudstream3.utils.AppUtils.toJson
 import com.lagradost.cloudstream3.utils.AppUtils.tryParseJson
@@ -24,7 +18,7 @@ import org.jsoup.nodes.Element
 import java.net.URI
 import kotlin.system.measureTimeMillis
 
-class FmoviesProvider : MainAPI() {
+class FmoviesAPPProvider : MainAPI() {
     override var mainUrl = "https://fmovies.app"
     override var name = "Fmovies"
 
@@ -431,7 +425,7 @@ class FmoviesProvider : MainAPI() {
             MovieSearchResponse(
                 title,
                 href,
-                this@FmoviesProvider.name,
+                this@FmoviesAPPProvider.name,
                 TvType.Movie,
                 posterUrl,
                 null
@@ -440,7 +434,7 @@ class FmoviesProvider : MainAPI() {
             TvSeriesSearchResponse(
                 title,
                 href,
-                this@FmoviesProvider.name,
+                this@FmoviesAPPProvider.name,
                 TvType.Movie,
                 posterUrl,
                 null,
@@ -464,7 +458,7 @@ class FmoviesProvider : MainAPI() {
         }
 
         // For re-use in Zoro
-        fun YesMoviesProviders.Sources.toExtractorLink(
+        fun YesMoviesProvider.Sources.toExtractorLink(
             caller: MainAPI,
             name: String,
             extractorData: String? = null
@@ -505,7 +499,7 @@ class FmoviesProvider : MainAPI() {
             }
         }
 
-        fun YesMoviesProviders.Tracks.toSubtitleFile(): SubtitleFile? {
+        fun YesMoviesProvider.Tracks.toSubtitleFile(): SubtitleFile? {
             return this.file?.let {
                 SubtitleFile(
                     this.label ?: "Unknown",
@@ -558,7 +552,7 @@ class FmoviesProvider : MainAPI() {
 //                        "Cache-Control" to "no-cache",
                         "TE" to "trailers"
                     )
-                ).mapped<YesMoviesProviders.SourceObject>()
+                ).mapped<YesMoviesProvider.SourceObject>()
 
                 mapped.tracks?.apmap { track ->
                     track?.toSubtitleFile()?.let { subtitleFile ->
