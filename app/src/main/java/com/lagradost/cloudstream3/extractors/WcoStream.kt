@@ -93,11 +93,11 @@ open class WcoStream : ExtractorApi() {
                                 else if (serverurl.contains("H3")) "720p"
                                 else if (serverurl.contains("H2")) "480p"
                                 else if (serverurl.contains("H1")) "360p"
-                                else "Auto"
+                                else "0"
                                 sources.add(
                                     ExtractorLink(
                                         "VidStream",
-                                        "VidStream $quality",
+                                        "VidStream",
                                         serverurl,
                                         url,
                                         getQualityFromName(quality),
@@ -129,11 +129,11 @@ open class WcoStream : ExtractorApi() {
                                 else if (serverurl.contains("H3")) "720p"
                                 else if (serverurl.contains("H2")) "480p"
                                 else if (serverurl.contains("H1")) "360p"
-                                else "Auto"
+                                else "0"
                                 sources.add(
                                     ExtractorLink(
                                         "VidStream",
-                                        "VidStream $quality",
+                                        "VidStream",
                                         serverurl.replace("#.mp4",""),
                                         url,
                                         getQualityFromName(quality),
@@ -160,11 +160,11 @@ open class WcoStream : ExtractorApi() {
                             else if (serverurl.contains("720")) "720p"
                             else if (serverurl.contains("480")) "480p"
                             else if (serverurl.contains("360")) "360p"
-                            else "Auto"
+                            else "0"
                             sources.add(
                                 ExtractorLink(
                                     "VidStream",
-                                    "VidStream $quality",
+                                    "VidStream",
                                     serverurl,
                                     url,
                                     getQualityFromName(quality),

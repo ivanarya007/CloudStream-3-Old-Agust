@@ -13,7 +13,6 @@ import kotlin.collections.ArrayList
 
 private fun String.toAscii() = this.map { it.toInt() }.joinToString()
 
-
 class KrunchyGeoBypasser {
     companion object {
         const val BYPASS_SERVER = "https://cr-unblocker.us.to/start_session"
@@ -366,12 +365,22 @@ class KrunchyProvider : MainAPI() {
                       "Crunchyroll",
                       stream.url,
                       "",
-                  )
+                  ).apmap { callback(
+                      ExtractorLink(
+                      "Crunchyroll",
+                      "Crunchy - ${stream.title}",
+                      it.url,
+                      "",
+                      getQualityFromName(it.quality.toString()),
+                      true
+                        )
+                    ) }
               } else if (stream.format == "trailer_hls") {
                   val premiumstream = stream.url
                       .replace("\\/", "/")
                       .replace(Regex("\\/clipFrom.*?index.m3u8"), "").replace("'_,'", "'_'")
                       .replace(stream.url.split("/")[2], "fy.v.vrv.co")
+
                   callback(
                   ExtractorLink(
                       "Crunchyroll",

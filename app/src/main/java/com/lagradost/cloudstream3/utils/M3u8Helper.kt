@@ -1,5 +1,6 @@
 package com.lagradost.cloudstream3.utils
 
+import com.lagradost.cloudstream3.apmap
 import com.lagradost.cloudstream3.app
 import com.lagradost.cloudstream3.mvvm.logError
 import kotlinx.coroutines.runBlocking
@@ -27,7 +28,7 @@ class M3u8Helper {
                     headers = headers,
                 ), true
             )
-                .map { stream ->
+                .apmap { stream ->
                     ExtractorLink(
                         source,
                         name = name,

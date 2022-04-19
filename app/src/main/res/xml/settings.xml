@@ -111,12 +111,7 @@
             android:key="general"
             android:title="@string/general"
             app:isPreferenceVisible="true">
-        <SwitchPreference
-            android:icon="@drawable/ic_baseline_play_arrow_24"
-            app:key="@string/random_button_key"
-            android:title="@string/random_button_settings"
-            android:summary="@string/random_button_settings_desc"
-            app:defaultValue="false" />
+
         <Preference
                 android:icon="@drawable/ic_baseline_language_24"
                 android:key="@string/provider_lang_key"
@@ -133,6 +128,12 @@
                 android:key="@string/display_sub_key"
                 android:title="@string/display_subbed_dubbed_settings"
                 android:icon="@drawable/ic_outline_voice_over_off_24" />
+        <SwitchPreference
+                android:icon="@drawable/ic_baseline_play_arrow_24"
+                app:key="@string/random_button_key"
+                android:title="@string/random_button_settings"
+                android:summary="@string/random_button_settings_desc"
+                app:defaultValue="false" />
         <SwitchPreference
                 android:key="@string/show_fillers_key"
                 android:icon="@drawable/ic_baseline_skip_next_24"
