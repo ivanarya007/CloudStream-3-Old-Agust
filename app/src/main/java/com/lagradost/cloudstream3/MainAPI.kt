@@ -96,7 +96,7 @@ object APIHolder {
             WcoProvider(),
             JKAnimeProvider(),
             ZoroProvider(),
-            YesMoviesProviders(), //Sflix mirror
+            YesMoviesProvider(), //Sflix mirror
             HDTodayProvider(),
             MoviesJoyProvider(),
             MyflixerToProvider(),

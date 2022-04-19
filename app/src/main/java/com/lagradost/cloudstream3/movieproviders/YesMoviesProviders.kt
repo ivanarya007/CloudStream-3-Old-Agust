@@ -19,22 +19,22 @@ import java.net.URI
 import kotlin.system.measureTimeMillis
 
 
-class HDTodayProvider : YesMoviesProviders() {
+class HDTodayProvider : YesMoviesProvider() {
     override var mainUrl = "https://hdtoday.tv"
     override var name = "HDToday"
 }
 
-class MoviesJoyProvider : YesMoviesProviders() {
+class MoviesJoyProvider : YesMoviesProvider() {
     override var mainUrl = "https://moviesjoy.to"
     override var name = "Moviesjoy"
 }
 
-class MyflixerToProvider : YesMoviesProviders() {
+class MyflixerToProvider : YesMoviesProvider() {
     override var mainUrl = "https://myflixertv.to"
     override var name = "MyFlixer"
 }
 
-open class YesMoviesProviders : MainAPI() {
+open class YesMoviesProvider : MainAPI() {
     override var mainUrl = "https://yesmovies.mn"
     override var name = "YesMovies"
 
@@ -330,7 +330,7 @@ open class YesMoviesProviders : MainAPI() {
             MovieSearchResponse(
                 title,
                 href,
-                this@YesMoviesProviders.name,
+                this@YesMoviesProvider.name,
                 TvType.Movie,
                 posterUrl = posterUrl,
                 year = year,
@@ -340,7 +340,7 @@ open class YesMoviesProviders : MainAPI() {
             TvSeriesSearchResponse(
                 title,
                 href,
-                this@YesMoviesProviders.name,
+                this@YesMoviesProvider.name,
                 TvType.Movie,
                 posterUrl,
                 year = year,
