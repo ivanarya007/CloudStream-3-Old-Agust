@@ -151,7 +151,7 @@
     },
     "FmoviesAPPProvider": {
         "name": "Fmovies",
-        "status": 1,
+        "status": 0,
         "url": "https://fmovies.app"
     },
     "FmoviesToProvider": {
