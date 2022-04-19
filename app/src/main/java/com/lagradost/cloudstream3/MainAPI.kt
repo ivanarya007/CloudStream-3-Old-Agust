@@ -47,6 +47,7 @@ object APIHolder {
             AllAnimeProvider(),
             AnimekisaProvider(),
             AllMoviesForYouProvider(),
+            AnimefenixProvider(),
             AnimeFlickProvider(),
             AnimeflvIOProvider(),
             AnimeflvnetProvider(),
@@ -55,6 +56,7 @@ object APIHolder {
             //AnimePaheProvider(),
             AsianLoadProvider(),
             BflixProvider(),
+            FmoviesToProvider(),
             CinecalidadProvider(),
             CuevanaProvider(),
             ComamosRamenProvider(),
@@ -94,7 +96,17 @@ object APIHolder {
             WcoProvider(),
             JKAnimeProvider(),
             ZoroProvider(),
+            YesMoviesProviders(), //Sflix mirror
+            HDTodayProvider(),
+            MoviesJoyProvider(),
+            MyflixerToProvider(),
 
+            FmoviesProvider(), //Sflix mirror
+            SoaptwoDayProvider(),
+            TwoEmbedProvider(),
+            ApiMDBProvider(),
+            TheFlixToProvider(),
+            NginxProvider(),
         )
     }
 
