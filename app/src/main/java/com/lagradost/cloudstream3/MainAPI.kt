@@ -100,7 +100,6 @@ object APIHolder {
             HDTodayProvider(),
             MoviesJoyProvider(),
             MyflixerToProvider(),
-
             FmoviesAPPProvider(), //Sflix mirror
             SoaptwoDayProvider(),
             TwoEmbedProvider(),
