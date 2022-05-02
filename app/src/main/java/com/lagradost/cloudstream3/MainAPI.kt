@@ -530,11 +530,11 @@ enum class ShowStatus {
     Ongoing,
 }
 
-enum class DubStatus {
-    Subbed,
-    PremiumSub,
-    Dubbed,
-    PremiumDub,
+enum class DubStatus(val id: Int) {
+    Subbed(0),
+    PremiumSub(1),
+    Dubbed(2),
+    PremiumDub(3),
 }
 
 enum class TvType {
