@@ -25,15 +25,14 @@ class CuevanaProvider : MainAPI() {
             Pair(mainUrl, "Recientemente actualizadas"),
             Pair("$mainUrl/estrenos/", "Estrenos"),
         )
-        argamap({
         items.add(
             HomePageList(
                 "Series",
                 app.get("$mainUrl/serie", timeout = 120).document.select("section.home-series li")
                     .map {
-                        val title = it.selectFirst("h2.Title").text()
-                        val poster = it.selectFirst("img.lazy").attr("data-src")
-                        val url = it.selectFirst("a").attr("href")
+                        val title = it.selectFirst("h2.Title")!!.text()
+                        val poster = it.selectFirst("img.lazy")!!.attr("data-src")
+                        val url = it.selectFirst("a")!!.attr("href")
                         TvSeriesSearchResponse(
                             title,
                             url,
@@ -45,25 +44,28 @@ class CuevanaProvider : MainAPI() {
                         )
                     })
         )
-        urls.apmap { (url, name) ->
-            val soup = app.get(url).document
-            val home = soup.select("section li.xxx.TPostMv").map {
-                val title = it.selectFirst("h2.Title").text()
-                val link = it.selectFirst("a").attr("href")
-                TvSeriesSearchResponse(
-                    title,
-                    link,
-                    this.name,
-                    if (link.contains("/pelicula/")) TvType.Movie else TvType.TvSeries,
-                    it.selectFirst("img.lazy").attr("data-src"),
-                    null,
-                    null,
-                )
-            }
+        for ((url, name) in urls) {
+            try {
+                val soup = app.get(url).document
+                val home = soup.select("section li.xxx.TPostMv").map {
+                    val title = it.selectFirst("h2.Title")!!.text()
+                    val link = it.selectFirst("a")!!.attr("href")
+                    TvSeriesSearchResponse(
+                        title,
+                        link,
+                        this.name,
+                        if (link.contains("/pelicula/")) TvType.Movie else TvType.TvSeries,
+                        it.selectFirst("img.lazy")!!.attr("data-src"),
+                        null,
+                        null,
+                    )
+                }
 
-            items.add(HomePageList(name, home))
+                items.add(HomePageList(name, home))
+            } catch (e: Exception) {
+                logError(e)
+            }
         }
-        })
 
         if (items.size <= 0) throw ErrorLoadingException()
         return HomePageResponse(items)
@@ -74,9 +76,9 @@ class CuevanaProvider : MainAPI() {
         val document = app.get(url).document
 
         return document.select("li.xxx.TPostMv").map {
-            val title = it.selectFirst("h2.Title").text()
-            val href = it.selectFirst("a").attr("href")
-            val image = it.selectFirst("img.lazy").attr("data-src")
+            val title = it.selectFirst("h2.Title")!!.text()
+            val href = it.selectFirst("a")!!.attr("href")
+            val image = it.selectFirst("img.lazy")!!.attr("data-src")
             val isSerie = href.contains("/serie/")
 
             if (isSerie) {
@@ -104,9 +106,9 @@ class CuevanaProvider : MainAPI() {
 
     override suspend fun load(url: String): LoadResponse? {
         val soup = app.get(url, timeout = 120).document
-        val title = soup.selectFirst("h1.Title").text()
+        val title = soup.selectFirst("h1.Title")!!.text()
         val description = soup.selectFirst(".Description p")?.text()?.trim()
-        val poster: String? = soup.selectFirst(".movtv-info div.Image img").attr("data-src")
+        val poster: String? = soup.selectFirst(".movtv-info div.Image img")!!.attr("data-src")
         val year1 = soup.selectFirst("footer p.meta").toString()
         val yearRegex = Regex("<span>(\\d+)</span>")
         val yearf =
@@ -115,9 +117,9 @@ class CuevanaProvider : MainAPI() {
         val episodes = soup.select(".all-episodes li.TPostMv article").map { li ->
             val href = li.select("a").attr("href")
             val epThumb =
-                li.selectFirst("div.Image img").attr("data-src") ?: li.selectFirst("img.lazy")
+                li.selectFirst("div.Image img")?.attr("data-src") ?: li.selectFirst("img.lazy")!!
                     .attr("data-srcc")
-            val seasonid = li.selectFirst("span.Year").text().let { str ->
+            val seasonid = li.selectFirst("span.Year")!!.text().let { str ->
                 str.split("x").mapNotNull { subStr -> subStr.toIntOrNull() }
             }
             val isValid = seasonid.size == 2
@@ -253,7 +255,7 @@ class CuevanaProvider : MainAPI() {
                             "Sec-Fetch-Site" to "same-origin",
                         ),
                         data = mapOf(Pair("url", tomkey))
-                    ).response.headers.values("location").apmap { loc ->
+                    ).okhttpResponse.headers.values("location").apmap { loc ->
                         if (loc.contains("goto_ddh.php")) {
                             val gotoregex =
                                 Regex("(\\/\\/api.cuevana3.me\\/ir\\/goto_ddh.php\\?h=[a-zA-Z0-9]{0,8}[a-zA-Z0-9_-]+)")
@@ -278,7 +280,7 @@ class CuevanaProvider : MainAPI() {
                                         "Sec-Fetch-Site" to "same-origin",
                                     ),
                                     data = mapOf(Pair("url", gotolink))
-                                ).response.headers.values("location").apmap { golink ->
+                                ).okhttpResponse.headers.values("location").apmap { golink ->
                                     loadExtractor(golink, data, callback)
                                 }
                             }
@@ -308,7 +310,7 @@ class CuevanaProvider : MainAPI() {
                                         "Sec-Fetch-User" to "?1",
                                     ),
                                     data = mapOf(Pair("h", inlink))
-                                ).response.headers.values("location").apmap { link ->
+                                ).okhttpResponse.headers.values("location").apmap { link ->
                                     loadExtractor(link, data, callback)
                                 }
                             }

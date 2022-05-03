@@ -24,23 +24,27 @@ class PelisflixProvider : MainAPI() {
             Pair("$mainUrl/ver-peliculas-online-gratis-fullhdc3/", "Películas"),
             Pair("$mainUrl/ver-series-online-gratis/", "Series"),
         )
-        urls.apmap { (url, name) ->
-            val soup = app.get(url).document
-            val home = soup.select("article.TPost.B").map {
-                val title = it.selectFirst("h2.title").text()
-                val link = it.selectFirst("a").attr("href")
-                TvSeriesSearchResponse(
-                    title,
-                    link,
-                    this.name,
-                    TvType.Movie,
-                    it.selectFirst("figure img").attr("data-src"),
-                    null,
-                    null,
-                )
-            }
+        for (i in urls) {
+            try {
+                val soup = app.get(i.first).document
+                val home = soup.select("article.TPost.B").map {
+                    val title = it.selectFirst("h2.title")!!.text()
+                    val link = it.selectFirst("a")!!.attr("href")
+                    TvSeriesSearchResponse(
+                        title,
+                        link,
+                        this.name,
+                        TvType.Movie,
+                        it.selectFirst("figure img")!!.attr("data-src"),
+                        null,
+                        null,
+                    )
+                }
 
-            items.add(HomePageList(name, home))
+                items.add(HomePageList(i.second, home))
+            } catch (e: Exception) {
+                logError(e)
+            }
         }
         if (items.size <= 0) throw ErrorLoadingException()
         return HomePageResponse(items)
@@ -50,9 +54,9 @@ class PelisflixProvider : MainAPI() {
         val url = "$mainUrl/?s=$query"
         val doc = app.get(url).document
         return doc.select("article.TPost.B").map {
-            val href = it.selectFirst("a").attr("href")
-            val poster = it.selectFirst("figure img").attr("data-src")
-            val name = it.selectFirst("h2.title").text()
+            val href = it.selectFirst("a")!!.attr("href")
+            val poster = it.selectFirst("figure img")!!.attr("data-src")
+            val name = it.selectFirst("h2.title")!!.text()
             val isMovie = href.contains("/pelicula/")
             if (isMovie) {
                 MovieSearchResponse(
@@ -77,29 +81,29 @@ class PelisflixProvider : MainAPI() {
         }.toList()
     }
 
-    override suspend fun load(url: String): LoadResponse {
+    override suspend fun load(url: String): LoadResponse? {
         val type = if (url.contains("/pelicula/")) TvType.Movie else TvType.TvSeries
 
         val document = app.get(url).document
 
-        val title = document.selectFirst("h1.Title").text()
+        val title = document.selectFirst("h1.Title")!!.text()
         val descRegex = Regex("(.Recuerda.*Pelisflix.+)")
         val descRegex2 = Regex("(Actualmente.*.)")
         val descRegex3 = Regex("(.*Director:.*)")
         val descRegex4 = Regex("(.*Actores:.*)")
         val descRegex5 = Regex("(Ver.*(\\)|)((\\d+).))")
-        val descipt = document.selectFirst("div.Description").text().replace(descRegex, "")
+        val descipt = document.selectFirst("div.Description")!!.text().replace(descRegex, "")
             .replace(descRegex2, "").replace(descRegex3, "")
             .replace(descRegex4, "").replace(descRegex5, "")
         val desc2Regex = Regex("(G(e|é)nero:.*..)")
-        val descipt2 = document.selectFirst("div.Description").text().replace(desc2Regex, "")
+        val descipt2 = document.selectFirst("div.Description")!!.text().replace(desc2Regex, "")
         val rating =
             document.selectFirst("div.rating-content button.like-mov span.vot_cl")?.text()
                 ?.toFloatOrNull()
                 ?.times(0)?.toInt()
         val year = document.selectFirst("span.Date")?.text()
         val duration =
-            if (type == TvType.Movie) document.selectFirst(".Container .Container  span.Time")
+            if (type == TvType.Movie) document.selectFirst(".Container .Container  span.Time")!!
                 .text() else null
         val postercss = document.selectFirst("head").toString()
         val posterRegex =
@@ -125,7 +129,7 @@ class PelisflixProvider : MainAPI() {
 
             val episodeList = ArrayList<Episode>()
 
-            list.apmap { (seasonInt, seasonUrl) ->
+            for ((seasonInt, seasonUrl) in list) {
                 val seasonDocument = app.get(seasonUrl).document
                 val episodes = seasonDocument.select("table > tbody > tr")
                 if (episodes.isNotEmpty()) {
@@ -133,7 +137,7 @@ class PelisflixProvider : MainAPI() {
                         val epNum = episode.selectFirst("> td > span.Num")?.text()?.toIntOrNull()
                         val epthumb = episode.selectFirst("img")?.attr("src")
                         val aName = episode.selectFirst("> td.MvTbTtl > a")
-                        val name = aName.text()
+                        val name = aName!!.text()
                         val href = aName.attr("href")
                         val date = episode.selectFirst("> td.MvTbTtl > span")?.text()
                         episodeList.add(
@@ -216,7 +220,7 @@ class PelisflixProvider : MainAPI() {
                     params = mapOf(Pair("h", postkey)),
                     data = mapOf(Pair("h", postkey)),
                     allowRedirects = false
-                ).response.headers.values("location").apmap { link ->
+                ).okhttpResponse.headers.values("location").apmap { link ->
                     val url1 = link.replace("#bu", "")
                     loadExtractor(url1, data, callback)
                 }
