@@ -25,7 +25,6 @@ object FillerEpisodeCheck {
             val localList = HashMap<String, String>()
             for (i in localHTMLList) {
                 val name = i.text()
-
                 if (name.lowercase(Locale.ROOT).contains("manga only")) continue
 
                 val href = i.attr("href")
@@ -72,7 +71,8 @@ object FillerEpisodeCheck {
                 "(TV)",
                 "(Uncensored)",
                 "(Censored)",
-                "(\\d+)" // year
+                "(\\d+)", // year
+                "One Piece Movies"
             )
             val blackListRegex =
                 Regex(""" (${blackList.joinToString(separator = "|").replace("(", "\\(").replace(")", "\\)")})""")
@@ -84,10 +84,11 @@ object FillerEpisodeCheck {
             val documented = Jsoup.parse(result) ?: return null
             val hashMap = HashMap<Int, Boolean>()
             documented.select("table.EpisodeList > tbody > tr").forEach {
-                val type = it.selectFirst("td.Type > span")?.text()  == "Filler" || it.selectFirst("td.Type > span")?.text() == "Anime Canon"
+                val type = it.selectFirst("td.Type > span")?.text()
+                val aaa = type?.contains(Regex("Filler|Anime Canon")) == true
                 val episodeNumber = it.selectFirst("td.Number")?.text()?.toIntOrNull()
                 if (episodeNumber != null) {
-                    hashMap[episodeNumber] = type
+                    hashMap[episodeNumber] = aaa
                 }
             }
             return hashMap
