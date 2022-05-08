@@ -98,23 +98,23 @@ class KrunchyProvider : MainAPI() {
         val doc = Jsoup.parse(crUnblock.geoBypassRequest(mainUrl).text)
         val items = ArrayList<HomePageList>()
         val featured = doc.select(".js-featured-show-list > li").map { anime ->
-            val title =  anime.selectFirst("img").attr("alt")
-            val href = fixUrl(anime.selectFirst("a").attr("href"))
-            val img = anime.selectFirst("img").attr("src").replace("small", "full")
-            newAnimeSearchResponse(title, href) {
-                this.posterUrl = fixUrl(img)
+            val title = anime.selectFirst("img")?.attr("alt")
+            val href = anime.selectFirst("a")?.let { fixUrl(it.attr("href")) }
+            val img = anime.selectFirst("img")?.attr("src")?.replace("small", "full")
+            newAnimeSearchResponse(title!!, href!!) {
+                this.posterUrl = fixUrl(img!!)
                 addDubStatus(getDubStatus(name))
             }
         }
         val recent = doc.select("div.welcome-countdown-day:contains(Now Showing) li")?.mapNotNull {
-            val link = fixUrl(it.selectFirst("a").attr("href"))
-            val name = it.selectFirst("span.welcome-countdown-name").text()
-            val img = it.selectFirst("img").attr("src").replace("medium","full")
-            val details = it.selectFirst("span.welcome-countdown-details").text()
-            val epnum = episodeNumRegex.find(details)?.value?.replace("Episode ","") ?: ""
-            newAnimeSearchResponse("★ $name ★", link.replace(Regex("(\\/episode.*)"),"")) {
-                this.posterUrl = fixUrl(img)
-                addDubStatus(getDubStatus(name), epnum.toIntOrNull())
+            val link = it.selectFirst("a")?.attr("href")?.let { it1 -> fixUrl(it1) }
+            val name = it.selectFirst("span.welcome-countdown-name")?.text()
+            val img = it.selectFirst("img")?.attr("src")?.replace("medium","full")
+            val details = it.selectFirst("span.welcome-countdown-details")?.text()
+            val epnum = episodeNumRegex.find(details!!)?.value?.replace("Episode ","") ?: ""
+            newAnimeSearchResponse("★ $name ★", link!!.replace(Regex("(\\/episode.*)"),"")) {
+                this.posterUrl = fixUrl(img!!)
+                addDubStatus(getDubStatus(name!!), epnum.toIntOrNull())
             }
         }
         if (recent!!.isNotEmpty()) {
@@ -126,10 +126,10 @@ class KrunchyProvider : MainAPI() {
             val soup = Jsoup.parse(response.text)
 
             val episodes = soup.select("li").map {
-                val title = it.selectFirst("a").attr("title")
-                val href = fixUrl(it.selectFirst("a").attr("href"))
+                val title = it.selectFirst("a")!!.attr("title")
+                val href = fixUrl(it.selectFirst("a")!!.attr("href"))
                 newAnimeSearchResponse(title, href) {
-                    this.posterUrl = fixUrl(it.selectFirst("img").attr("src"))
+                    this.posterUrl = fixUrl(it.selectFirst("img")!!.attr("src"))
                     addDubStatus(getDubStatus(name))
                 }
             }
@@ -198,12 +198,12 @@ class KrunchyProvider : MainAPI() {
         val title = soup.selectFirst("#showview-content-header .ellipsis")?.text()?.trim()
         val posterU = soup.selectFirst(".poster")?.attr("src")
         val p = soup.selectFirst(".description")
-        val description = if (p.selectFirst(".more") != null && !p.selectFirst(".more")?.text()?.trim().isNullOrEmpty()) {
-            p.selectFirst(".more").text().trim()
+        val description = if (p?.selectFirst(".more") != null && !p.selectFirst(".more")?.text()?.trim().isNullOrEmpty()) {
+            p.selectFirst(".more")!!.text().trim()
         } else {
-            p.selectFirst("span").text().trim()
+            p?.selectFirst("span")?.text()?.trim()
         }
-        val rating = soup?.selectFirst(".average-rating div meta")?.attr("content")?.toFloatOrNull()
+        val rating = soup.selectFirst(".average-rating div meta")?.attr("content")?.toFloatOrNull()
             ?.times(1000)?.toInt()?.times(2) ?: "".toIntOrNull()
 
         val genres = soup.select(".large-margin-bottom > ul:nth-child(2) li:nth-child(2) a").map { it.text() }

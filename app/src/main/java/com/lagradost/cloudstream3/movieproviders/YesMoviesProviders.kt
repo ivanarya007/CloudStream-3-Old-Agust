@@ -6,9 +6,8 @@ import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.LoadResponse.Companion.addDuration
 import com.lagradost.cloudstream3.animeproviders.ZoroProvider
 import com.lagradost.cloudstream3.mvvm.suspendSafeApiCall
-import com.lagradost.cloudstream3.network.AppResponse
+import com.lagradost.cloudstream3.network.*
 import com.lagradost.cloudstream3.utils.*
-
 import com.lagradost.cloudstream3.utils.AppUtils.parseJson
 import com.lagradost.cloudstream3.utils.AppUtils.toJson
 import com.lagradost.cloudstream3.utils.AppUtils.tryParseJson
@@ -17,6 +16,8 @@ import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 import java.net.URI
 import kotlin.system.measureTimeMillis
+import com.lagradost.nicehttp.NiceResponse
+
 
 
 class HDTodayProvider : YesMoviesProvider() {
@@ -282,7 +283,7 @@ open class YesMoviesProvider : MainAPI() {
 
                 val serverId = url.substringAfterLast(".")
                 val iframeLink =
-                    app.get("${this.mainUrl}/ajax/get_link/$serverId").mapped<IframeJson>().link
+                    app.get("${this.mainUrl}/ajax/get_link/$serverId").parsed<IframeJson>().link
                         ?: return@suspendSafeApiCall
 
                 // Some smarter ws11 or w10 selection might be required in the future.
@@ -302,10 +303,10 @@ open class YesMoviesProvider : MainAPI() {
 
     private fun Element.toSearchResult(): SearchResponse {
         val inner = this.selectFirst("div.film-poster")
-        val img = inner.select("img")
-        val title = img.attr("title")
-        val posterUrl = img.attr("data-src") ?: img.attr("src")
-        val href = fixUrl(inner.select("a").attr("href"))
+        val img = inner?.select("img")
+        val title = img?.attr("title")
+        val posterUrl = img?.attr("data-src") ?: img?.attr("src")
+        val href = fixUrl(inner?.select("a")?.attr("href") ?: "")
         val isMovie = href.contains("/movie/")
         val otherInfo =
             this.selectFirst("div.film-detail > div.fd-infor")?.select("span")?.toList() ?: listOf()
@@ -328,7 +329,7 @@ open class YesMoviesProvider : MainAPI() {
 
         return if (isMovie) {
             MovieSearchResponse(
-                title,
+                title ?: "",
                 href,
                 this@YesMoviesProvider.name,
                 TvType.Movie,
@@ -338,7 +339,7 @@ open class YesMoviesProvider : MainAPI() {
             )
         } else {
             TvSeriesSearchResponse(
-                title,
+                title ?: "",
                 href,
                 this@YesMoviesProvider.name,
                 TvType.Movie,
@@ -402,11 +403,11 @@ open class YesMoviesProvider : MainAPI() {
          * @return the data and if it is new.
          * */
         private suspend fun getUpdatedData(
-            response: AppResponse,
+            response: NiceResponse,
             data: PollingData,
             baseUrl: String
         ): Pair<PollingData, Boolean> {
-            if (!response.response.isSuccessful) {
+            if (!response.okhttpResponse.isSuccessful) {
                 return negotiateNewSid(baseUrl)?.let {
                     it to true
                 } ?: data to false
@@ -638,7 +639,7 @@ open class YesMoviesProvider : MainAPI() {
 //                        "Cache-Control" to "no-cache",
                     "TE" to "trailers"
                 )
-            ).mapped<SourceObject>()
+            ).parsed<SourceObject>()
 
             mapped.tracks?.forEach { track ->
                 track?.toSubtitleFile()?.let { subtitleFile ->

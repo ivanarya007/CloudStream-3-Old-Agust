@@ -12,7 +12,7 @@ open class YourUpload : ExtractorApi() {
 
     override suspend fun getUrl(url: String, referer: String?): List<ExtractorLink>? {
        val doc = app.get(url).document
-       val link = doc.selectFirst("meta[property=og:video]").attr("content") ?: return null
+       val link = doc.selectFirst("meta[property=og:video]")?.attr("content") ?: return null
        val extractedlink = app.get(link, referer = url).url
         return listOf(
             ExtractorLink(

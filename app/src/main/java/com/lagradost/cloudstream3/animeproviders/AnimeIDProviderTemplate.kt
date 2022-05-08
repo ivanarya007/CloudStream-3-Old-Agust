@@ -46,17 +46,17 @@ open class AnimeIDProviderTemplate : MainAPI() {
 
         return ArrayList(soup.select(".listing.items > .video-block").map { li ->
             // Selects the href in <a href="...">
-            val href = fixUrl(li.selectFirst("a").attr("href"))
-            val poster = fixUrl(li.selectFirst("img").attr("src"))
+            val href = fixUrl(li.selectFirst("a")?.attr("href")!!)
+            val poster = fixUrl(li.selectFirst("img")?.attr("src") ?: "")
 
             // .text() selects all the text in the element, be careful about doing this while too high up in the html hierarchy
-            val title = li.selectFirst(".name").text()
+            val title = li.selectFirst(".name")?.text()
             // Use get(0) and toIntOrNull() to prevent any possible crashes, [0] or toInt() will error the search on unexpected values.
             val year = li.selectFirst(".date")?.text()?.split("-")?.get(0)?.toIntOrNull()
 
             AnimeSearchResponse(
                 // .trim() removes unwanted spaces in the start and end.
-                if (!title.contains("Episodio")) title else title.split("Episodio")[0].trim(),
+                if (!title!!.contains("Episodio")) title else title.split("Episodio")[0].trim(),
                 href,
                 this.name,
                 TvType.Anime,
@@ -76,21 +76,21 @@ open class AnimeIDProviderTemplate : MainAPI() {
         val html = app.get(url).text
         val soup = Jsoup.parse(html)
 
-        var title = soup.selectFirst("h1,h2,h3").text()
-        title = if (!title.contains("Episodio")) title else title.split("Episodio")[0].trim()
+        var title = soup.selectFirst("h1,h2,h3")?.text()
+        title = if (!title?.contains("Episodio")!!) title else title.split("Episodio")[0].trim()
 
         val description = soup.selectFirst(".post-entry")?.text()?.trim()
         var poster: String? = null
         val isDubbed = title.contains("Latino")
         val episodes = soup.select(".listing.items.lists > .video-block").map { li ->
             val epTitle = if (li.selectFirst(".name") != null)
-                if (li.selectFirst(".name").text().contains("Episodio"))
-                    "Episodio " + li.selectFirst(".name").text().split("Episodio")[1].trim()
+                if (li.selectFirst(".name")!!.text().contains("Episodio"))
+                    "Episodio " + li.selectFirst(".name")!!.text().split("Episodio")[1].trim()
                 else
-                    li.selectFirst(".name").text()
+                    li.selectFirst(".name")!!.text()
             else ""
             var epThumb = li.selectFirst("ul.items li .img img")?.attr("src")
-            val epDate = li.selectFirst(".meta > .date").text()
+            val epDate = li.selectFirst(".meta > .date")?.text()
 
             if (poster == null) {
                 poster = li.selectFirst("img")?.attr("onerror")?.split("=")?.get(1)?.replace(Regex("[';]"), "")
@@ -100,7 +100,7 @@ open class AnimeIDProviderTemplate : MainAPI() {
 
             val epNum = Regex("""Episodio (\d+)""").find(epTitle)?.destructured?.component1()?.toIntOrNull()
 
-            newEpisode(li.selectFirst("a").attr("href")) {
+            newEpisode(li.selectFirst("a")?.attr("href")) {
                 this.episode = epNum
                 this.posterUrl = epThumb
                 addDate(epDate)
@@ -207,7 +207,7 @@ open class AnimeIDProviderTemplate : MainAPI() {
         callback: (ExtractorLink) -> Unit
     ): Boolean {
         val doc = app.get(data).document
-        val iframe = fixUrl(doc.selectFirst("div.play-video iframe").attr("src"))
+        val iframe = fixUrl(doc.selectFirst("div.play-video iframe")?.attr("src")!!)
         app.get(iframe).document.select("ul.list-server-items li").apmap {
             val url = it.attr("data-video")
             for (extractor in extractorApis) {

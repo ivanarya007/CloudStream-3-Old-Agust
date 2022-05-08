@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.LoadResponse.Companion.addDuration
 import com.lagradost.cloudstream3.mvvm.suspendSafeApiCall
-import com.lagradost.cloudstream3.network.AppResponse
+import com.lagradost.cloudstream3.network.*
 import com.lagradost.cloudstream3.utils.AppUtils.parseJson
 import com.lagradost.cloudstream3.utils.AppUtils.toJson
 import com.lagradost.cloudstream3.utils.AppUtils.tryParseJson
@@ -17,6 +17,8 @@ import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 import java.net.URI
 import kotlin.system.measureTimeMillis
+import com.lagradost.nicehttp.NiceResponse
+
 
 class FmoviesAPPProvider : MainAPI() {
     override var mainUrl = "https://fmovies.app"
@@ -259,7 +261,7 @@ class FmoviesAPPProvider : MainAPI() {
 
                 val serverId = url.substringAfterLast(".")
                 val iframeLink =
-                    app.get("$mainUrl/ajax/get_link/$serverId").mapped<IframeJson>().link
+                    app.get("$mainUrl/ajax/get_link/$serverId").parsed<IframeJson>().link
                         ?: return@suspendSafeApiCall
 
                 // Some smarter ws11 or w10 selection might be required in the future.
@@ -323,11 +325,11 @@ class FmoviesAPPProvider : MainAPI() {
      * @return the data and if it is new.
      * */
     private suspend fun getUpdatedData(
-        response: AppResponse,
+        response: NiceResponse,
         data: PollingData,
         baseUrl: String
     ): Pair<PollingData, Boolean> {
-        if (!response.response.isSuccessful) {
+        if (!response.okhttpResponse.isSuccessful) {
             return negotiateNewSid(baseUrl)?.let {
                 it to true
             } ?: data to false
@@ -552,7 +554,7 @@ class FmoviesAPPProvider : MainAPI() {
 //                        "Cache-Control" to "no-cache",
                         "TE" to "trailers"
                     )
-                ).mapped<YesMoviesProvider.SourceObject>()
+                ).parsed<YesMoviesProvider.SourceObject>()
 
                 mapped.tracks?.apmap { track ->
                     track?.toSubtitleFile()?.let { subtitleFile ->

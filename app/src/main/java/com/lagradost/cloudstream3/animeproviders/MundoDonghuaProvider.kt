@@ -32,15 +32,15 @@ class MundoDonghuaProvider : MainAPI() {
             HomePageList(
                 "Últimos episodios",
                 app.get(mainUrl, timeout = 120).document.select("div.row .col-xs-4").map {
-                    val title = it.selectFirst("h5").text()
-                    val poster = it.selectFirst(".fit-1 img").attr("src")
+                    val title = it.selectFirst("h5")?.text() ?: ""
+                    val poster = it.selectFirst(".fit-1 img")?.attr("src")
                     val epRegex = Regex("(\\/(\\d+)\$)")
-                    val url = it.selectFirst("a").attr("href").replace(epRegex,"").replace("/ver/","/donghua/")
+                    val url = it.selectFirst("a")?.attr("href")?.replace(epRegex,"")?.replace("/ver/","/donghua/")
                     val epnumRegex = Regex("((\\d+)$)")
                     val epNum = epnumRegex.find(title)?.value?.toIntOrNull()
                     val dubstat = if (title.contains("Latino") || title.contains("Castellano")) DubStatus.Dubbed else DubStatus.Subbed
-                    newAnimeSearchResponse(title.replace(Regex("Episodio|(\\d+)"),"").trim(), fixUrl(url)) {
-                        this.posterUrl = fixUrl(poster)
+                    newAnimeSearchResponse(title.replace(Regex("Episodio|(\\d+)"),"").trim(), fixUrl(url ?: "")) {
+                        this.posterUrl = fixUrl(poster ?: "")
                         addDubStatus(dubstat, epNum)
                     }
                 })
@@ -48,11 +48,11 @@ class MundoDonghuaProvider : MainAPI() {
         for (i in urls) {
             try {
                 val home = app.get(i.first, timeout = 120).document.select(".col-xs-4").map {
-                    val title = it.selectFirst(".fs-14").text()
-                    val poster = it.selectFirst(".fit-1 img").attr("src")
+                    val title = it.selectFirst(".fs-14")?.text() ?: ""
+                    val poster = it.selectFirst(".fit-1 img")?.attr("src") ?: ""
                     AnimeSearchResponse(
                         title,
-                        fixUrl(it.selectFirst("a").attr("href")),
+                        fixUrl(it.selectFirst("a")?.attr("href") ?: ""),
                         this.name,
                         TvType.Donghua,
                         fixUrl(poster),
@@ -76,15 +76,15 @@ class MundoDonghuaProvider : MainAPI() {
     override suspend fun search(query: String): ArrayList<SearchResponse> {
         val search =
             app.get("$mainUrl/busquedas/$query", timeout = 120).document.select(".col-xs-4").map {
-                val title = it.selectFirst(".fs-14").text()
-                val href = fixUrl(it.selectFirst("a").attr("href"))
-                val image = it.selectFirst(".fit-1 img").attr("src")
+                val title = it.selectFirst(".fs-14")?.text() ?: ""
+                val href = fixUrl(it.selectFirst("a")?.attr("href") ?: "")
+                val image = it.selectFirst(".fit-1 img")?.attr("src")
                 AnimeSearchResponse(
                     title,
                     href,
                     this.name,
                     TvType.Donghua,
-                    fixUrl(image),
+                    fixUrl(image ?: ""),
                     null,
                     if (title.contains("Latino") || title.contains("Castellano")) EnumSet.of(
                         DubStatus.Dubbed
@@ -96,9 +96,9 @@ class MundoDonghuaProvider : MainAPI() {
 
     override suspend fun load(url: String): LoadResponse {
         val doc = app.get(url, timeout = 120).document
-        val poster = doc.selectFirst("head meta[property=og:image]").attr("content")
-        val title = doc.selectFirst(".ls-title-serie").text()
-        val description = doc.selectFirst("p.text-justify.fc-dark").text()
+        val poster = doc.selectFirst("head meta[property=og:image]")?.attr("content") ?: ""
+        val title = doc.selectFirst(".ls-title-serie")?.text() ?: ""
+        val description = doc.selectFirst("p.text-justify.fc-dark")?.text() ?: ""
         val genres = doc.select("span.label.label-primary.f-bold").map { it.text() }
         val status = when (doc.selectFirst("div.col-md-6.col-xs-6.align-center.bg-white.pt-10.pr-15.pb-0.pl-15 p span.badge.bg-default")?.text()) {
             "En Emisión" -> ShowStatus.Ongoing
@@ -106,7 +106,7 @@ class MundoDonghuaProvider : MainAPI() {
             else -> null
         }
         val episodes = doc.select("ul.donghua-list a").map {
-            val name = it.selectFirst(".fs-16").text()
+            val name = it.selectFirst(".fs-16")?.text()
             val link = it.attr("href")
             Episode(fixUrl(link), name)
         }.reversed()

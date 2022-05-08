@@ -28,13 +28,13 @@ class PelisplusSOProvider:MainAPI() {
         )
         argamap({
             items.add(HomePageList("Estrenos", app.get(mainUrl).document.select("div#owl-demo-premiere-movies .pull-left").map{
-                val title = it.selectFirst("p").text()
+                val title = it.selectFirst("p")?.text() ?: ""
                 TvSeriesSearchResponse(
                     title,
-                    fixUrl(it.selectFirst("a").attr("href")),
+                    fixUrl(it.selectFirst("a")?.attr("href") ?: ""),
                     this.name,
                     TvType.Movie,
-                    it.selectFirst("img").attr("src"),
+                    it.selectFirst("img")?.attr("src"),
                     it.selectFirst("span.year").toString().toIntOrNull(),
                     null,
                 )
@@ -43,14 +43,14 @@ class PelisplusSOProvider:MainAPI() {
             urls.apmap { (url, name) ->
                 val soup = app.get(url).document
                 val home = soup.select(".main-peliculas div.item-pelicula").map {
-                    val title = it.selectFirst(".item-detail p").text()
+                    val title = it.selectFirst(".item-detail p")?.text() ?: ""
                     val titleRegex = Regex("(\\d+)x(\\d+)")
                     TvSeriesSearchResponse(
                         title.replace(titleRegex,""),
-                        fixUrl(it.selectFirst("a").attr("href")),
+                        fixUrl(it.selectFirst("a")?.attr("href") ?: ""),
                         this.name,
                         TvType.Movie,
-                        it.selectFirst("img").attr("src"),
+                        it.selectFirst("img")?.attr("src"),
                         it.selectFirst("span.year").toString().toIntOrNull(),
                         null,
                     )
@@ -85,10 +85,10 @@ class PelisplusSOProvider:MainAPI() {
         val document = Jsoup.parse(html)
 
         return document.select(".item-pelicula.pull-left").map {
-            val title = it.selectFirst("div.item-detail p").text()
-            val href = fixUrl(it.selectFirst("a").attr("href"))
-            val year = it.selectFirst("span.year").text().toIntOrNull()
-            val image = it.selectFirst("figure img").attr("src")
+            val title = it.selectFirst("div.item-detail p")?.text() ?: ""
+            val href = fixUrl(it.selectFirst("a")?.attr("href") ?: "")
+            val year = it.selectFirst("span.year")?.text()?.toIntOrNull()
+            val image = it.selectFirst("figure img")?.attr("src")
             val isMovie = href.contains("/pelicula/")
 
             if (isMovie) {
@@ -116,13 +116,13 @@ class PelisplusSOProvider:MainAPI() {
     override suspend fun load(url: String): LoadResponse? {
         val soup = app.get(url).document
 
-        val title = soup.selectFirst(".info-content h1").text()
+        val title = soup.selectFirst(".info-content h1")?.text() ?: ""
 
         val description = soup.selectFirst("span.sinopsis")?.text()?.trim()
-        val poster: String? = soup.selectFirst(".poster img").attr("src")
+        val poster: String? = soup.selectFirst(".poster img")?.attr("src")
         val episodes = soup.select(".item-season-episodes a").map { li ->
-            val epTitle = li.selectFirst("a").text()
-            val href = fixUrl(li.selectFirst("a").attr("href"))
+            val epTitle = li.selectFirst("a")?.text()
+            val href = fixUrl(li.selectFirst("a")?.attr("href") ?: "")
             val seasonid = href.replace(Regex("($mainUrl\\/.*\\/temporada-|capitulo-)"),"").replace("/","-").let { str ->
                 str.split("-").mapNotNull { subStr -> subStr.toIntOrNull() }
             }

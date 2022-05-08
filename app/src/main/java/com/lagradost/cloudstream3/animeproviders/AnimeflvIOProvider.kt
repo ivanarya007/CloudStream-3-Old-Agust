@@ -28,13 +28,13 @@ class AnimeflvIOProvider:MainAPI() {
             Pair("$mainUrl/peliculas", "Peliculas actualizadas"),
         )
         items.add(HomePageList("Estrenos", Jsoup.parse(app.get(mainUrl).text).select("div#owl-demo-premiere-movies .pull-left").map{
-            val title = it.selectFirst("p").text()
+            val title = it.selectFirst("p")?.text() ?: ""
             AnimeSearchResponse(
                 title,
-                fixUrl(it.selectFirst("a").attr("href")),
+                fixUrl(it.selectFirst("a")?.attr("href") ?: ""),
                 this.name,
                 TvType.Anime,
-                it.selectFirst("img").attr("src"),
+                it.selectFirst("img")?.attr("src"),
                 it.selectFirst("span.year").toString().toIntOrNull(),
                 EnumSet.of(DubStatus.Subbed),
             )
@@ -42,11 +42,11 @@ class AnimeflvIOProvider:MainAPI() {
         urls.apmap { (url, name) ->
             val soup = app.get(url).document
             val home = soup.select("div.item-pelicula").map {
-                val title = it.selectFirst(".item-detail p").text()
-                val poster = it.selectFirst("figure img").attr("src")
+                val title = it.selectFirst(".item-detail p")?.text() ?: ""
+                val poster = it.selectFirst("figure img")?.attr("src")
                 AnimeSearchResponse(
                     title,
-                    fixUrl(it.selectFirst("a").attr("href")),
+                    fixUrl(it.selectFirst("a")?.attr("href") ?: ""),
                     this.name,
                     TvType.Anime,
                     poster,
@@ -79,11 +79,11 @@ class AnimeflvIOProvider:MainAPI() {
             headers = headers
         ).document
          val episodes = document.select(".item-pelicula.pull-left").map {
-            val title = it.selectFirst("div.item-detail p").text()
-            val href = fixUrl(it.selectFirst("a").attr("href"))
-            var image = it.selectFirst("figure img").attr("src")
+            val title = it.selectFirst("div.item-detail p")?.text() ?: ""
+            val href = fixUrl(it.selectFirst("a")?.attr("href") ?: "")
+            var image = it.selectFirst("figure img")?.attr("src") ?: ""
             val isMovie = href.contains("/pelicula/")
-             if (image.contains("/static/img/picture.png")) { image = null}
+             if (image.contains("/static/img/picture.png")) { image = ""}
 
             if (isMovie) {
                 MovieSearchResponse(
@@ -113,12 +113,12 @@ class AnimeflvIOProvider:MainAPI() {
         // Gets the url returned from searching.
         val html = app.get(url).text
         val soup = Jsoup.parse(html)
-        val title = soup.selectFirst(".info-content h1").text()
+        val title = soup.selectFirst(".info-content h1")?.text()
         val description = soup.selectFirst("span.sinopsis")?.text()?.trim()
-        val poster: String? = soup.selectFirst(".poster img").attr("src")
+        val poster: String? = soup.selectFirst(".poster img")?.attr("src")
         val episodes = soup.select(".item-season-episodes a").map { li ->
-            val href = fixUrl(li.selectFirst("a").attr("href"))
-            val name = li.selectFirst("a").text()
+            val href = fixUrl(li.selectFirst("a")?.attr("href") ?: "")
+            val name = li.selectFirst("a")?.text() ?: ""
            Episode(
                 href, name,
             )
@@ -134,7 +134,7 @@ class AnimeflvIOProvider:MainAPI() {
 
         return when (tvType) {
             TvType.Anime -> {
-                return newAnimeLoadResponse(title, url, tvType) {
+                return newAnimeLoadResponse(title ?: "", url, tvType) {
                     japName = null
                     engName = title
                     posterUrl = poster
@@ -148,7 +148,7 @@ class AnimeflvIOProvider:MainAPI() {
             }
             TvType.AnimeMovie -> {
                 MovieLoadResponse(
-                    title,
+                    title ?: "",
                     url,
                     this.name,
                     tvType,

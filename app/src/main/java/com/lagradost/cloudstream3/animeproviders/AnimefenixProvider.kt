@@ -42,13 +42,13 @@ class AnimefenixProvider:MainAPI() {
             HomePageList(
                 "Últimos episodios",
                 app.get(mainUrl).document.select(".capitulos-grid div.item").map {
-                    val title = it.selectFirst("div.overtitle").text()
-                    val poster = it.selectFirst("a img").attr("src")
+                    val title = it.selectFirst("div.overtitle")?.text()
+                    val poster = it.selectFirst("a img")?.attr("src")
                     val epRegex = Regex("(-(\\d+)\$|-(\\d+)\\.(\\d+))")
-                    val url = it.selectFirst("a").attr("href").replace(epRegex,"")
-                        .replace("/ver/","/")
-                    val epNum = it.selectFirst(".is-size-7").text().replace("Episodio ","").toIntOrNull()
-                    newAnimeSearchResponse(title, url) {
+                    val url = it.selectFirst("a")?.attr("href")?.replace(epRegex,"")
+                        ?.replace("/ver/","/")
+                    val epNum = it.selectFirst(".is-size-7")?.text()?.replace("Episodio ","")?.toIntOrNull()
+                    newAnimeSearchResponse(title!!, url!!) {
                         this.posterUrl = poster
                         addDubStatus(getDubStatus(title), epNum)
                     }
@@ -59,11 +59,11 @@ class AnimefenixProvider:MainAPI() {
             val response = app.get(url)
             val soup = Jsoup.parse(response.text)
             val home = soup.select(".list-series article").map {
-                val title = it.selectFirst("h3 a").text()
-                val poster = it.selectFirst("figure img").attr("src")
+                val title = it.selectFirst("h3 a")?.text()
+                val poster = it.selectFirst("figure img")?.attr("src")
                 AnimeSearchResponse(
-                    title,
-                    it.selectFirst("a").attr("href"),
+                    title!!,
+                    it.selectFirst("a")?.attr("href") ?: "",
                     this.name,
                     TvType.Anime,
                     poster,
@@ -79,31 +79,29 @@ class AnimefenixProvider:MainAPI() {
         return HomePageResponse(items)
     }
 
-    override suspend fun search(query: String): ArrayList<SearchResponse> {
-        val search =
-            Jsoup.parse(app.get("$mainUrl/animes?q=$query", timeout = 120).text).select(".list-series article").map {
-                val title = it.selectFirst("h3 a").text()
-                val href = it.selectFirst("a").attr("href")
-                val image = it.selectFirst("figure img").attr("src")
+    override suspend fun search(query: String): List<SearchResponse> {
+          return Jsoup.parse(app.get("$mainUrl/animes?q=$query", timeout = 120).text).select(".list-series article").map {
+                val title = it.selectFirst("h3 a")?.text()
+                val href = it.selectFirst("a")?.attr("href")
+                val image = it.selectFirst("figure img")?.attr("src")
                 AnimeSearchResponse(
-                    title,
-                    href,
+                    title!!,
+                    href!!,
                     this.name,
                     TvType.Anime,
-                    fixUrl(image),
+                    fixUrl(image ?: ""),
                     null,
                     if (title.contains("Latino") || title.contains("Castellano")) EnumSet.of(DubStatus.Dubbed) else EnumSet.of(
                         DubStatus.Subbed),
                 )
             }
-        return ArrayList(search)
     }
 
     override suspend fun load(url: String): LoadResponse? {
         val doc = Jsoup.parse(app.get(url, timeout = 120).text)
-        val poster = doc.selectFirst(".image > img").attr("src")
-        val title = doc.selectFirst("h1.title.has-text-orange").text()
-        val description = doc.selectFirst("p.has-text-light").text()
+        val poster = doc.selectFirst(".image > img")?.attr("src")
+        val title = doc.selectFirst("h1.title.has-text-orange")?.text()
+        val description = doc.selectFirst("p.has-text-light")?.text()
         val genres = doc.select(".genres a").map { it.text() }
         val status = when (doc.selectFirst(".is-narrow-desktop a.button")?.text()) {
             "Emisión" -> ShowStatus.Ongoing
@@ -111,20 +109,20 @@ class AnimefenixProvider:MainAPI() {
             else -> null
         }
         val episodes = doc.select(".anime-page__episode-list li").map {
-            val name = it.selectFirst("span").text()
-            val link = it.selectFirst("a").attr("href")
-            Episode(link, name)
+            val name = it.selectFirst("span")?.text()
+            val link = it.selectFirst("a")?.attr("href")
+            Episode(link!!, name)
         }.reversed()
 
         val href = doc.selectFirst(".anime-page__episode-list li")
-        val hrefmovie = href.selectFirst("a").attr("href")
-        val type = if (doc.selectFirst("ul.has-text-light").text()
-                .contains("Película") && episodes.size == 1
+        val hrefmovie = href?.selectFirst("a")?.attr("href")
+        val type = if (doc.selectFirst("ul.has-text-light")?.text()
+                !!.contains("Película") && episodes.size == 1
         ) TvType.AnimeMovie else TvType.Anime
 
         return when (type) {
             TvType.Anime -> {
-                return newAnimeLoadResponse(title, url, type) {
+                return newAnimeLoadResponse(title!!, url, type) {
                     japName = null
                     engName = title
                     posterUrl = poster
@@ -137,11 +135,11 @@ class AnimefenixProvider:MainAPI() {
             }
             TvType.AnimeMovie -> {
                 MovieLoadResponse(
-                    title,
+                    title!!,
                     url,
                     this.name,
                     type,
-                    hrefmovie,
+                    hrefmovie!!,
                     poster,
                     null,
                     description,
@@ -169,8 +167,8 @@ class AnimefenixProvider:MainAPI() {
         callback: (ExtractorLink) -> Unit
     ): Boolean {
         val soup = app.get(data).document
-        val script = soup.selectFirst(".player-container script").data()
-        if (script.contains("var tabsArray =")) {
+        val script = soup.selectFirst(".player-container script")?.data()
+        if (script!!.contains("var tabsArray =")) {
             val sourcesRegex = Regex("player=.*&amp;code(.*)&")
             val test = sourcesRegex.findAll(script).toList()
             test.apmap {

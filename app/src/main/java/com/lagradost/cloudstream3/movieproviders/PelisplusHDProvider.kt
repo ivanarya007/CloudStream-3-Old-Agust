@@ -67,9 +67,9 @@ class PelisplusHDProvider:MainAPI() {
         val document = app.get(url).document
 
         return document.select("a.Posters-link").map {
-            val title = it.selectFirst(".listing-content p").text()
-            val href = it.selectFirst("a").attr("href")
-            val image = fixUrl(it.selectFirst(".Posters-img").attr("src"))
+            val title = it.selectFirst(".listing-content p")!!.text()
+            val href = it.selectFirst("a")!!.attr("href")
+            val image = it.selectFirst(".Posters-img")?.attr("src")?.let { it1 -> fixUrl(it1) }
             val isMovie = href.contains("/pelicula/")
 
             if (isMovie) {
@@ -98,29 +98,29 @@ class PelisplusHDProvider:MainAPI() {
     override suspend fun load(url: String): LoadResponse? {
         val soup = app.get(url).document
 
-        val title = soup.selectFirst(".m-b-5").text()
+        val title = soup.selectFirst(".m-b-5")?.text()
         val description = soup.selectFirst("div.text-large")?.text()?.trim()
-        val poster: String? = soup.selectFirst(".img-fluid").attr("src")
+        val poster: String? = soup.selectFirst(".img-fluid")?.attr("src")
         val episodes = soup.select("div.tab-pane .btn").map { li ->
-            val href = li.selectFirst("a").attr("href")
-            val name = li.selectFirst(".btn-primary.btn-block").text().replace(Regex("(T(\\d+).*E(\\d+):)"),"").trim()
-            val seasoninfo = href.substringAfter("temporada/").replace("/capitulo/","-")
+            val href = li.selectFirst("a")?.attr("href")
+            val name = li.selectFirst(".btn-primary.btn-block")?.text()?.replace(Regex("(T(\\d+).*E(\\d+):)"),"")?.trim()
+            val seasoninfo = href?.substringAfter("temporada/")?.replace("/capitulo/","-")
             val seasonid =
                 seasoninfo.let { str ->
-                    str.split("-").mapNotNull { subStr -> subStr.toIntOrNull() }
+                    str?.split("-")?.mapNotNull { subStr -> subStr.toIntOrNull() }
                 }
-            val isValid = seasonid.size == 2
-            val episode = if (isValid) seasonid.getOrNull(1) else null
-            val season = if (isValid) seasonid.getOrNull(0) else null
+            val isValid = seasonid?.size == 2
+            val episode = if (isValid) seasonid?.getOrNull(1) else null
+            val season = if (isValid) seasonid?.getOrNull(0) else null
             Episode(
-                href,
+                href!!,
                 name,
                 season,
                 episode,
             )
         }
 
-        val year = soup.selectFirst(".p-r-15 .text-semibold").text().toIntOrNull()
+        val year = soup.selectFirst(".p-r-15 .text-semibold")?.text()?.toIntOrNull()
         val tvType = if (url.contains("/pelicula/")) TvType.Movie else TvType.TvSeries
         val tags = soup.select(".p-h-15.text-center a span.font-size-18.text-info.text-semibold")
             .map { it?.text()?.trim().toString().replace(", ","") }
@@ -128,7 +128,7 @@ class PelisplusHDProvider:MainAPI() {
         return when (tvType) {
             TvType.TvSeries -> {
                 TvSeriesLoadResponse(
-                    title,
+                    title!!,
                     url,
                     this.name,
                     tvType,
@@ -143,7 +143,7 @@ class PelisplusHDProvider:MainAPI() {
             }
             TvType.Movie -> {
                 MovieLoadResponse(
-                    title,
+                    title!!,
                     url,
                     this.name,
                     tvType,

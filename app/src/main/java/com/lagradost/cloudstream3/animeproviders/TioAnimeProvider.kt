@@ -38,20 +38,20 @@ class TioAnimeProvider:MainAPI() {
             HomePageList(
                 "Últimos episodios",
                 app.get(mainUrl).document.select("ul.episodes li article").map {
-                    val title = it.selectFirst("h3.title").text().replace(Regex("((\\d+)\$)"),"")
-                    val poster = it.selectFirst("figure img").attr("src")
+                    val title = it.selectFirst("h3.title")?.text()?.replace(Regex("((\\d+)\$)"),"")
+                    val poster = it.selectFirst("figure img")?.attr("src")
                     val epRegex = Regex("(-(\\d+)\$)")
-                    val url = it.selectFirst("a").attr("href").replace(epRegex,"")
-                        .replace("ver/","anime/")
-                    val urlepnum = it.selectFirst("a").attr("href")
-                    val epNum = epRegex.findAll(urlepnum).map {
+                    val url = it.selectFirst("a")?.attr("href")?.replace(epRegex,"")
+                        ?.replace("ver/","anime/")
+                    val urlepnum = it.selectFirst("a")?.attr("href")
+                    val epNum = epRegex.findAll(urlepnum ?: "").map {
                         it.value.replace("-","")
                     }.first().toIntOrNull()
-                    val dubstat = if (title.contains("Latino") || title.contains("Castellano"))
+                    val dubstat = if (title!!.contains("Latino") || title.contains("Castellano"))
                         DubStatus.Dubbed
                      else DubStatus.Subbed
-                    newAnimeSearchResponse(title, fixUrl(url)) {
-                        this.posterUrl = fixUrl(poster)
+                    newAnimeSearchResponse(title, fixUrl(url!!)) {
+                        this.posterUrl = fixUrl(poster ?: "")
                         addDubStatus(dubstat, epNum)
                     }
                 })
@@ -59,14 +59,14 @@ class TioAnimeProvider:MainAPI() {
         urls.apmap { (url, name) ->
             val doc = app.get(url).document
             val home = doc.select("ul.animes li article").map {
-                val title = it.selectFirst("h3.title").text()
-                val poster = it.selectFirst("figure img").attr("src")
+                val title = it.selectFirst("h3.title")?.text()
+                val poster = it.selectFirst("figure img")?.attr("src")
                 AnimeSearchResponse(
-                    title,
-                    fixUrl(it.selectFirst("a").attr("href")),
+                    title!!,
+                    fixUrl(it.selectFirst("a")?.attr("href") ?: ""),
                     this.name,
                     TvType.Anime,
-                    fixUrl(poster),
+                    fixUrl(poster ?: ""),
                     null,
                     if (title.contains("Latino") || title.contains("Castellano")) EnumSet.of(DubStatus.Dubbed) else EnumSet.of(DubStatus.Subbed),
                 )
@@ -114,10 +114,10 @@ class TioAnimeProvider:MainAPI() {
     override suspend fun load(url: String): LoadResponse {
         val doc = app.get(url).document
         val episodes = ArrayList<Episode>()
-        val title = doc.selectFirst("h1.Title").text()
-        val poster = doc.selectFirst("div.thumb img").attr("src")
-        val description = doc.selectFirst("p.sinopsis").text()
-        val type = doc.selectFirst("span.anime-type-peli").text()
+        val title = doc.selectFirst("h1.Title")?.text()
+        val poster = doc.selectFirst("div.thumb img")?.attr("src")
+        val description = doc.selectFirst("p.sinopsis")?.text()
+        val type = doc.selectFirst("span.anime-type-peli")?.text()
         val status = when (doc.selectFirst("div.thumb a.btn.status i")?.text()) {
             "En emision" -> ShowStatus.Ongoing
             "Finalizado" -> ShowStatus.Completed
@@ -125,7 +125,7 @@ class TioAnimeProvider:MainAPI() {
         }
         val genre = doc.select("p.genres a")
             .map { it?.text()?.trim().toString() }
-        val year = doc.selectFirst("span.year").text().toIntOrNull()
+        val year = doc.selectFirst("span.year")?.text()?.toIntOrNull()
 
         doc.select("script").map { script ->
             if (script.data().contains("var episodes = [")) {
@@ -144,8 +144,8 @@ class TioAnimeProvider:MainAPI() {
                 }
             }
         }
-        return newAnimeLoadResponse(title, url, getType(type)) {
-            posterUrl = fixUrl(poster)
+        return newAnimeLoadResponse(title!!, url, getType(type!!)) {
+            posterUrl = fixUrl(poster ?: "")
             addEpisodes(DubStatus.Subbed, episodes.reversed())
             showStatus = status
             plot = description

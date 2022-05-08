@@ -38,11 +38,11 @@ class EstrenosDoramasProvider : MainAPI() {
 
        urls.apmap { (url, name) ->
            val home = app.get(url, timeout = 120).document.select("div.clearfix").map {
-               val title = it.selectFirst("h3 a").text().replace(Regex("[Pp]elicula|[Pp]elicula "),"")
-               val poster = it.selectFirst("img.cate_thumb").attr("src")
+               val title = it.selectFirst("h3 a")?.text()?.replace(Regex("[Pp]elicula|[Pp]elicula "),"")
+               val poster = it.selectFirst("img.cate_thumb")?.attr("src")
                AnimeSearchResponse(
-                   title,
-                   it.selectFirst("a").attr("href"),
+                   title!!,
+                   it.selectFirst("a")?.attr("href")!!,
                    this.name,
                    TvType.AsianDrama,
                    poster,
@@ -63,13 +63,13 @@ class EstrenosDoramasProvider : MainAPI() {
         val searchob = ArrayList<AnimeSearchResponse>()
         val search =
             app.get("$mainUrl/?s=$query", timeout = 120).document.select("div.clearfix").map {
-                val title = it.selectFirst("h3 a").text().replace(Regex("[Pp]elicula |[Pp]elicula"),"")
-                val href = it.selectFirst("a").attr("href")
-                val image = it.selectFirst("img.cate_thumb").attr("src")
+                val title = it.selectFirst("h3 a")?.text()?.replace(Regex("[Pp]elicula |[Pp]elicula"),"")
+                val href = it.selectFirst("a")?.attr("href")
+                val image = it.selectFirst("img.cate_thumb")?.attr("src")
                 val lists =
                     AnimeSearchResponse(
-                    title,
-                    href,
+                    title!!,
+                    href!!,
                     this.name,
                     TvType.AsianDrama,
                     image,
@@ -90,8 +90,8 @@ class EstrenosDoramasProvider : MainAPI() {
 
     override suspend fun load(url: String): LoadResponse? {
         val doc = app.get(url, timeout = 120).document
-        val poster = doc.selectFirst("head meta[property]").attr("content")
-        val title = doc.selectFirst("h1.titulo").text()
+        val poster = doc.selectFirst("head meta[property]")?.attr("content")
+        val title = doc.selectFirst("h1.titulo")?.text()
         val description = try {
             doc.selectFirst("div.post div.highlight div.font").toString()
         } catch (e:Exception){
@@ -107,9 +107,9 @@ class EstrenosDoramasProvider : MainAPI() {
         }
         val epi = ArrayList<Episode>()
         val episodes = doc.select("div.post .lcp_catlist a").map {
-            val name = it.selectFirst("a").text()
-            val link = it.selectFirst("a").attr("href")
-            val test = Episode(link, name)
+            val name = it.selectFirst("a")?.text()
+            val link = it.selectFirst("a")?.attr("href")
+            val test = Episode(link!!, name)
             if (link.equals(url)) {
                 //nothing
             }
@@ -121,7 +121,7 @@ class EstrenosDoramasProvider : MainAPI() {
 
         return when (val type = if (episodes.isEmpty()) TvType.Movie else TvType.AsianDrama) {
             TvType.AsianDrama -> {
-                return newAnimeLoadResponse(title, url, type) {
+                return newAnimeLoadResponse(title!!, url, type) {
                     japName = null
                     engName = title.replace(Regex("[Pp]elicula |[Pp]elicula"),"")
                     posterUrl = poster
@@ -131,7 +131,7 @@ class EstrenosDoramasProvider : MainAPI() {
             }
             TvType.Movie -> {
                 MovieLoadResponse(
-                    title.replace(Regex("[Pp]elicula |[Pp]elicula"),""),
+                    title?.replace(Regex("[Pp]elicula |[Pp]elicula"),"")!!,
                     url,
                     this.name,
                     TvType.Movie,

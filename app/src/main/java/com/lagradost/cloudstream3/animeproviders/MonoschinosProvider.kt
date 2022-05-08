@@ -63,21 +63,17 @@ class MonoschinosProvider : MainAPI() {
                 })
         )
 
-        for (i in urls) {
-            try {
-                val home = app.get(i.first, timeout = 120).document.select(".col-6").map {
-                    val title = it.selectFirst(".seristitles")!!.text()
-                    val poster = it.selectFirst("img.animemainimg")!!.attr("src")
-                    newAnimeSearchResponse(title, fixUrl(it.selectFirst("a")!!.attr("href"))) {
-                        this.posterUrl = fixUrl(poster)
-                        addDubStatus(getDubStatus(title))
-                    }
+        urls.apmap { (url, name) ->
+            val home = app.get(url, timeout = 120).document.select(".col-6").map {
+                val title = it.selectFirst(".seristitles")!!.text()
+                val poster = it.selectFirst("img.animemainimg")!!.attr("src")
+                newAnimeSearchResponse(title, fixUrl(it.selectFirst("a")!!.attr("href"))) {
+                    this.posterUrl = fixUrl(poster)
+                    addDubStatus(getDubStatus(title))
                 }
-
-                items.add(HomePageList(i.second, home))
-            } catch (e: Exception) {
-                e.printStackTrace()
             }
+
+            items.add(HomePageList(name, home))
         }
 
         if (items.size <= 0) throw ErrorLoadingException()

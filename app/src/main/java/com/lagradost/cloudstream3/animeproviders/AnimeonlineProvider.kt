@@ -31,12 +31,12 @@ class AnimeonlineProvider:MainAPI() {
             HomePageList(
                 "Últimos episodios",
                 app.get(mainUrl).document.select(".items article.episodes").map {
-                    val title = it.selectFirst("h3").text()
-                    val poster = it.selectFirst("img").attr("data-src")
+                    val title = it.selectFirst("h3")?.text()
+                    val poster = it.selectFirst("img")?.attr("data-src")
                     val epRegex = Regex("(-cap-(\\d+)|\\/\$)")
-                    val url = it.selectFirst("a").attr("href").replace(epRegex,"")
-                        .replace("episodio/","online/")
-                    val epNum = it.selectFirst("h4").text().replace("Episodio ","").toIntOrNull()
+                    val url = it.selectFirst("a")?.attr("href")?.replace(epRegex,"")
+                        ?.replace("episodio/","online/")
+                    val epNum = it.selectFirst("h4")?.text()?.replace("Episodio ","")?.toIntOrNull()
                     val audio = it.selectFirst("div.poster").toString()
                     var dubstat = if (audio.contains("Latino") || audio.contains("Castellano")) {
                         DubStatus.Dubbed
@@ -46,18 +46,18 @@ class AnimeonlineProvider:MainAPI() {
                      if (audio.contains("Multi Audio")) {
                          dubstat = DubStatus.Dubbed.also { DubStatus.Subbed }
                      }
-                    val type = it.selectFirst("div.epiposter h4").text()
-                    val urlclean = if (type.contains("Película")) url.replace("/online/","/pelicula/") else url
-                    newAnimeSearchResponse(title, urlclean) {
+                    val type = it.selectFirst("div.epiposter h4")?.text() ?: ""
+                    val urlclean = if (type.contains("Película")) url?.replace("/online/","/pelicula/") else url
+                    newAnimeSearchResponse(title ?: "", urlclean ?: "") {
                         this.posterUrl = poster
                         addDubStatus(dubstat, epNum)
                     }
                 })
         )
         items.add(HomePageList("Películas", app.get("$mainUrl/pelicula", timeout = 120).document.select(".animation-2.items .item.movies").map{
-            val title = it.selectFirst("div.title h4").text()
-            val poster = it.selectFirst("div.poster img").attr("data-src")
-            val url = it.selectFirst("a").attr("href")
+            val title = it.selectFirst("div.title h4")?.text() ?: ""
+            val poster = it.selectFirst("div.poster img")?.attr("data-src")
+            val url = it.selectFirst("a")?.attr("href") ?: ""
             AnimeSearchResponse(
                 title,
                 url,
@@ -73,11 +73,11 @@ class AnimeonlineProvider:MainAPI() {
             try {
                 val doc = app.get(i.first).document
                 val home = doc.select("div.items article").map {
-                    val title = it.selectFirst("div.title h4").text()
-                    val poster = it.selectFirst("div.poster img").attr("data-src")
+                    val title = it.selectFirst("div.title h4")?.text() ?: ""
+                    val poster = it.selectFirst("div.poster img")?.attr("data-src")
                     AnimeSearchResponse(
                         title,
-                        fixUrl(it.selectFirst("a").attr("href")),
+                        fixUrl(it.selectFirst("a")?.attr("href") ?: ""),
                         this.name,
                         TvType.Anime,
                         poster,
@@ -97,9 +97,9 @@ class AnimeonlineProvider:MainAPI() {
         val url = "${mainUrl}/?s=${query}"
         val doc = app.get(url).document
         val episodes = doc.select("div.result-item article").map {
-            val title = it.selectFirst("div.title a").text()
-            val href =it.selectFirst("a").attr("href")
-            val image = it.selectFirst("div.image img").attr("data-src")
+            val title = it.selectFirst("div.title a")?.text() ?: ""
+            val href =it.selectFirst("a")?.attr("href") ?: ""
+            val image = it.selectFirst("div.image img")?.attr("data-src")
             AnimeSearchResponse(
                 title,
                 href,
@@ -114,9 +114,9 @@ class AnimeonlineProvider:MainAPI() {
     }
     override suspend fun load(url: String): LoadResponse? {
         val soup = app.get(url).document
-        val title = soup.selectFirst("div.data > h1").text() ?: soup.selectFirst("div.wp-content h2 a").text()
-        val description = soup.selectFirst("div#info.sbox div.wp-content p").text()
-        val poster: String? = soup.selectFirst("div.poster img").attr("data-src")
+        val title = soup.selectFirst("div.data > h1")?.text() ?: soup.selectFirst("div.wp-content h2 a")?.text()
+        val description = soup.selectFirst("div#info.sbox div.wp-content p")?.text() ?: ""
+        val poster: String? = soup.selectFirst("div.poster img")?.attr("data-src")
         val episodes = soup.select("div ul.episodios li").map { li ->
             val href = try {
                 li.select("a").attr("href")
@@ -148,7 +148,7 @@ class AnimeonlineProvider:MainAPI() {
         val tvType = if (url.contains("/pelicula/")) TvType.AnimeMovie else TvType.Anime
         return when (tvType) {
             TvType.Anime -> {
-                return newAnimeLoadResponse(title, url, tvType) {
+                return newAnimeLoadResponse(title ?: "", url, tvType) {
                     japName = null
                     engName = title
                     posterUrl = poster
@@ -158,7 +158,7 @@ class AnimeonlineProvider:MainAPI() {
             }
             TvType.AnimeMovie -> {
                 MovieLoadResponse(
-                    title,
+                    title ?: "",
                     url,
                     this.name,
                     tvType,

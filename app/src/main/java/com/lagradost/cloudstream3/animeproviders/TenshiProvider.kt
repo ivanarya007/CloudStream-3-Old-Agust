@@ -58,11 +58,11 @@ class TenshiProvider : MainAPI() {
                         }
                         val anime = top.select("li > a").map {
                             AnimeSearchResponse(
-                                it.selectFirst(".thumb-title").text(),
+                                it.selectFirst(".thumb-title")?.text() ?: "",
                                 fixUrl(it.attr("href")),
                                 this.name,
                                 TvType.Anime,
-                                it.selectFirst("img").attr("src"),
+                                it.selectFirst("img")?.attr("src"),
                                 null,
                                 EnumSet.of(DubStatus.Subbed),
                             )
@@ -70,16 +70,16 @@ class TenshiProvider : MainAPI() {
                         items.add(HomePageList(title, anime))
                     }
                 } else {
-                    val title = section.selectFirst("h2").text()
+                    val title = section.selectFirst("h2")?.text() ?: ""
                     val anime = section.select("li > a").map {
                         val link = it.attr("href").replace(Regex("\\/(\\d+)\$"),"")
-                        val epnumdoc = it.selectFirst("div.episode-title").text()
+                        val epnumdoc = it.selectFirst("div.episode-title")?.text() ?: ""
                         println(epnumdoc)
                         val epnumRegex = Regex("(Ep\\. (\\d+))")
                         val epNum = epnumRegex.find(epnumdoc)?.value?.replace("Ep. ","") ?: ""
                         val animetitle = (it.selectFirst(".thumb-title")?.text() ?: it.selectFirst("div.title")?.text())!!
                         newAnimeSearchResponse(animetitle, fixUrl(link)) {
-                            this.posterUrl = it.selectFirst("img").attr("src")
+                            this.posterUrl = it.selectFirst("img")?.attr("src")
                             addSub(epNum.toIntOrNull())
                         }
                     }
@@ -105,7 +105,7 @@ class TenshiProvider : MainAPI() {
         val items = soup.select("ul.thumb > li > a")
         return items.map {
             val href = fixUrl(it.attr("href"))
-            val img = fixUrl(it.selectFirst("img").attr("src"))
+            val img = fixUrl(it.selectFirst("img")?.attr("src") ?: "")
             val title = it.attr("title")
             if (getIsMovie(href, true)) {
                 MovieSearchResponse(
@@ -226,11 +226,11 @@ class TenshiProvider : MainAPI() {
             interceptor = ddosGuardKiller
         ).document
 
-        val canonicalTitle = document.selectFirst("header.entry-header > h1.mb-3").text().trim()
+        val canonicalTitle = document.selectFirst("header.entry-header > h1.mb-3")?.text()?.trim()
         val episodeNodes = document.select("li[class*=\"episode\"] > a").toMutableList()
         val totalEpisodePages = if (document.select(".pagination").size > 0)
-            document.select(".pagination .page-item a.page-link:not([rel])").last().text()
-                .toIntOrNull()
+            document.select(".pagination .page-item a.page-link:not([rel])").last()?.text()
+                ?.toIntOrNull()
         else 1
 
         if (totalEpisodePages != null && totalEpisodePages > 1) {
@@ -264,7 +264,7 @@ class TenshiProvider : MainAPI() {
 
         val type = document.selectFirst("a[href*=\"$mainUrl/type/\"]")?.text()?.trim()
 
-        return newAnimeLoadResponse(canonicalTitle, url, getType(type ?: "")) {
+        return newAnimeLoadResponse(canonicalTitle ?: "", url, getType(type ?: "")) {
             recommendations = similarAnime
             posterUrl = document.selectFirst("img.cover-image")?.attr("src")
             plot = document.selectFirst(".entry-description > .card-body")?.text()?.trim()
@@ -284,7 +284,7 @@ class TenshiProvider : MainAPI() {
                     ?.trim()
 
             val pattern = Regex("(\\d{4})")
-            val yearText = document.selectFirst("li.release-date .value").text()
+            val yearText = document.selectFirst("li.release-date .value")?.text() ?: ""
             year = pattern.find(yearText)?.groupValues?.get(1)?.toIntOrNull()
 
             addEpisodes(DubStatus.Subbed, episodes)
@@ -338,10 +338,9 @@ class TenshiProvider : MainAPI() {
                         fixUrl(it.src),
                         this.mainUrl,
                         getQualityFromName("${it.size}"),
-                        headers = getHeaders(
-                            mapOf(),
-                            null,
-                            ddosGuardKiller.savedCookiesMap.get(URI(this.mainUrl).host) ?: mapOf()
+                        headers = getHeaders(emptyMap(),
+                            ddosGuardKiller.savedCookiesMap[URI(this.mainUrl).host]
+                                ?: emptyMap()
                         ).toMap()
                     )
                 })

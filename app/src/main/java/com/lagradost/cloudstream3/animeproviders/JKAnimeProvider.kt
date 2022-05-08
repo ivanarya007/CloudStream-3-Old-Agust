@@ -44,13 +44,13 @@ class JKAnimeProvider : MainAPI() {
             HomePageList(
                 "Últimos episodios",
                 app.get(mainUrl).document.select(".listadoanime-home a.bloqq").map {
-                    val title = it.selectFirst("h5").text()
-                    val dubstat =if (title.contains("Latino") || title.contains("Castellano"))
+                    val title = it.selectFirst("h5")?.text()
+                    val dubstat =if (title!!.contains("Latino") || title.contains("Castellano"))
                             DubStatus.Dubbed else DubStatus.Subbed
-                    val poster = it.selectFirst(".anime__sidebar__comment__item__pic img").attr("src")
+                    val poster = it.selectFirst(".anime__sidebar__comment__item__pic img")?.attr("src") ?: ""
                     val epRegex = Regex("/(\\d+)/|/especial/|/ova/")
                     val url = it.attr("href").replace(epRegex, "")
-                    val epNum = it.selectFirst("h6").text().replace("Episodio ", "").toIntOrNull()
+                    val epNum = it.selectFirst("h6")?.text()?.replace("Episodio ", "")?.toIntOrNull()
                     newAnimeSearchResponse(title, url) {
                         this.posterUrl = poster
                         addDubStatus(dubstat, epNum)
@@ -60,11 +60,11 @@ class JKAnimeProvider : MainAPI() {
         urls.apmap { (url, name) ->
             val soup = app.get(url).document
             val home = soup.select(".g-0").map {
-                val title = it.selectFirst("h5 a").text()
-                val poster = it.selectFirst("img").attr("src")
+                val title = it.selectFirst("h5 a")?.text()
+                val poster = it.selectFirst("img")?.attr("src") ?: ""
                 AnimeSearchResponse(
-                    title,
-                    fixUrl(it.selectFirst("a").attr("href")),
+                    title!!,
+                    fixUrl(it.selectFirst("a")?.attr("href") ?: ""),
                     this.name,
                     TvType.Anime,
                     fixUrl(poster),
@@ -135,17 +135,17 @@ class JKAnimeProvider : MainAPI() {
 
     override suspend fun load(url: String): LoadResponse {
         val doc = app.get(url, timeout = 120).document
-        val poster = doc.selectFirst(".set-bg").attr("data-setbg")
-        val title = doc.selectFirst(".anime__details__title > h3").text()
-        val type = doc.selectFirst(".anime__details__text").text()
-        val description = doc.selectFirst(".anime__details__text > p").text()
+        val poster = doc.selectFirst(".set-bg")?.attr("data-setbg")
+        val title = doc.selectFirst(".anime__details__title > h3")?.text()
+        val type = doc.selectFirst(".anime__details__text")?.text()
+        val description = doc.selectFirst(".anime__details__text > p")?.text()
         val genres = doc.select("div.col-lg-6:nth-child(1) > ul:nth-child(1) > li:nth-child(2) > a").map { it.text() }
         val status = when (doc.selectFirst("span.enemision")?.text()) {
             "En emisión" -> ShowStatus.Ongoing
             "Concluido" -> ShowStatus.Completed
             else -> null
         }
-        val animeID = doc.selectFirst("div.ml-2").attr("data-anime").toInt()
+        val animeID = doc.selectFirst("div.ml-2")?.attr("data-anime")?.toInt()
         val animeeps = "$mainUrl/ajax/last_episode/$animeID/"
         val jsoneps = app.get(animeeps).text
         val episodes = ArrayList<Episode>()
@@ -157,7 +157,7 @@ class JKAnimeProvider : MainAPI() {
 
 
 
-        return newAnimeLoadResponse(title, url, getType(type)) {
+        return newAnimeLoadResponse(title!!, url, getType(type!!)) {
             posterUrl = poster
             addEpisodes(DubStatus.Subbed, episodes)
             showStatus = status
@@ -208,7 +208,7 @@ class JKAnimeProvider : MainAPI() {
                             "Pragma" to "no-cache",
                             "Cache-Control" to "no-cache",),
                         data = mapOf(Pair("data",gsplaykey)),
-                        allowRedirects = false).response.headers.values("location").apmap { loc ->
+                        allowRedirects = false).okhttpResponse.headers.values("location").apmap { loc ->
                             val postkey = loc.replace("/gsplay/player.html#","")
                             val nozomitext = app.post("$mainUrl/gsplay/api.php",
                             headers = mapOf(
@@ -268,7 +268,7 @@ class JKAnimeProvider : MainAPI() {
                             }
                     }
                     if (link.contains("jkmedia")) {
-                       app.get(link, referer = data, allowRedirects = false).response.headers.values("location").apmap { xtremeurl ->
+                       app.get(link, referer = data, allowRedirects = false).okhttpResponse.headers.values("location").apmap { xtremeurl ->
                            callback(
                                ExtractorLink(
                                    name,
