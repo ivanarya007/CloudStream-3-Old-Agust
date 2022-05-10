@@ -67,7 +67,7 @@
     "AnimeonlineProvider": {
         "language": "es",
         "name": "Animeonline",
-        "status": 1,
+        "status": 0,
         "url": "https://animeonline1.ninja"
     },
     "ApiMDBProvider": {
@@ -329,7 +329,7 @@
     "PelisflixProvider": {
         "language": "es",
         "name": "Pelisflix",
-        "status": 1,
+        "status": 0,
         "url": "https://pelisflix.li"
     },
     "PelisplusHDProvider": {
