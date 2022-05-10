@@ -7,7 +7,7 @@ import com.lagradost.cloudstream3.app
 import com.lagradost.cloudstream3.utils.AppUtils.parseJson
 import com.lagradost.cloudstream3.utils.ExtractorApi
 import com.lagradost.cloudstream3.utils.ExtractorLink
-import com.lagradost.cloudstream3.utils.M3u8Helper
+import com.lagradost.cloudstream3.utils.M3u8Helper.Companion.generateM3u8
 
 open class Mcloud : ExtractorApi() {
     override var name = "Mcloud"
@@ -51,18 +51,17 @@ open class Mcloud : ExtractorApi() {
 
         val mapped = parseJson<JsonMcloud>(response)
         val sources = mutableListOf<ExtractorLink>()
-
         if (mapped.success)
             mapped.media.sources.apmap {
                 if (it.file.contains("m3u8")) {
-                    M3u8Helper.generateM3u8(
-                        name,
-                        it.file,
-                        url,
-                        headers = app.get(url).headers.toMap()
-                    ).forEach { link ->
-                        sources.add(link)
-                    }
+                    sources.addAll(
+                        generateM3u8(
+                            name,
+                            it.file,
+                            url,
+                            headers = mapOf("Referer" to url)
+                        )
+                    )
                 }
             }
         return sources

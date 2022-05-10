@@ -176,7 +176,7 @@ class MundoDonghuaProvider : MainAPI() {
                             callback(
                                 ExtractorLink(
                                     "Protea",
-                                    "Protea ${source.label}",
+                                    "Protea",
                                     fixUrl(source.file),
                                     "",
                                     getQualityFromName(source.label!!),
@@ -197,11 +197,10 @@ class MundoDonghuaProvider : MainAPI() {
                                 ), true
                             )
                                 .apmap { stream ->
-                                    val qualityString = if ((stream.quality ?: 0) == 0) "" else "${stream.quality}p"
                                       callback(
                                         ExtractorLink(
                                         "Asura",
-                                        "Asura $qualityString",
+                                        "Asura",
                                         stream.streamUrl,
                                         "",
                                         getQualityFromName(stream.quality.toString()),

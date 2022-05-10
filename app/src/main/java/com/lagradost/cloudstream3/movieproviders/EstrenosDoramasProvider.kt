@@ -93,27 +93,17 @@ class EstrenosDoramasProvider : MainAPI() {
         val poster = doc.selectFirst("head meta[property]")?.attr("content")
         val title = doc.selectFirst("h1.titulo")?.text()
         val description = try {
-            doc.selectFirst("div.post div.highlight div.font").toString()
+            doc.selectFirst("div.post div.highlight div.font")?.text()
         } catch (e:Exception){
             null
         }
-        val desc = Regex("(<b>Sinopsis: <\\/b><\\/span>.+.\\n.*\\n.*|<b>Sinopsis:<\\/b><\\/span>.+)")
-        val finaldesc = description?.let {
-            desc.findAll(it).map {
-                it.value.replace("<br>","").replace("<b>Sinopsis: </b></span>","")
-                    .replace("<p>","").replace("<b>","").replace("</b>","")
-                    .replace("</span>","").replace("Sinopsis:","")
-            }.toList().first()
-        }
+        val finaldesc = description?.substringAfter("Sinopsis")?.replace(": ", "")?.trim()
         val epi = ArrayList<Episode>()
         val episodes = doc.select("div.post .lcp_catlist a").map {
             val name = it.selectFirst("a")?.text()
             val link = it.selectFirst("a")?.attr("href")
             val test = Episode(link!!, name)
-            if (link.equals(url)) {
-                //nothing
-            }
-            else {
+            if (!link.equals(url)) {
                 epi.add(test)
             }
         }.reversed()

@@ -28,8 +28,7 @@ class DoramasYTProvider : MainAPI() {
     override val hasChromecastSupport = true
     override val hasDownloadSupport = true
     override val supportedTypes = setOf(
-        TvType.TvSeries,
-        TvType.Movie,
+        TvType.AsianDrama,
     )
 
     override suspend fun getMainPage(): HomePageResponse {
@@ -65,21 +64,17 @@ class DoramasYTProvider : MainAPI() {
                 })
         )
 
-        for (i in urls) {
-            try {
-                val home = app.get(i.first, timeout = 120).document.select(".col-6").map {
-                    val title = it.selectFirst(".animedtls p")!!.text()
-                    val poster = it.selectFirst(".anithumb img")!!.attr("src")
-                    newAnimeSearchResponse(title, fixUrl(it.selectFirst("a")!!.attr("href"))) {
-                        this.posterUrl = fixUrl(poster)
-                        addDubStatus(getDubStatus(title))
-                    }
+        urls.apmap { (url, name) ->
+            val posterdoc = if (url.contains("/emision")) "div.animes img" else ".anithumb img"
+            val home = app.get(url).document.select(".col-6").map {
+                val title = it.selectFirst(".animedtls p")!!.text()
+                val poster = it.selectFirst(posterdoc)!!.attr("src")
+                newAnimeSearchResponse(title, fixUrl(it.selectFirst("a")!!.attr("href"))) {
+                    this.posterUrl = fixUrl(poster)
+                    addDubStatus(getDubStatus(title))
                 }
-
-                items.add(HomePageList(i.second, home))
-            } catch (e: Exception) {
-                e.printStackTrace()
             }
+            items.add(HomePageList(name, home))
         }
 
         if (items.size <= 0) throw ErrorLoadingException()
@@ -107,7 +102,7 @@ class DoramasYTProvider : MainAPI() {
 
     override suspend fun load(url: String): LoadResponse {
         val doc = app.get(url, timeout = 120).document
-        val poster = doc.selectFirst("div.flimimg img.img1")!!.attr("src")
+        val poster = doc.selectFirst("head meta[property=og:image]")!!.attr("content")
         val title = doc.selectFirst("h1")!!.text()
         val type = doc.selectFirst("h4")!!.text()
         val description = doc.selectFirst("p.textComplete")!!.text().replace("Ver menos", "")

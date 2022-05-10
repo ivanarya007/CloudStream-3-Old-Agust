@@ -79,7 +79,7 @@ object FillerEpisodeCheck {
 
             val realQuery = fixName(query.replace(blackListRegex, "")).replace("shippuuden", "shippuden")
             if (!localList.containsKey(realQuery)) return null
-            val href = localList[realQuery]?.replace(MAIN_URL, "") ?: return null // JUST IN CASE
+            val href = localList[realQuery]?.replace(MAIN_URL, "")?.replace("-movies","") ?: return null // JUST IN CASE
             val result = app.get("$MAIN_URL$href").text
             val documented = Jsoup.parse(result) ?: return null
             val hashMap = HashMap<Int, Boolean>()
