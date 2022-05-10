@@ -80,9 +80,8 @@ class MonoschinosProvider : MainAPI() {
         return HomePageResponse(items)
     }
 
-    override suspend fun search(query: String): ArrayList<SearchResponse> {
-        val search =
-            app.get("$mainUrl/buscar?q=$query", timeout = 120).document.select(".col-6").map {
+    override suspend fun search(query: String): List<SearchResponse> {
+           return app.get("$mainUrl/buscar?q=$query", timeout = 120).document.select(".col-6").map {
                 val title = it.selectFirst(".seristitles")!!.text()
                 val href = fixUrl(it.selectFirst("a")!!.attr("href"))
                 val image = it.selectFirst("img.animemainimg")!!.attr("src")
@@ -98,7 +97,6 @@ class MonoschinosProvider : MainAPI() {
                     ) else EnumSet.of(DubStatus.Subbed),
                 )
             }
-        return ArrayList(search)
     }
 
     override suspend fun load(url: String): LoadResponse {

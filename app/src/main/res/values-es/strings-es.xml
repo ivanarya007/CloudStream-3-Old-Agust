@@ -19,6 +19,7 @@
      <string name="title_downloads">Descargas</string>
      <string name="title_settings">Ajustes</string>
      <string name="search_hint">Buscar…</string>
+     <string name="search_hint_site" formatted="true">Buscar en %s…</string>
      <string name="no_data">No hay datos</string>
      <string name="episode_more_options_des">Más Opciones</string>
      <string name="next_episode">Siguiente capítulo</string>
@@ -220,6 +221,17 @@
      <string name="dont_show_again">No mostrar de nuevo</string>
      <string name="update">Actualizar</string>
      <string name="watch_quality_pref">Calidad Preferida</string>
+     <string name="limit_title">Cantidad de caracteres en el título dentro del reproductor de video</string>
+
+     <array name="limit_title_pref_names">
+      <item>@string/none</item>
+      <item>16 caracteres</item>
+      <item>32 caracteres</item>
+      <item>64 caracteres</item>
+      <item>128 caracteres</item>
+      <item>Esconder título</item>
+     </array>
+
      <string name="video_buffer_size_settings">Tamaño de búfer del video</string>
      <string name="video_buffer_length_settings">Duración del búfer de vídeo</string>
      <string name="video_buffer_disk_settings">Caché de video en memoria</string>
@@ -230,6 +242,8 @@
      <string name="dns_pref_summary">Útil para evitar bloqueos de ISP</string>
      <string name="display_subbed_dubbed_settings">Mostrar Anime Doblado/Subtitulado</string>
      <string name="provider_lang_settings">Idioma de los proveedores</string>
+     <string name="random_button_settings">Botón Aleatorio</string>
+     <string name="random_button_settings_desc">Muestra el botón de aleatorio en la página de inicio</string>
      <string name="app_layout">Orientación de la app</string>
      <string name="automatic">Automática</string>
      <string name="tv_layout">De TV</string>
@@ -243,6 +257,13 @@
      </array>
      <string name="primary_color_settings">Color principal</string>
      <string name="app_theme_settings">Tema de la app</string>
+     <string name="bottom_title_settings">Localización del título</string>
+     <string name="bottom_title_settings_des">Acomoda el título debajo del poster</string>
+     <string name="poster_ui_settings">Alternar elementos UI del poster</string>
+     <string name="show_hd">Etiqueta de calidad</string>
+     <string name="show_dub">Etiqueta de Dob</string>
+     <string name="show_sub">Etiqueta de Sub</string>
+     <string name="show_title">Título</string>
      <string name="resize_fit">Ajustar a Pantalla</string>
      <string name="resize_fill">Estirar</string>
      <string name="resize_zoom">Acercar</string>
@@ -251,6 +272,7 @@
      <string name="downloaded_file">Archivo descargado</string>
      <string name="subtitles_example_text">Jovencillo emponzoñado de whisky, qué mala figurota exhibes.</string>
      <string name="home_source">Fuente</string>
-    <string name="coming_soon">Próximamente…</string>
+     <string name="home_random">Aleatorio</string>
+     <string name="coming_soon">Próximamente…</string>
 
 </resources>

@@ -45,37 +45,33 @@ class MundoDonghuaProvider : MainAPI() {
                     }
                 })
         )
-        for (i in urls) {
-            try {
-                val home = app.get(i.first, timeout = 120).document.select(".col-xs-4").map {
-                    val title = it.selectFirst(".fs-14")?.text() ?: ""
-                    val poster = it.selectFirst(".fit-1 img")?.attr("src") ?: ""
-                    AnimeSearchResponse(
-                        title,
-                        fixUrl(it.selectFirst("a")?.attr("href") ?: ""),
-                        this.name,
-                        TvType.Donghua,
-                        fixUrl(poster),
-                        null,
-                        if (title.contains("Latino") || title.contains("Castellano")) EnumSet.of(
-                            DubStatus.Dubbed
-                        ) else EnumSet.of(DubStatus.Subbed),
-                    )
-                }
 
-                items.add(HomePageList(i.second, home))
-            } catch (e: Exception) {
-                e.printStackTrace()
+        urls.apmap { (url, name) ->
+            val home = app.get(url, timeout = 120).document.select(".col-xs-4").map {
+                val title = it.selectFirst(".fs-14")?.text() ?: ""
+                val poster = it.selectFirst(".fit-1 img")?.attr("src") ?: ""
+                AnimeSearchResponse(
+                    title,
+                    fixUrl(it.selectFirst("a")?.attr("href") ?: ""),
+                    this.name,
+                    TvType.Donghua,
+                    fixUrl(poster),
+                    null,
+                    if (title.contains("Latino") || title.contains("Castellano")) EnumSet.of(
+                        DubStatus.Dubbed
+                    ) else EnumSet.of(DubStatus.Subbed),
+                )
             }
+
+            items.add(HomePageList(name, home))
         }
 
         if (items.size <= 0) throw ErrorLoadingException()
         return HomePageResponse(items)
     }
 
-    override suspend fun search(query: String): ArrayList<SearchResponse> {
-        val search =
-            app.get("$mainUrl/busquedas/$query", timeout = 120).document.select(".col-xs-4").map {
+    override suspend fun search(query: String): List<SearchResponse> {
+        return app.get("$mainUrl/busquedas/$query", timeout = 120).document.select(".col-xs-4").map {
                 val title = it.selectFirst(".fs-14")?.text() ?: ""
                 val href = fixUrl(it.selectFirst("a")?.attr("href") ?: "")
                 val image = it.selectFirst(".fit-1 img")?.attr("src")
@@ -91,7 +87,6 @@ class MundoDonghuaProvider : MainAPI() {
                     ) else EnumSet.of(DubStatus.Subbed),
                 )
             }
-        return ArrayList(search)
     }
 
     override suspend fun load(url: String): LoadResponse {

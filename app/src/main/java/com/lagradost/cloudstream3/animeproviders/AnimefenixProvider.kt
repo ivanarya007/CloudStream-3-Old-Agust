@@ -80,7 +80,7 @@ class AnimefenixProvider:MainAPI() {
     }
 
     override suspend fun search(query: String): List<SearchResponse> {
-          return Jsoup.parse(app.get("$mainUrl/animes?q=$query", timeout = 120).text).select(".list-series article").map {
+          return app.get("$mainUrl/animes?q=$query").document.select(".list-series article").map {
                 val title = it.selectFirst("h3 a")?.text()
                 val href = it.selectFirst("a")?.attr("href")
                 val image = it.selectFirst("figure img")?.attr("src")
@@ -97,7 +97,7 @@ class AnimefenixProvider:MainAPI() {
             }
     }
 
-    override suspend fun load(url: String): LoadResponse? {
+    override suspend fun load(url: String): LoadResponse {
         val doc = Jsoup.parse(app.get(url, timeout = 120).text)
         val poster = doc.selectFirst(".image > img")?.attr("src")
         val title = doc.selectFirst("h1.title.has-text-orange")?.text()
@@ -113,16 +113,10 @@ class AnimefenixProvider:MainAPI() {
             val link = it.selectFirst("a")?.attr("href")
             Episode(link!!, name)
         }.reversed()
-
-        val href = doc.selectFirst(".anime-page__episode-list li")
-        val hrefmovie = href?.selectFirst("a")?.attr("href")
         val type = if (doc.selectFirst("ul.has-text-light")?.text()
                 !!.contains("Película") && episodes.size == 1
         ) TvType.AnimeMovie else TvType.Anime
-
-        return when (type) {
-            TvType.Anime -> {
-                return newAnimeLoadResponse(title!!, url, type) {
+        return newAnimeLoadResponse(title!!, url, type) {
                     japName = null
                     engName = title
                     posterUrl = poster
@@ -130,26 +124,7 @@ class AnimefenixProvider:MainAPI() {
                     plot = description
                     tags = genres
                     showStatus = status
-
                 }
-            }
-            TvType.AnimeMovie -> {
-                MovieLoadResponse(
-                    title!!,
-                    url,
-                    this.name,
-                    type,
-                    hrefmovie!!,
-                    poster,
-                    null,
-                    description,
-                    null,
-                    genres,
-                    null,
-                )
-            }
-            else -> null
-        }
     }
 
     private fun cleanStreamID(input: String): String = input.replace(Regex("player=.*&amp;code=|&"),"")

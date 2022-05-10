@@ -169,13 +169,18 @@ class PelisplusHDProvider:MainAPI() {
                 .replace("https://api.mycdn.moe/furl.php?id=","https://www.fembed.com/v/")
                 .replace("https://api.mycdn.moe/sblink.php?id=","https://streamsb.net/e/"))
                 .apmap { link ->
-                    if (link.contains("https://api.mycdn.moe/video/")) {
+                    if (link.contains("https://api.mycdn.moe/video/") || link.contains("https://api.mycdn.moe/embed.php?customid")) {
                         val doc = app.get(link).document
                         doc.select("div.ODDIV li").apmap {
                             val linkencoded = it.attr("data-r")
-                            val linkdecoded = base64Decode(linkencoded).replace("https://owodeuwu.xyz","https://embedsito.com")
+                            val linkdecoded = base64Decode(linkencoded)
+                                .replace(Regex("https://owodeuwu.xyz|https://sypl.xyz"),"https://embedsito.com")
                                 .replace(Regex(".poster.*"),"")
+                            val secondlink = it.attr("onclick")
+                                .replace(Regex("https://owodeuwu.xyz|https://sypl.xyz"),"https://embedsito.com")
+                                .replace(Regex(".poster.*|.cover.*"),"").replace(Regex("go_to_player\\('|'\\)"),"")
                             loadExtractor(linkdecoded, link, callback)
+                            loadExtractor(secondlink, link, callback)
                         }
                     }
                 loadExtractor(link, data, callback)

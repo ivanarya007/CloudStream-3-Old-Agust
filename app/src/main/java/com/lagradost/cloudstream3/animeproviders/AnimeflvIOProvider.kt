@@ -4,8 +4,6 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.utils.*
 import com.lagradost.cloudstream3.utils.AppUtils.parseJson
-
-import org.jsoup.Jsoup
 import java.util.*
 import kotlin.collections.ArrayList
 
@@ -27,7 +25,7 @@ class AnimeflvIOProvider:MainAPI() {
             Pair("$mainUrl/series", "Series actualizadas",),
             Pair("$mainUrl/peliculas", "Peliculas actualizadas"),
         )
-        items.add(HomePageList("Estrenos", Jsoup.parse(app.get(mainUrl).text).select("div#owl-demo-premiere-movies .pull-left").map{
+        items.add(HomePageList("Estrenos", app.get(mainUrl).document.select("div#owl-demo-premiere-movies .pull-left").map{
             val title = it.selectFirst("p")?.text() ?: ""
             AnimeSearchResponse(
                 title,
@@ -62,7 +60,7 @@ class AnimeflvIOProvider:MainAPI() {
         return HomePageResponse(items)
     }
 
-    override suspend fun search(query: String): ArrayList<SearchResponse> {
+    override suspend fun search(query: String): List<SearchResponse> {
 
         val headers = mapOf(
             "Host" to "animeflv.io",
@@ -73,18 +71,17 @@ class AnimeflvIOProvider:MainAPI() {
             "Connection" to "keep-alive",
             "Referer" to "https://animeflv.io",
         )
-        val url = "${mainUrl}/search.html?keyword=${query}"
+        val url = "$mainUrl/search.html?keyword=$query"
         val document = app.get(
             url,
             headers = headers
         ).document
-         val episodes = document.select(".item-pelicula.pull-left").map {
+         return document.select(".item-pelicula.pull-left").map {
             val title = it.selectFirst("div.item-detail p")?.text() ?: ""
             val href = fixUrl(it.selectFirst("a")?.attr("href") ?: "")
             var image = it.selectFirst("figure img")?.attr("src") ?: ""
             val isMovie = href.contains("/pelicula/")
              if (image.contains("/static/img/picture.png")) { image = ""}
-
             if (isMovie) {
                 MovieSearchResponse(
                     title,
@@ -106,13 +103,11 @@ class AnimeflvIOProvider:MainAPI() {
                 )
             }
         }
-        return ArrayList(episodes)
     }
 
     override suspend fun load(url: String): LoadResponse? {
         // Gets the url returned from searching.
-        val html = app.get(url).text
-        val soup = Jsoup.parse(html)
+        val soup = app.get(url).document
         val title = soup.selectFirst(".info-content h1")?.text()
         val description = soup.selectFirst("span.sinopsis")?.text()?.trim()
         val poster: String? = soup.selectFirst(".poster img")?.attr("src")

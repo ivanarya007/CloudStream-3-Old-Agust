@@ -86,17 +86,15 @@ class TioAnimeProvider:MainAPI() {
         @JsonProperty("slug") val slug: String
     )
 
-    override suspend fun search(query: String): ArrayList<SearchResponse> {
+    override suspend fun search(query: String): List<SearchResponse> {
         val response = app.post("https://tioanime.com/api/search",
             data = mapOf(Pair("value",query))
         ).text
         val json = parseJson<List<SearchObject>>(response)
-        val search = ArrayList<AnimeSearchResponse>()
-        json.map { searchr ->
+         return json.map { searchr ->
             val title = searchr.title
             val href = "$mainUrl/anime/${searchr.slug}"
             val image = "$mainUrl/uploads/portadas/${searchr.id}.jpg"
-            search.add(
                 AnimeSearchResponse(
                     title,
                     href,
@@ -106,9 +104,7 @@ class TioAnimeProvider:MainAPI() {
                     null,
                     if (title.contains("Latino") || title.contains("Castellano")) EnumSet.of(DubStatus.Dubbed) else EnumSet.of(DubStatus.Subbed),
                 )
-            )
         }
-        return ArrayList(search)
     }
 
     override suspend fun load(url: String): LoadResponse {

@@ -106,15 +106,13 @@ class JKAnimeProvider : MainAPI() {
         @JsonProperty("Music") val Music: String
     )
 
-    override suspend fun search(query: String): ArrayList<SearchResponse> {
+    override suspend fun search(query: String): List<SearchResponse> {
         val main = app.get("$mainUrl/ajax/ajax_search/?q=$query").text
         val json = parseJson<MainSearch>(main)
-        val search = ArrayList<AnimeSearchResponse>()
-         json.animes.forEach {
+       return json.animes.map {
             val title = it.title
             val href = "$mainUrl/${it.slug}"
             val image = "https://cdn.jkanime.net/assets/images/animes/image/${it.slug}.jpg"
-          search.add(
               AnimeSearchResponse(
                 title,
                 href,
@@ -126,12 +124,8 @@ class JKAnimeProvider : MainAPI() {
                     DubStatus.Dubbed
                 ) else EnumSet.of(DubStatus.Subbed),
             )
-          )
         }
-
-        return ArrayList(search)
     }
-
 
     override suspend fun load(url: String): LoadResponse {
         val doc = app.get(url, timeout = 120).document
@@ -148,14 +142,11 @@ class JKAnimeProvider : MainAPI() {
         val animeID = doc.selectFirst("div.ml-2")?.attr("data-anime")?.toInt()
         val animeeps = "$mainUrl/ajax/last_episode/$animeID/"
         val jsoneps = app.get(animeeps).text
-        val episodes = ArrayList<Episode>()
-        val json = jsoneps.substringAfter("{\"number\":\"").substringBefore("\",\"title\"").toInt()
-        (1..json).map { it }.map {
+        val lastepnum = jsoneps.substringAfter("{\"number\":\"").substringBefore("\",\"title\"").toInt()
+        val episodes = (1..lastepnum).map { it }.map {
             val link = "${url.removeSuffix("/")}/$it"
-            episodes.add(Episode(link))
+            Episode(link)
         }
-
-
 
         return newAnimeLoadResponse(title!!, url, getType(type!!)) {
             posterUrl = poster
@@ -184,7 +175,7 @@ class JKAnimeProvider : MainAPI() {
                         .replace("$mainUrl/jkokru.php?u=","http://ok.ru/videoembed/")
                         .replace("$mainUrl/jkvmixdrop.php?u=","https://mixdrop.co/e/")
                         .replace("$mainUrl/jk.php?u=","$mainUrl/")
-                }.toList().apmap { link ->
+                }.apmap { link ->
                     loadExtractor(link, data, callback)
                     if (link.contains("um2.php")) {
                         val doc = app.get(link, referer = data).document
