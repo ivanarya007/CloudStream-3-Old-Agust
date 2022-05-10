@@ -84,11 +84,11 @@ object FillerEpisodeCheck {
             val documented = Jsoup.parse(result) ?: return null
             val hashMap = HashMap<Int, Boolean>()
             documented.select("table.EpisodeList > tbody > tr").forEach {
-                val type = it.selectFirst("td.Type > span")?.text()
-                val aaa = type?.contains(Regex("Filler|Anime Canon")) == true
+                val typedoc = it.selectFirst("td.Type > span")?.text()
+                val type = typedoc == "Filler" || typedoc == "Anime Canon"
                 val episodeNumber = it.selectFirst("td.Number")?.text()?.toIntOrNull()
                 if (episodeNumber != null) {
-                    hashMap[episodeNumber] = aaa
+                    hashMap[episodeNumber] = type
                 }
             }
             return hashMap
