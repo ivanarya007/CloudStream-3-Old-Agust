@@ -349,7 +349,7 @@ class FmoviesAPPProvider : MainAPI() {
         // This request is obligatory
         app.post(
             "$extractorData&t=${generateTimeStamp()}&sid=${data.sid}",
-            data = 40, headers = headers
+            json = "40", headers = headers
         )//.also { println("First post ${it.text}") }
         // This makes the second get request work, and re-connect work.
         val reconnectSid =
@@ -387,7 +387,7 @@ class FmoviesAPPProvider : MainAPI() {
             val url = "${extractorData}&t=${generateTimeStamp()}&sid=${data.sid}"
 
             getUpdatedData(
-                app.post(url, data = authData, headers = headers),
+                app.post(url, json = authData, headers = headers),
                 data,
                 extractorData
             ).also {

@@ -427,7 +427,7 @@ open class YesMoviesProvider : MainAPI() {
             val data = negotiateNewSid(extractorData) ?: return null to null
             app.post(
                 "$extractorData&t=${generateTimeStamp()}&sid=${data.sid}",
-                data = 40, headers = headers
+                json = "40", headers = headers
             )
 
             // This makes the second get request work, and re-connect work.
@@ -491,7 +491,7 @@ open class YesMoviesProvider : MainAPI() {
                 val url = "${extractorData}&t=${generateTimeStamp()}&sid=${data.sid}"
 
                 getUpdatedData(
-                    app.post(url, data = authData, headers = headers),
+                    app.post(url, json = authData, headers = headers),
                     data,
                     extractorData
                 ).also {
@@ -606,7 +606,7 @@ open class YesMoviesProvider : MainAPI() {
             extractorData?.let { negotiateNewSid(it) }?.also {
                 app.post(
                     "$extractorData&t=${generateTimeStamp()}&sid=${it.sid}",
-                    data = "40",
+                    json = "40",
                     timeout = 60
                 )
                 val text = app.get(
