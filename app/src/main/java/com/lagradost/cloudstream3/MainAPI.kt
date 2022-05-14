@@ -105,6 +105,7 @@ object APIHolder {
             ApiMDBProvider(),
             TheFlixToProvider(),
             NginxProvider(),
+            EgyBestProvider(),
         )
     }
 
