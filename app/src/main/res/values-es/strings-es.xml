@@ -131,6 +131,13 @@
      <string name="killswitch_settings_des">Si quieres usar todos proveedores (incluso los que no funcionen) desactiva esta opción</string>
 
      <string name="search">Buscar</string>
+     <string name="category_credits">Créditos y cuentas</string>
+     <string name="category_updates">Actualizaciones y respaldos</string>
+     <string name="category_preferred_media_and_lang">Idioma y preferidos</string>
+     <string name="category_ui">Interfaz</string>
+     <string name="category_player">Reproductor de video</string>
+
+
      <string name="settings_info">Info</string>
      <string name="advanced_search">Búsqueda Avanzada</string>
      <string name="advanced_search_des">Muestra resultados de búsqueda separador por proveedor</string>
