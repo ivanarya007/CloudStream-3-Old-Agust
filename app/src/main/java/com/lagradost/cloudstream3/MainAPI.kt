@@ -106,6 +106,7 @@ object APIHolder {
             TheFlixToProvider(),
             NginxProvider(),
             EgyBestProvider(),
+            FireAnimeProvider(),
         )
     }
 
