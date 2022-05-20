@@ -31,6 +31,7 @@ https://github.com/Stormunblessed/CloudStream-3/releases
 * 🇩🇪 German
 * 🇬🇷 Greek
 * 🇮🇳 Hindi
+* 🇮🇩 Indonesian
 * 🇮🇹 Italian
 * 🇲🇰 Macedonian
 * 🇮🇳 Malayalam
