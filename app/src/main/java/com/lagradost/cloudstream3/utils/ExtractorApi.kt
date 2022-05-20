@@ -174,6 +174,7 @@ val extractorApis: Array<ExtractorApi> = arrayOf(
     Tomatomatela(),
     Cinestart(),
     OkRu(),
+    OkRuHttps(),
 
     // dood extractors
     DoodToExtractor(),
