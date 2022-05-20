@@ -125,9 +125,7 @@ class M3u8Helper {
                 app.get(m3u8.streamUrl, headers = m3u8.headers).text
             }
 
-            var hasAnyContent = false
             for (match in QUALITY_REGEX.findAll(response)) {
-                hasAnyContent = true
 
                 var (quality, m3u8Link, m3u8Link2) = match.destructured
                 if (m3u8Link.isEmpty()) m3u8Link = m3u8Link2
@@ -156,7 +154,7 @@ class M3u8Helper {
                     )
                 )
             }
-            if (returnThis || !hasAnyContent) {
+            if (returnThis) {
                 yield(
                     M3u8Stream(
                         m3u8.streamUrl,
