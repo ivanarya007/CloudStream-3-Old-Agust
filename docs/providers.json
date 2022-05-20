@@ -188,6 +188,12 @@
         "status": 1,
         "url": "https://filman.cc"
     },
+    "FireAnimeProvider": {
+        "language": "de",
+        "name": "FireAnime",
+        "status": 1,
+        "url": "https://api.fireani.me"
+    },
     "FmoviesAPPProvider": {
         "language": "en",
         "name": "Fmovies",
