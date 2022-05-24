@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.lagradost.cloudstream3.USER_AGENT
 import com.lagradost.cloudstream3.apmap
 import com.lagradost.cloudstream3.app
+import com.lagradost.cloudstream3.extractors.WcoStream.Companion.cipher
+import com.lagradost.cloudstream3.extractors.WcoStream.Companion.encrypt
 import com.lagradost.cloudstream3.utils.AppUtils.parseJson
 import com.lagradost.cloudstream3.utils.ExtractorApi
 import com.lagradost.cloudstream3.utils.ExtractorLink
@@ -27,37 +29,43 @@ open class Mcloud : ExtractorApi() {
         "Referer" to "https://animekisa.in/", //Referer works for wco and animekisa, probably with others too
         "Pragma" to "no-cache",
         "Cache-Control" to "no-cache",)
+    private val key = "LCbu3iYC7ln24K7P"
     override suspend fun getUrl(url: String, referer: String?): List<ExtractorLink>? {
-        val link = url.replace("$mainUrl/e/","$mainUrl/info/")
+        val id = url.substringAfter("e/").substringAfter("embed/").substringBefore("?")
+        val encryptedid = encrypt(cipher(key, encrypt(id))).replace("/", "_").replace("=","")
+        val link = "$mainUrl/info/$encryptedid"
         val response = app.get(link, headers = headers).text
-
         if(response.startsWith("<!DOCTYPE html>")) {
             // TODO decrypt html for link
             return emptyList()
         }
-
-        data class Sources (
-            @JsonProperty("file") val file: String
+        data class SourcesMcloud (
+            @JsonProperty("file" ) var file : String? = null
         )
 
-        data class Media (
-            @JsonProperty("sources") val sources: List<Sources>
+        data class MediaMcloud (
+            @JsonProperty("sources" ) var sources : ArrayList<SourcesMcloud> = arrayListOf()
+        )
+
+        data class DataMcloud (
+            @JsonProperty("media" ) var media : MediaMcloud? = MediaMcloud()
         )
 
         data class JsonMcloud (
-            @JsonProperty("success") val success: Boolean,
-            @JsonProperty("media") val media: Media,
+            @JsonProperty("status" ) var status : Int?  = null,
+            @JsonProperty("data"   ) var data   : DataMcloud = DataMcloud()
         )
 
         val mapped = parseJson<JsonMcloud>(response)
         val sources = mutableListOf<ExtractorLink>()
-        if (mapped.success)
-            mapped.media.sources.apmap {
-                if (it.file.contains("m3u8")) {
+        val checkfile = mapped.status == 200
+        if (checkfile)
+            mapped.data.media?.sources?.apmap {
+                if (it.file?.contains("m3u8") == true) {
                     sources.addAll(
                         generateM3u8(
                             name,
-                            it.file,
+                            it.file!!,
                             url,
                             headers = mapOf("Referer" to url)
                         )

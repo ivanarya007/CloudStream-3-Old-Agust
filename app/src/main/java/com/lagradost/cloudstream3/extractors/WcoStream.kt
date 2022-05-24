@@ -47,6 +47,59 @@ open class WcoStream : ExtractorApi() {
     override var mainUrl = "https://vidstream.pro"
     override val requiresReferer = false
 
+    companion object {
+        private val keytwo = "0wMrYU+ixjJ4QdzgfN2HlyIVAt3sBOZnCT9Lm7uFDovkb/EaKpRWhqXS5168ePcG"
+        fun encrypt(input: String): String {
+            if (input.any { it.code >= 256 }) throw Exception("illegal characters!")
+            var output = ""
+            for (i in input.indices step 3) {
+                val a = intArrayOf(-1, -1, -1, -1)
+                a[0] = input[i].code shr 2
+                a[1] = (3 and input[i].code) shl 4
+                if (input.length > i + 1) {
+                    a[1] = a[1] or (input[i + 1].code shr 4)
+                    a[2] = (15 and input[i + 1].code) shl 2
+                }
+                if (input.length > i + 2) {
+                    a[2] = a[2] or (input[i + 2].code shr 6)
+                    a[3] = 63 and input[i + 2].code
+                }
+                for (n in a) {
+                    if (n == -1) output += "="
+                    else {
+                        if (n in 0..63) output += keytwo[n]
+                    }
+                }
+            }
+            return output;
+        }
+
+        fun cipher(inputOne: String, inputTwo: String): String {
+            val arr = IntArray(256) { it }
+            var output = ""
+            var u = 0
+            var r: Int
+            for (a in arr.indices) {
+                u = (u + arr[a] + inputOne[a % inputOne.length].code) % 256
+                r = arr[a]
+                arr[a] = arr[u]
+                arr[u] = r
+            }
+            u = 0
+            var c = 0
+            for (f in inputTwo.indices) {
+                c = (c + f) % 256
+                u = (u + arr[c]) % 256
+                r = arr[c]
+                arr[c] = arr[u]
+                arr[u] = r
+                output += (inputTwo[f].code xor arr[(arr[c] + arr[u]) % 256]).toChar()
+            }
+            return output
+        }
+    }
+
+    private val key = "LCbu3iYC7ln24K7P"
     override suspend fun getUrl(url: String, referer: String?): List<ExtractorLink> {
         val baseUrl = url.split("/e/")[0]
 
@@ -56,8 +109,8 @@ open class WcoStream : ExtractorApi() {
         )?.destructured) ?: return emptyList()
         val (skey) = Regex("""skey\s=\s['"](.*?)['"];""").find(html)?.destructured
             ?: return emptyList()
-
-        val apiLink = "$baseUrl/info/$Id?domain=wcostream.cc&skey=$skey"
+        val encryptedID = encrypt(cipher(key, Id)).replace("/", "_")
+        val apiLink = "$baseUrl/info/$encryptedID?domain=wcostream.cc&skey=$skey"
         val referrer = "$baseUrl/e/$Id?domain=wcostream.cc"
 
         data class Sources(
@@ -73,7 +126,6 @@ open class WcoStream : ExtractorApi() {
             @JsonProperty("success") val success: Boolean,
             @JsonProperty("media") val media: Media
         )
-        val test = app.get(url)
         val mapped = app.get(apiLink, headers = mapOf("Referer" to referrer)).parsed<WcoResponse>()
         val sources = mutableListOf<ExtractorLink>()
 
