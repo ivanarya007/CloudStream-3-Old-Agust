@@ -40,20 +40,20 @@ open class Mcloud : ExtractorApi() {
             return emptyList()
         }
         data class SourcesMcloud (
-            @JsonProperty("file" ) var file : String? = null
+            @JsonProperty("file" ) val file : String
         )
 
         data class MediaMcloud (
-            @JsonProperty("sources" ) var sources : ArrayList<SourcesMcloud> = arrayListOf()
+            @JsonProperty("sources" ) val sources : ArrayList<SourcesMcloud> = arrayListOf()
         )
 
         data class DataMcloud (
-            @JsonProperty("media" ) var media : MediaMcloud? = MediaMcloud()
+            @JsonProperty("media" ) val media : MediaMcloud? = MediaMcloud()
         )
 
         data class JsonMcloud (
-            @JsonProperty("status" ) var status : Int?  = null,
-            @JsonProperty("data"   ) var data   : DataMcloud = DataMcloud()
+            @JsonProperty("status" ) val status : Int?  = null,
+            @JsonProperty("data"   ) val data   : DataMcloud = DataMcloud()
         )
 
         val mapped = parseJson<JsonMcloud>(response)
@@ -61,11 +61,11 @@ open class Mcloud : ExtractorApi() {
         val checkfile = mapped.status == 200
         if (checkfile)
             mapped.data.media?.sources?.apmap {
-                if (it.file?.contains("m3u8") == true) {
+                if (it.file.contains("m3u8")) {
                     sources.addAll(
                         generateM3u8(
                             name,
-                            it.file!!,
+                            it.file,
                             url,
                             headers = mapOf("Referer" to url)
                         )

@@ -57,7 +57,7 @@ open class BflixProvider : MainAPI() {
     }
 
     //Credits to https://github.com/jmir1
-    val key = "5uLKesbh0nkrpPq9VwMC6+tQBdomjJ4HNl/fWOSiREvAYagT8yIG7zx2D13UZFXc"
+    val key = "5uLKesbh0nkrpPq9VwMC6+tQBdomjJ4HNl/fWOSiREvAYagT8yIG7zx2D13UZFXc" //key credits to @Modder4869
 
     private fun getVrf(id: String): String? {
         val reversed = ue(encode(id) + "0000000").slice(0..5).reversed()
@@ -362,7 +362,6 @@ open class BflixProvider : MainAPI() {
                     } else null)?.url?.let { it1 -> getLink(it1.replace("=", "")) }
                         ?.replace("/embed/", "/e/")?.replace(Regex("(\\?sub.info.*)"), "")
                 }.apmap { url ->
-                    println("TESTING links $url")
                     loadExtractor(
                         url, data, callback
                     )

@@ -102,73 +102,37 @@ open class WcoStream : ExtractorApi() {
     private val key = "LCbu3iYC7ln24K7P"
     override suspend fun getUrl(url: String, referer: String?): List<ExtractorLink> {
         val baseUrl = url.split("/e/")[0]
-
-        val html = app.get(url, headers = mapOf("Referer" to "https://wcostream.cc/")).text
         val (Id) = (Regex("/e/(.*?)?domain").find(url)?.destructured ?: Regex("""/e/(.*)""").find(
             url
         )?.destructured) ?: return emptyList()
-        val (skey) = Regex("""skey\s=\s['"](.*?)['"];""").find(html)?.destructured
-            ?: return emptyList()
-        val encryptedID = encrypt(cipher(key, Id)).replace("/", "_")
-        val apiLink = "$baseUrl/info/$encryptedID?domain=wcostream.cc&skey=$skey"
+        val encryptedID = encrypt(cipher(key, encrypt(Id))).replace("/", "_").replace("=","")
+        val apiLink = "$baseUrl/info/$encryptedID"
         val referrer = "$baseUrl/e/$Id?domain=wcostream.cc"
 
-        data class Sources(
-            @JsonProperty("file") val file: String,
-            @JsonProperty("label") val label: String?
+        data class SourcesWco (
+            @JsonProperty("file" ) val file : String
         )
 
-        data class Media(
-            @JsonProperty("sources") val sources: List<Sources>
+        data class MediaWco (
+            @JsonProperty("sources" ) val sources : ArrayList<SourcesWco> = arrayListOf()
         )
 
-        data class WcoResponse(
-            @JsonProperty("success") val success: Boolean,
-            @JsonProperty("media") val media: Media
+        data class DataWco (
+            @JsonProperty("media" ) val media : MediaWco? = MediaWco()
         )
+
+        data class WcoResponse (
+            @JsonProperty("status" ) val status : Int?  = null,
+            @JsonProperty("data"   ) val data   : DataWco? = DataWco()
+        )
+
+
         val mapped = app.get(apiLink, headers = mapOf("Referer" to referrer)).parsed<WcoResponse>()
         val sources = mutableListOf<ExtractorLink>()
 
-        if (mapped.success) {
-            mapped.media.sources.forEach {
-                if (mainUrl == "https://vizcloud2.ru" || mainUrl == "https://vizcloud.online") {
-                    if (it.file.contains("vizcloud2.ru") || it.file.contains("vizcloud.online")) {
-                        // Had to do this thing 'cause "list.m3u8#.mp4" gives 404 error so no quality is added
-                        val link1080 = it.file.replace("list.m3u8#.mp4", "H4/v.m3u8")
-                        val link720 = it.file.replace("list.m3u8#.mp4", "H3/v.m3u8")
-                        val link480 = it.file.replace("list.m3u8#.mp4", "H2/v.m3u8")
-                        val link360 = it.file.replace("list.m3u8#.mp4", "H1/v.m3u8")
-                        val linkauto = it.file.replace("#.mp4", "")
-                        listOf(
-                            link1080,
-                            link720,
-                            link480,
-                            link360,
-                            linkauto
-                        ).apmap { serverurl ->
-                            val testurl = app.get(serverurl, headers = mapOf("Referer" to url)).text
-                            if (testurl.contains("EXTM3")) {
-                                val quality = when {
-                                    serverurl.contains("H4") -> "1080p"
-                                    serverurl.contains("H3") -> "720p"
-                                    serverurl.contains("H2") -> "480p"
-                                    serverurl.contains("H1") -> "360p"
-                                    else -> "Auto"
-                                }
-                                sources.add(
-                                    ExtractorLink(
-                                        "VidStream",
-                                        "VidStream",
-                                        serverurl,
-                                        url,
-                                        getQualityFromName(quality),
-                                        true,
-                                    )
-                                )
-                            }
-                        }
-                    }
-                } else if (
+        if (mapped.status == 200) {
+            mapped.data?.media?.sources?.forEach {
+                if (
                     arrayOf(
                         "https://vidstream.pro",
                         "https://vidstreamz.online",
