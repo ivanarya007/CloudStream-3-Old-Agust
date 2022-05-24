@@ -368,6 +368,12 @@
         "status": 1,
         "url": "https://nyaa.si"
     },
+    "OlgplyProvider": {
+        "language": "en",
+        "name": "Olgply",
+        "status": 1,
+        "url": "https://olgply.com"
+    },
     "OploverzProvider": {
         "language": "id",
         "name": "Oploverz",
