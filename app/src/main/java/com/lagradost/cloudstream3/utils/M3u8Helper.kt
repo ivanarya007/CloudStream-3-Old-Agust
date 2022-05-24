@@ -1,6 +1,5 @@
 package com.lagradost.cloudstream3.utils
 
-import com.lagradost.cloudstream3.apmap
 import com.lagradost.cloudstream3.app
 import com.lagradost.cloudstream3.mvvm.logError
 import kotlinx.coroutines.runBlocking
@@ -26,9 +25,9 @@ class M3u8Helper {
                     streamUrl = streamUrl,
                     quality = quality,
                     headers = headers,
-                ), true
+                ), null
             )
-                .apmap { stream ->
+                .map { stream ->
                     ExtractorLink(
                         source,
                         name = name,
@@ -42,7 +41,6 @@ class M3u8Helper {
         }
     }
 
-
     private val ENCRYPTION_DETECTION_REGEX = Regex("#EXT-X-KEY:METHOD=([^,]+),")
     private val ENCRYPTION_URL_IV_REGEX =
         Regex("#EXT-X-KEY:METHOD=([^,]+),URI=\"([^\"]+)\"(?:,IV=(.*))?")
@@ -51,7 +49,7 @@ class M3u8Helper {
     private val TS_EXTENSION_REGEX =
         Regex("""(.*\.ts.*|.*\.jpg.*)""") //.jpg here 'case vizcloud uses .jpg instead of .ts
 
-     fun absoluteExtensionDetermination(url: String): String? {
+    private fun absoluteExtensionDetermination(url: String): String? {
         val split = url.split("/")
         val gg: String = split[split.size - 1].split("?")[0]
         return if (gg.contains(".")) {
@@ -118,14 +116,16 @@ class M3u8Helper {
         return !url.contains("https://") && !url.contains("http://")
     }
 
-    fun m3u8Generation(m3u8: M3u8Stream, returnThis: Boolean): List<M3u8Stream> {
+    fun m3u8Generation(m3u8: M3u8Stream, returnThis: Boolean?): List<M3u8Stream> {
         val generate = sequence {
             val m3u8Parent = getParentLink(m3u8.streamUrl)
             val response = runBlocking {
                 app.get(m3u8.streamUrl, headers = m3u8.headers).text
             }
 
+            var hasAnyContent = false
             for (match in QUALITY_REGEX.findAll(response)) {
+                hasAnyContent = true
 
                 var (quality, m3u8Link, m3u8Link2) = match.destructured
                 if (m3u8Link.isEmpty()) m3u8Link = m3u8Link2
@@ -154,7 +154,7 @@ class M3u8Helper {
                     )
                 )
             }
-            if (returnThis) {
+            if (returnThis ?: !hasAnyContent) {
                 yield(
                     M3u8Stream(
                         m3u8.streamUrl,

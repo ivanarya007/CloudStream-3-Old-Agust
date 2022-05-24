@@ -594,14 +594,11 @@ open class SflixProvider : MainAPI() {
                     ignoreCase = true
                 )
                 if (isM3u8) {
-                    M3u8Helper().m3u8Generation(M3u8Helper.M3u8Stream(this.file, null), true)
+                    M3u8Helper().m3u8Generation(M3u8Helper.M3u8Stream(this.file, null), null)
                         .map { stream ->
-                            //println("stream: ${stream.quality} at ${stream.streamUrl}")
-                            val qualityString = if ((stream.quality ?: 0) == 0) label
-                                ?: "" else "${stream.quality}p"
                             ExtractorLink(
                                 caller.name,
-                                "${caller.name} $qualityString $name",
+                                "${caller.name} $name",
                                 stream.streamUrl,
                                 caller.mainUrl,
                                 getQualityFromName(stream.quality?.toString()),
@@ -612,10 +609,10 @@ open class SflixProvider : MainAPI() {
                 } else {
                     listOf(ExtractorLink(
                         caller.name,
-                        this.label?.let { "${caller.name} - $it" } ?: caller.name,
+                        caller.name,
                         file,
                         caller.mainUrl,
-                        getQualityFromName(this.type ?: ""),
+                        getQualityFromName(this.label),
                         false,
                         extractorData = extractorData
                     ))
@@ -623,7 +620,7 @@ open class SflixProvider : MainAPI() {
             }
         }
 
-        fun Tracks.toSubtitleFile(): SubtitleFile? {
+        private fun Tracks.toSubtitleFile(): SubtitleFile? {
             return this.file?.let {
                 SubtitleFile(
                     this.label ?: "Unknown",
@@ -631,7 +628,6 @@ open class SflixProvider : MainAPI() {
                 )
             }
         }
-
 
         suspend fun MainAPI.extractRabbitStream(
             url: String,
