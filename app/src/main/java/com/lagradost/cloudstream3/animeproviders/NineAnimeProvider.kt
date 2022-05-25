@@ -64,12 +64,12 @@ class NineAnimeProvider : MainAPI() {
     }
 
     //Credits to https://github.com/jmir1
-    private val key = "c/aUAorINHBLxWTy3uRiPt8J+vjsOheFG1E0q2X9CYwDZlnmd4Kb5M6gSVzfk7pQ" // @Modder4869
+    private val key = "c/aUAorINHBLxWTy3uRiPt8J+vjsOheFG1E0q2X9CYwDZlnmd4Kb5M6gSVzfk7pQ" //key credits to @Modder4869
 
     private fun getVrf(id: String): String? {
-        val reversed = encrypt(encode(id) + "0000000").slice(0..5).reversed()
+        val reversed = ue(encode(id) + "0000000").slice(0..5).reversed()
 
-        return reversed + encrypt(cipher(reversed, encode(id) ?: return null)).replace(
+        return reversed + ue(je(reversed, encode(id) ?: return null)).replace(
             """=+$""".toRegex(),
             ""
         )
@@ -78,10 +78,10 @@ class NineAnimeProvider : MainAPI() {
     private fun getLink(url: String): String? {
         val i = url.slice(0..5)
         val n = url.slice(6..url.lastIndex)
-        return decode(cipher(i, decrypt(n)))
+        return decode(je(i, ze(n)))
     }
 
-    private fun encrypt(input: String): String {
+    private fun ue(input: String): String {
         if (input.any { it.code >= 256 }) throw Exception("illegal characters!")
         var output = ""
         for (i in input.indices step 3) {
@@ -106,7 +106,7 @@ class NineAnimeProvider : MainAPI() {
         return output;
     }
 
-    private fun cipher(inputOne: String, inputTwo: String): String {
+    private fun je(inputOne: String, inputTwo: String): String {
         val arr = IntArray(256) { it }
         var output = ""
         var u = 0
@@ -130,7 +130,7 @@ class NineAnimeProvider : MainAPI() {
         return output
     }
 
-    private fun decrypt(input: String): String {
+    private fun ze(input: String): String {
         val t = if (input.replace("""[\t\n\f\r]""".toRegex(), "").length % 4 == 0) {
             input.replace(Regex("""/==?$/"""), "")
         } else input

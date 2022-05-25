@@ -57,7 +57,7 @@ open class BflixProvider : MainAPI() {
     }
 
     //Credits to https://github.com/jmir1
-    val key = "5uLKesbh0nkrpPq9VwMC6+tQBdomjJ4HNl/fWOSiREvAYagT8yIG7zx2D13UZFXc" //key credits to @Modder4869
+    private val key = "5uLKesbh0nkrpPq9VwMC6+tQBdomjJ4HNl/fWOSiREvAYagT8yIG7zx2D13UZFXc" //key credits to @Modder4869
 
     private fun getVrf(id: String): String? {
         val reversed = ue(encode(id) + "0000000").slice(0..5).reversed()
@@ -262,7 +262,7 @@ open class BflixProvider : MainAPI() {
         val yearegex = Regex("<span>(\\d+)<\\/span>")
         val duration = if (durationdoc.contains("na min")) null
         else durationregex.find(durationdoc)?.destructured?.component1()?.replace(" min","")?.toIntOrNull()
-        val year = if (mainUrl.contains("bflix")) { yearegex.find(durationdoc)?.destructured?.component1()
+        val year = if (mainUrl == "https://bflix.ru") { yearegex.find(durationdoc)?.destructured?.component1()
             ?.replace(Regex("<span>|<\\/span>"),"") } else null
         return when (tvType) {
             TvType.TvSeries -> {
