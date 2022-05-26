@@ -8,7 +8,7 @@
     "AllAnimeProvider": {
         "language": "en",
         "name": "AllAnime",
-        "status": 1,
+        "status": 0,
         "url": "https://allanime.site"
     },
     "AllMoviesForYouProvider": {
