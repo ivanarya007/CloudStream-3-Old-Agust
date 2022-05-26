@@ -480,8 +480,9 @@ class GeneratorPlayer : FullScreenPlayer() {
 
         if (settings)
             subtitles.firstOrNull { sub ->
-                sub.name.replace(Regex("[^A-Za-z]")," ").startsWith("$lang ")
-                        || sub.name.trim() == langCode
+                val t = sub.name.replace(Regex("[^A-Za-z]"), " ").trim()
+                t == lang || t.startsWith("$lang ")
+                        || t == langCode
             }?.let { sub ->
                 return sub
             }
