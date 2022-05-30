@@ -12,22 +12,21 @@ class WcoHelper {
         data class ExternalKeys(
             @JsonProperty("wco_key")
             val wcoKey: String? = null,
+            @JsonProperty("wco_cipher_key")
+            val wcocipher: String? = null
         )
-
         private var keys: ExternalKeys? = null
-        private val wcoKey: String? get() = keys?.wcoKey
-
         private suspend fun getKeys() {
             keys = keys
-                ?: app.get("https://raw.githubusercontent.com/LagradOst/CloudStream-3/master/docs/keys.json")
+                ?: app.get("https://raw.githubusercontent.com/Stormunblessed/CloudStream-3/master/docs/keys.json")
                     .parsedSafe<ExternalKeys>()?.also { setKey(BACKUP_KEY_DATA, it) } ?: getKey(
                     BACKUP_KEY_DATA
                 )
         }
 
-        suspend fun getWcoKey(): String? {
+        suspend fun getWcoKey(): ExternalKeys? {
             getKeys()
-            return wcoKey
+            return keys
         }
     }
 }
