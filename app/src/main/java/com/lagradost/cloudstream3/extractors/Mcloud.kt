@@ -31,7 +31,7 @@ open class Mcloud : ExtractorApi() {
         "Referer" to "https://animekisa.in/", //Referer works for wco and animekisa, probably with others too
         "Pragma" to "no-cache",
         "Cache-Control" to "no-cache",)
-    private val key = "LCbu3iYC7ln24K7P" // key credits @Modder4869
+    private val key = "fsVFfz49gtVHPw6i" // key credits @Modder4869
     override suspend fun getUrl(url: String, referer: String?): List<ExtractorLink>? {
         val id = url.substringAfter("e/").substringAfter("embed/").substringBefore("?")
         keytwo = getWcoKey() ?: return null
