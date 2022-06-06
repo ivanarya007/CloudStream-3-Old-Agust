@@ -34,18 +34,18 @@ class WcoHelper {
                     BACKUP_KEY_DATA
                 )
         }
-       private suspend fun getNewKeys() {
-            newKeys = newKeys
-                ?:
-                app.get("https://raw.githubusercontent.com/chekaslowakiya/BruhFlow/main/keys.json")
-                    .parsedSafe<NewExternalKeys>()?.also { setKey(BACKUP_KEY_DATA, it) } ?: getKey(
-                    BACKUP_KEY_DATA
-                )
-        }
 
         suspend fun getWcoKey(): ExternalKeys? {
             getKeys()
             return keys
+        }
+
+        private suspend fun getNewKeys() {
+            newKeys = newKeys
+                ?: app.get("https://raw.githubusercontent.com/chekaslowakiya/BruhFlow/main/keys.json")
+                            .parsedSafe<NewExternalKeys>()?.also { setKey(BACKUP_KEY_DATA, it) } ?: getKey(
+                    BACKUP_KEY_DATA
+                )
         }
 
         suspend fun getNewWcoKey(): NewExternalKeys? {
