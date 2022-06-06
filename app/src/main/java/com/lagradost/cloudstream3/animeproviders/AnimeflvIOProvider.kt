@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.utils.*
 import com.lagradost.cloudstream3.utils.AppUtils.parseJson
+import com.lagradost.cloudstream3.utils.M3u8Helper.Companion.generateM3u8
 import java.util.*
 import kotlin.collections.ArrayList
 
@@ -189,25 +190,23 @@ class AnimeflvIOProvider:MainAPI() {
                 val json = parseJson<MainJson>(ajaxurltext)
                 json.source.forEach { source ->
                     if (source.file.contains("m3u8")) {
-                        M3u8Helper().m3u8Generation(
-                            M3u8Helper.M3u8Stream(
-                                source.file,
-                                headers = mapOf("Referer" to "https://animeid.to")
-                            ), true
-                        )
-                            .map { stream ->
-                                val qualityString = if ((stream.quality ?: 0) == 0) "" else "${stream.quality}p"
-                                callback(
-                                    ExtractorLink(
-                                    name,
-                                    "$name $qualityString",
-                                    stream.streamUrl,
+                        generateM3u8(
+                            "Animeflv.io",
+                            source.file,
+                            "https://animeid.to",
+                            headers = mapOf("Referer" to "https://animeid.to")
+                        ).apmap {
+                            callback(
+                                ExtractorLink(
+                                    "Animeflv.io",
+                                    "Animeflv.io",
+                                    it.url,
                                     "https://animeid.to",
-                                    getQualityFromName(stream.quality.toString()),
-                                    true
+                                    getQualityFromName(it.quality.toString()),
+                                    it.url.contains("m3u8")
                                 )
-                                )
-                            }
+                            )
+                        }
                     } else {
                         callback(
                             ExtractorLink(
