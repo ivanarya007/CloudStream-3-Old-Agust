@@ -15,7 +15,18 @@ class WcoHelper {
             @JsonProperty("wco_cipher_key")
             val wcocipher: String? = null
         )
+
+        data class NewExternalKeys(
+            @JsonProperty("cipherKey")
+            val cipherkey: String? = null,
+            @JsonProperty("encryptKey")
+            val encryptKey: String? = null,
+            @JsonProperty("mainKey")
+            val mainKey: String? = null,
+        )
+
         private var keys: ExternalKeys? = null
+        private var newKeys: NewExternalKeys? = null
         private suspend fun getKeys() {
             keys = keys
                 ?: app.get("https://raw.githubusercontent.com/Stormunblessed/CloudStream-3/master/docs/keys.json")
@@ -23,10 +34,23 @@ class WcoHelper {
                     BACKUP_KEY_DATA
                 )
         }
+       private suspend fun getNewKeys() {
+            newKeys = newKeys
+                ?:
+                app.get("https://raw.githubusercontent.com/chekaslowakiya/BruhFlow/main/keys.json")
+                    .parsedSafe<NewExternalKeys>()?.also { setKey(BACKUP_KEY_DATA, it) } ?: getKey(
+                    BACKUP_KEY_DATA
+                )
+        }
 
         suspend fun getWcoKey(): ExternalKeys? {
             getKeys()
             return keys
+        }
+
+        suspend fun getNewWcoKey(): NewExternalKeys? {
+            getNewKeys()
+            return newKeys
         }
     }
 }

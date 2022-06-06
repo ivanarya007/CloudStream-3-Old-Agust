@@ -5,6 +5,7 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import com.lagradost.cloudstream3.apmap
 import com.lagradost.cloudstream3.app
 import com.lagradost.cloudstream3.extractors.helper.WcoHelper
+import com.lagradost.cloudstream3.extractors.helper.WcoHelper.Companion.getNewWcoKey
 import com.lagradost.cloudstream3.extractors.helper.WcoHelper.Companion.getWcoKey
 import com.lagradost.cloudstream3.mapper
 import com.lagradost.cloudstream3.utils.*
@@ -101,16 +102,15 @@ open class WcoStream : ExtractorApi() {
         }
     }
 
-    private val key = "fsVFfz49gtVHPw6i"
     override suspend fun getUrl(url: String, referer: String?): List<ExtractorLink> {
         val baseUrl = url.split("/e/")[0]
         val (Id) = (Regex("/e/(.*?)?domain").find(url)?.destructured ?: Regex("""/e/(.*)""").find(
             url
         )?.destructured) ?: return emptyList()
-        val keys = getWcoKey()
-        keytwo = keys?.wcoKey ?: return emptyList()
-        val encryptedID = encrypt(cipher(keys.wcocipher!!, encrypt(Id))).replace("/", "_").replace("=","")
-        val apiLink = "$baseUrl/info/$encryptedID"
+        val keys = getNewWcoKey()
+        keytwo = keys?.encryptKey ?: return emptyList()
+        val encryptedID = encrypt(cipher(keys.cipherkey!!, encrypt(Id))).replace("/", "_").replace("=","")
+        val apiLink = "$baseUrl/mediainfo/$encryptedID?key=${keys.mainKey}"
         val referrer = "$baseUrl/e/$Id?domain=wcostream.cc"
 
         data class SourcesWco (

@@ -110,6 +110,13 @@ object APIHolder {
         )
     }
 
+    fun initAll() {
+        for (api in allProviders) {
+            api.init()
+        }
+        apiMap = null
+    }
+
     var apis: List<MainAPI> = arrayListOf()
     private var apiMap: Map<String, Int>? = null
 
@@ -320,17 +327,18 @@ abstract class MainAPI {
         var overrideData: HashMap<String, ProvidersInfoJson>? = null
     }
 
+    fun init() {
+        overrideData?.get(this.javaClass.simpleName)?.let { data ->
+            overrideWithNewData(data)
+        }
+    }
+
     fun overrideWithNewData(data: ProvidersInfoJson) {
         this.name = data.name
         this.mainUrl = data.url
         this.storedCredentials = data.credentials
     }
 
-    init {
-        overrideData?.get(this.javaClass.simpleName)?.let { data ->
-            overrideWithNewData(data)
-        }
-    }
 
     open var name = "NONE"
     open var mainUrl = "NONE"
