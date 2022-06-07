@@ -3,6 +3,7 @@ package com.lagradost.cloudstream3.extractors
 import com.lagradost.cloudstream3.apmap
 import com.lagradost.cloudstream3.utils.*
 import com.lagradost.cloudstream3.app
+import com.lagradost.cloudstream3.utils.M3u8Helper.Companion.generateM3u8
 import java.net.URLDecoder
 
 class Sendvid1: Sendvid() {
@@ -18,23 +19,14 @@ open class Sendvid : ExtractorApi() {
         val doc = app.get(url).document
         val urlString = doc.select("head meta[property=og:video:secure_url]").attr("content")
         val sources = mutableListOf<ExtractorLink>()
-        if (urlString.contains("m3u8"))  M3u8Helper().m3u8Generation(
-            M3u8Helper.M3u8Stream(
+        if (urlString.contains("m3u8"))
+            sources.addAll(
+                generateM3u8(
+                name,
                 urlString,
+                mainUrl,
                 headers = app.get(url).headers.toMap()
-            ), true
-        )
-            .apmap { stream ->
-                val qualityString = if ((stream.quality ?: 0) == 0) "" else "${stream.quality}p"
-                sources.add(  ExtractorLink(
-                    name,
-                    "$name $qualityString",
-                    stream.streamUrl,
-                    url,
-                    getQualityFromName(stream.quality.toString()),
-                    true
-                ))
-            }
+            ))
         return sources
     }
 }

@@ -6,6 +6,7 @@ import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.utils.*
 import com.lagradost.cloudstream3.utils.AppUtils.parseJson
 import com.lagradost.cloudstream3.utils.AppUtils.toJson
+import com.lagradost.cloudstream3.utils.M3u8Helper.Companion.generateM3u8
 import java.util.*
 import kotlin.collections.ArrayList
 
@@ -127,6 +128,26 @@ class MundoDonghuaProvider : MainAPI() {
         @JsonProperty("default") val default: String?
     )
 
+   private fun cleanStream(
+       name: String,
+       url: String,
+       qualityString: String?,
+       callback: (ExtractorLink) -> Unit,
+       isM3U8: Boolean
+   ): Boolean {
+       callback(
+           ExtractorLink(
+               name,
+               name,
+               url,
+               "",
+               getQualityFromName(qualityString),
+               isM3U8
+           )
+       )
+       return true
+   }
+
 
     override suspend fun loadLinks(
         data: String,
@@ -152,7 +173,7 @@ class MundoDonghuaProvider : MainAPI() {
                         val requestlink = "$mainUrl/api_donghua.php?slug=$slug"
                         val response = app.get(requestlink, headers =
                         mapOf("Host" to "www.mundodonghua.com",
-                            "User-Agent" to "Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0",
+                            "User-Agent" to USER_AGENT,
                             "Accept" to "*/*",
                             "Accept-Language" to "en-US,en;q=0.5",
                             "Referer" to data,
@@ -168,41 +189,24 @@ class MundoDonghuaProvider : MainAPI() {
                         ).text.removePrefix("[").removeSuffix("]")
                         val json = parseJson<Protea>(response)
                         json.source.forEach { source ->
-                            callback(
-                                ExtractorLink(
-                                    "Protea",
-                                    "Protea",
-                                    fixUrl(source.file),
-                                    "",
-                                    getQualityFromName(source.label!!),
-                                    false
-                                )
-                            )
+                            val protename = "Protea"
+                            cleanStream(protename, fixUrl(source.file), source.label, callback, false)
                         }
                     }
                     if (unpack.contains("asura_player")) {
-                    val proteaRegex = Regex("(asura_player.*type)")
-                        proteaRegex.findAll(unpack).map {
+                    val asuraRegex = Regex("(asura_player.*type)")
+                        asuraRegex.findAll(unpack).map {
                             it.value
                         }.toList().apmap { protea ->
+                            val asuraname = "Asura"
                             val file = protea.substringAfter("{file:\"").substringBefore("\"")
-                            M3u8Helper().m3u8Generation(
-                                M3u8Helper.M3u8Stream(
-                                    file,
-                                ), true
-                            )
-                                .apmap { stream ->
-                                      callback(
-                                        ExtractorLink(
-                                        "Asura",
-                                        "Asura",
-                                        stream.streamUrl,
-                                        "",
-                                        getQualityFromName(stream.quality.toString()),
-                                        true
-                                    )
-                                      )
-                                }
+                            generateM3u8(
+                                asuraname,
+                                file,
+                                ""
+                            ).forEach {
+                                cleanStream(asuraname, it.url, it.quality.toString(), callback, true)
+                            }
                         }
                     }
                 }

@@ -62,7 +62,6 @@ class AnimeflvIOProvider:MainAPI() {
     }
 
     override suspend fun search(query: String): List<SearchResponse> {
-
         val headers = mapOf(
             "Host" to "animeflv.io",
             "User-Agent" to USER_AGENT,

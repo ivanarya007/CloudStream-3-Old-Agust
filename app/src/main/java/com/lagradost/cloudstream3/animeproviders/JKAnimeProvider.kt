@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.utils.*
 import com.lagradost.cloudstream3.utils.AppUtils.parseJson
+import com.lagradost.cloudstream3.utils.M3u8Helper.Companion.generateM3u8
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.collections.List
@@ -161,6 +162,27 @@ class JKAnimeProvider : MainAPI() {
         @JsonProperty("file") val file: String?
     )
 
+  private fun streamClean(
+      name: String,
+      url: String,
+      referer: String,
+      quality: String?,
+      callback: (ExtractorLink) -> Unit,
+      m3u8: Boolean
+    ): Boolean {
+        callback(
+            ExtractorLink(
+                name,
+                name,
+                url,
+                referer,
+                getQualityFromName(quality),
+                m3u8
+            )
+        )
+        return true
+    }
+
     override suspend fun loadLinks(
         data: String,
         isCasting: Boolean,
@@ -204,7 +226,7 @@ class JKAnimeProvider : MainAPI() {
                             val nozomitext = app.post("$mainUrl/gsplay/api.php",
                             headers = mapOf(
                                 "Host" to "jkanime.net",
-                                "User-Agent" to "Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0",
+                                "User-Agent" to USER_AGENT,
                                 "Accept" to "application/json, text/javascript, */*; q=0.01",
                                 "Accept-Language" to "en-US,en;q=0.5",
                                 "Content-Type" to "application/x-www-form-urlencoded; charset=UTF-8",
@@ -222,16 +244,8 @@ class JKAnimeProvider : MainAPI() {
                             val nozomiurl = listOf(json.file)
                             if (nozomiurl.isEmpty()) null else
                                 nozomiurl.forEach { url ->
-                                    callback(
-                                        ExtractorLink(
-                                            "Nozomi",
-                                            "Nozomi",
-                                            url!!,
-                                            "",
-                                            Qualities.Unknown.value,
-                                            false
-                                        )
-                                    )
+                                    val nozominame = "Nozomi"
+                                    streamClean(nozominame, url!!, "", null, callback, url.contains(".m3u8"))
                                 }
                         }
                     }
@@ -239,36 +253,19 @@ class JKAnimeProvider : MainAPI() {
                         val desutext = app.get(link, referer = data).text
                         val desuRegex = Regex("((https:|http:)\\/\\/.*\\.m3u8)")
                         val file = desuRegex.find(desutext)?.value
-                        M3u8Helper().m3u8Generation(
-                            M3u8Helper.M3u8Stream(
-                                file!!,
-                                headers = mapOf("Referer" to mainUrl)
-                            ), true
-                        )
-                            .apmap { stream ->
-                                val qualityString = if ((stream.quality ?: 0) == 0) "" else "${stream.quality}p"
-                                callback(
-                                    ExtractorLink(
-                                    name,
-                                    "Desu $qualityString",
-                                    stream.streamUrl,
-                                    mainUrl,
-                                    getQualityFromName(stream.quality.toString()),
-                                    file.contains("m3u8")
-                                ))
-                            }
+                        val namedesu = "Desu"
+                        generateM3u8(
+                            namedesu,
+                            file!!,
+                            mainUrl,
+                        ).forEach { desurl ->
+                            streamClean(namedesu, desurl.url, mainUrl, desurl.quality.toString(), callback, true)
+                        }
                     }
                     if (link.contains("jkmedia")) {
                        app.get(link, referer = data, allowRedirects = false).okhttpResponse.headers.values("location").apmap { xtremeurl ->
-                           callback(
-                               ExtractorLink(
-                                   name,
-                                   "Xtreme S",
-                                   xtremeurl,
-                                   "",
-                                   Qualities.Unknown.value,
-                                   xtremeurl.contains("m3u8")
-                               ))
+                           val namex = "Xtreme S"
+                           streamClean(namex, xtremeurl, "", null, callback, xtremeurl.contains(".m3u8"))
                        }
                     }
                 }

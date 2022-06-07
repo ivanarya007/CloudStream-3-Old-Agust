@@ -135,6 +135,25 @@ class AnimefenixProvider:MainAPI() {
         @JsonProperty("label") var label : String? = null
     )
 
+    private fun cleanExtractor(
+        source: String,
+        name: String,
+        url: String,
+        callback: (ExtractorLink) -> Unit
+    ): Boolean {
+        callback(
+            ExtractorLink(
+                source,
+                name,
+                url,
+                "",
+                Qualities.Unknown.value,
+                false
+            )
+        )
+        return true
+    }
+
     override suspend fun loadLinks(
         data: String,
         isCasting: Boolean,
@@ -148,85 +167,59 @@ class AnimefenixProvider:MainAPI() {
             val test = sourcesRegex.findAll(script).toList()
             test.apmap {
                 val codestream = it.value
-                val fembed = if (codestream.contains("player=2&amp")) {
-                    "https://embedsito.com/v/"+cleanStreamID(codestream)
-                } else ""
-                val mp4Upload = if (codestream.contains("player=3&amp")) {
-                    "https://www.mp4upload.com/embed-"+cleanStreamID(codestream)+".html"
-                } else ""
-                val yourUpload = if (codestream.contains("player=6&amp")) {
-                    "https://www.yourupload.com/embed/"+cleanStreamID(codestream)
-                } else ""
-                val okru = if (codestream.contains("player=12&amp")) {
-                    "http://ok.ru/videoembed/"+cleanStreamID(codestream)
-                } else ""
-                val sendvid = if (codestream.contains("player=4&amp")) {
-                    "https://sendvid.com/"+cleanStreamID(codestream)
-                } else ""
-                val amazon =  if (codestream.contains("player=9&amp")) {
-                    "https://www.animefenix.com/stream/amz.php?v="+cleanStreamID(codestream)
-                } else ""
-                val amazonES =  if (codestream.contains("player=11&amp")) {
-                    "https://www.animefenix.com/stream/amz.php?v="+cleanStreamID(codestream)
-                } else ""
-                val fireload = if (codestream.contains("player=22&amp")) {
-                    "https://www.animefenix.com/stream/fl.php?v="+cleanStreamID(codestream)
-                } else ""
-                val servers = listOf(
-                    fembed,
-                    mp4Upload,
-                    yourUpload,
-                    okru,
-                    sendvid)
-                servers.apmap { url ->
-                    loadExtractor(url, data, callback)
+                val links = when {
+                    codestream.contains("player=2&amp") -> "https://embedsito.com/v/"+cleanStreamID(codestream)
+                    codestream.contains("player=3&amp") -> "https://www.mp4upload.com/embed-"+cleanStreamID(codestream)+".html"
+                    codestream.contains("player=6&amp") -> "https://www.yourupload.com/embed/"+cleanStreamID(codestream)
+                    codestream.contains("player=12&amp") -> "http://ok.ru/videoembed/"+cleanStreamID(codestream)
+                    codestream.contains("player=4&amp") -> "https://sendvid.com/"+cleanStreamID(codestream)
+                    codestream.contains("player=9&amp") -> "AmaNormal https://www.animefenix.com/stream/amz.php?v="+cleanStreamID(codestream)
+                    codestream.contains("player=11&amp") -> "AmazonES https://www.animefenix.com/stream/amz.php?v="+cleanStreamID(codestream)
+                    codestream.contains("player=22&amp") -> "Fireload https://www.animefenix.com/stream/fl.php?v="+cleanStreamID(codestream)
+
+                    else -> ""
                 }
+                loadExtractor(links, data, callback)
+
                 argamap({
-                    if (amazon.isNotBlank()) {
-                        val doc = app.get(amazon).document
+                    if (links.contains("AmaNormal")) {
+                        val doc = app.get(links.replace("AmaNormal ","")).document
                         doc.select("script").map { script ->
                             if (script.data().contains("sources: [{\"file\"")) {
                                 val text = script.data().substringAfter("sources:").substringBefore("]").replace("[","")
                                 val json = parseJson<Amazon>(text)
                                 if (json.file != null) {
-                                    callback(
-                                        ExtractorLink(
-                                            "Amazon",
-                                            "Amazon ${json.label}",
-                                            json.file!!,
-                                            "",
-                                            Qualities.Unknown.value,
-                                            isM3u8 = false
-                                        )
+                                    cleanExtractor(
+                                        "Amazon",
+                                        "Amazon ${json.label}",
+                                        json.file!!,
+                                        callback
                                     )
                                 }
                             }
                         }
                     }
 
-                    if (amazonES.isNotBlank()) {
+                    if (links.contains("AmazonES")) {
+                        val amazonES = links.replace("AmazonES ", "")
                         val doc = app.get("$amazonES&ext=es").document
                         doc.select("script").map { script ->
                             if (script.data().contains("sources: [{\"file\"")) {
                                 val text = script.data().substringAfter("sources:").substringBefore("]").replace("[","")
                                 val json = parseJson<Amazon>(text)
                                 if (json.file != null) {
-                                    callback(
-                                        ExtractorLink(
-                                            "AmazonES",
-                                            "AmazonES ${json.label}",
-                                            json.file!!,
-                                            "",
-                                            Qualities.Unknown.value,
-                                            isM3u8 = false
-                                        )
+                                    cleanExtractor(
+                                        "AmazonES",
+                                        "AmazonES ${json.label}",
+                                        json.file!!,
+                                        callback
                                     )
                                 }
                             }
                         }
                     }
-                    if (fireload.isNotBlank()) {
-                        val doc = app.get(fireload).document
+                    if (links.contains("Fireload")) {
+                        val doc = app.get(links.replace("Fireload ", "")).document
                         doc.select("script").map { script ->
                             if (script.data().contains("sources: [{\"file\"")) {
                                 val text = script.data().substringAfter("sources:").substringBefore("]").replace("[","")
@@ -237,17 +230,12 @@ class AnimefenixProvider:MainAPI() {
                                 if (testurl?.contains("error") == true) {
                                     //
                                 } else if (json.file?.contains("fireload") == true) {
-                                    callback(
-                                        ExtractorLink(
-                                            "Fireload",
-                                            "Fireload ${json.label}",
-                                            "https://"+json.file!!,
-                                            "",
-                                            Qualities.Unknown.value,
-                                            isM3u8 = false
+                                    cleanExtractor(
+                                        "Fireload",
+                                        "Fireload ${json.label}",
+                                        "https://"+json.file!!,
+                                        callback
                                         )
-                                    )
-
                                 }
                             }
                         }
