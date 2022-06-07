@@ -29,7 +29,7 @@ class WcoHelper {
         private var newKeys: NewExternalKeys? = null
         private suspend fun getKeys() {
             keys = keys
-                ?: app.get("https://raw.githubusercontent.com/Stormunblessed/CloudStream-3/master/docs/keys.json")
+                ?: app.get("https://raw.githubusercontent.com/LagradOst/CloudStream-3/master/docs/keys.json")
                     .parsedSafe<ExternalKeys>()?.also { setKey(BACKUP_KEY_DATA, it) } ?: getKey(
                     BACKUP_KEY_DATA
                 )
@@ -43,7 +43,7 @@ class WcoHelper {
         private suspend fun getNewKeys() {
             newKeys = newKeys
                 ?: app.get("https://raw.githubusercontent.com/chekaslowakiya/BruhFlow/main/keys.json")
-                            .parsedSafe<NewExternalKeys>()?.also { setKey(BACKUP_KEY_DATA, it) } ?: getKey(
+                    .parsedSafe<NewExternalKeys>()?.also { setKey(BACKUP_KEY_DATA, it) } ?: getKey(
                     BACKUP_KEY_DATA
                 )
         }

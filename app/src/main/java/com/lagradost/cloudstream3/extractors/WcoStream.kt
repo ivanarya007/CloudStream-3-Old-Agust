@@ -1,22 +1,24 @@
 package com.lagradost.cloudstream3.extractors
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.module.kotlin.readValue
 import com.lagradost.cloudstream3.apmap
 import com.lagradost.cloudstream3.app
-import com.lagradost.cloudstream3.extractors.helper.WcoHelper
 import com.lagradost.cloudstream3.extractors.helper.WcoHelper.Companion.getNewWcoKey
 import com.lagradost.cloudstream3.extractors.helper.WcoHelper.Companion.getWcoKey
-import com.lagradost.cloudstream3.mapper
-import com.lagradost.cloudstream3.utils.*
+import com.lagradost.cloudstream3.utils.ExtractorApi
+import com.lagradost.cloudstream3.utils.ExtractorLink
 import com.lagradost.cloudstream3.utils.M3u8Helper.Companion.generateM3u8
+import com.lagradost.cloudstream3.utils.Qualities
+import com.lagradost.cloudstream3.utils.getQualityFromName
 
 class Vidstreamz : WcoStream() {
     override var mainUrl = "https://vidstreamz.online"
 }
+
 class Vizcloud : WcoStream() {
     override var mainUrl = "https://vizcloud2.ru"
 }
+
 class Vizcloud2 : WcoStream() {
     override var mainUrl = "https://vizcloud2.online"
 }
@@ -35,6 +37,10 @@ class VizcloudLive : WcoStream() {
 
 class VizcloudInfo : WcoStream() {
     override var mainUrl = "https://vizcloud.info"
+}
+
+class MwvnVizcloudInfo : WcoStream() {
+    override var mainUrl = "https://mwvn.vizcloud.info"
 }
 
 class VizcloudDigital : WcoStream() {
@@ -101,12 +107,15 @@ open class WcoStream : ExtractorApi() {
             return output
         }
     }
-
+    private val key = "LCbu3iYC7ln24K7P" // key credits @Modder4869
     override suspend fun getUrl(url: String, referer: String?): List<ExtractorLink> {
         val baseUrl = url.split("/e/")[0]
+
         val (Id) = (Regex("/e/(.*?)?domain").find(url)?.destructured ?: Regex("""/e/(.*)""").find(
             url
         )?.destructured) ?: return emptyList()
+      //  val (skey) = Regex("""skey\s=\s['"](.*?)['"];""").find(html)?.destructured
+      //     ?: return emptyList()
         val keys = getNewWcoKey()
         keytwo = keys?.encryptKey ?: return emptyList()
         val encryptedID = encrypt(cipher(keys.cipherkey!!, encrypt(Id))).replace("/", "_").replace("=","")
@@ -130,13 +139,49 @@ open class WcoStream : ExtractorApi() {
             @JsonProperty("data"   ) val data   : DataWco? = DataWco()
         )
 
-
         val mapped = app.get(apiLink, headers = mapOf("Referer" to referrer)).parsed<WcoResponse>()
         val sources = mutableListOf<ExtractorLink>()
-
-        if (mapped.status == 200) {
+        val check = mapped.status == 200
+        if (check) {
             mapped.data?.media?.sources?.forEach {
-                if (
+                if (mainUrl == "https://vizcloud2.ru" || mainUrl == "https://vizcloud.online") {
+                    if (it.file.contains("vizcloud2.ru") || it.file.contains("vizcloud.online")) {
+                        // Had to do this thing 'cause "list.m3u8#.mp4" gives 404 error so no quality is added
+                        val link1080 = it.file.replace("list.m3u8#.mp4", "H4/v.m3u8")
+                        val link720 = it.file.replace("list.m3u8#.mp4", "H3/v.m3u8")
+                        val link480 = it.file.replace("list.m3u8#.mp4", "H2/v.m3u8")
+                        val link360 = it.file.replace("list.m3u8#.mp4", "H1/v.m3u8")
+                        val linkauto = it.file.replace("#.mp4", "")
+                        listOf(
+                            link1080,
+                            link720,
+                            link480,
+                            link360,
+                            linkauto
+                        ).apmap { serverurl ->
+                            val testurl = app.get(serverurl, headers = mapOf("Referer" to url)).text
+                            if (testurl.contains("EXTM3")) {
+                                val quality = when {
+                                    serverurl.contains("H4") -> "1080p"
+                                    serverurl.contains("H3") -> "720p"
+                                    serverurl.contains("H2") -> "480p"
+                                    serverurl.contains("H1") -> "360p"
+                                    else -> "Auto"
+                                }
+                                sources.add(
+                                    ExtractorLink(
+                                        "VidStream",
+                                        "VidStream",
+                                        serverurl,
+                                        url,
+                                        getQualityFromName(quality),
+                                        true,
+                                    )
+                                )
+                            }
+                        }
+                    }
+                } else if (
                     arrayOf(
                         "https://vidstream.pro",
                         "https://vidstreamz.online",
