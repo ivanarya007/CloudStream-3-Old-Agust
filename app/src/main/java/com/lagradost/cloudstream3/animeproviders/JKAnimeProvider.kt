@@ -144,7 +144,7 @@ class JKAnimeProvider : MainAPI() {
         val animeeps = "$mainUrl/ajax/last_episode/$animeID/"
         val jsoneps = app.get(animeeps).text
         val lastepnum = jsoneps.substringAfter("{\"number\":\"").substringBefore("\",\"title\"").toInt()
-        val episodes = (1..lastepnum).map { it }.map {
+        val episodes = (1..lastepnum).map {
             val link = "${url.removeSuffix("/")}/$it"
             Episode(link)
         }
