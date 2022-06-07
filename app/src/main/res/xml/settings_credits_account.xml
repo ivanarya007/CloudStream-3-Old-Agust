@@ -10,6 +10,7 @@
             android:icon="@drawable/ic_anilist_icon" />
     <Preference
             android:key="@string/opensubtitles_key"
+            android:title="@string/opensubs_account"
             android:icon="@drawable/open_subtitles_icon" />
     <Preference
             android:key="@string/nginx_key"

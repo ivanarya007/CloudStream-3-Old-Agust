@@ -466,6 +466,7 @@
     -->
     <string name="login_format" formatted="true">%s %s</string>
     <string name="account">account</string>
+    <string name="opensubs_account">OpenSubtitles account</string>
     <string name="logout">Logout</string>
     <string name="login">Login</string>
     <string name="switch_account">Switch account</string>
