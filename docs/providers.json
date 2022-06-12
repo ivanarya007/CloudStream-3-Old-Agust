@@ -249,7 +249,6 @@
         "url": "https://hdm.to"
     },
     "HDTodayProvider": {
-        "language": "en",
         "name": "HDToday",
         "status": 1,
         "url": "https://hdtoday.cc"
