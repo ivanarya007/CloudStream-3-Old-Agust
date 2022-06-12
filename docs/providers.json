@@ -21,7 +21,7 @@
         "language": "it",
         "name": "Altadefinizione",
         "status": 1,
-        "url": "https://altadefinizione.limo"
+        "url": "https://altadefinizione.hair"
     },
     "AnimeFlickProvider": {
         "language": "en",
@@ -249,9 +249,10 @@
         "url": "https://hdm.to"
     },
     "HDTodayProvider": {
+        "language": "en",
         "name": "HDToday",
         "status": 1,
-        "url": "https://hdtoday.tv"
+        "url": "https://hdtoday.cc"
     },
     "HenaojaraProvider": {
         "name": "Henaojara",
@@ -312,7 +313,6 @@
         "url": "https://149.56.24.226"
     },
     "LookMovieProvider": {
-        "language": "en",
         "name": "LookMovie",
         "status": 0,
         "url": "https://lookmovie.io"
@@ -484,7 +484,7 @@
         "language": "it",
         "name": "Streamingcommunity",
         "status": 1,
-        "url": "https://streamingcommunity.monster"
+        "url": "https://streamingcommunity.press"
     },
     "TantiFilmProvider": {
         "name": "TantiFilm",
