@@ -206,6 +206,12 @@
         "status": 1,
         "url": "https://filman.cc"
     },
+    "FilmpertuttiProvider": {
+        "language": "it",
+        "name": "Filmpertutti",
+        "status": 1,
+        "url": "https://www.filmpertutti.buzz"
+    },
     "FireAnimeProvider": {
         "language": "de",
         "name": "FireAnime",
@@ -234,7 +240,7 @@
         "language": "en",
         "name": "GogoAnime",
         "status": 1,
-        "url": "https://gogoanime.film"
+        "url": "https://gogoanime.sk"
     },
     "GomunimeProvider": {
         "language": "id",
@@ -494,7 +500,7 @@
         "language": "it",
         "name": "Tantifilm",
         "status": 1,
-        "url": "https://www.tantifilm.rodeo"
+        "url": "https://www.tantifilm.pics"
     },
     "TenshiProvider": {
         "language": "en",
@@ -559,7 +565,7 @@
         "language": "en",
         "name": "WatchAsian",
         "status": 1,
-        "url": "https://watchasian.sh"
+        "url": "https://watchasian.cx"
     },
     "WatchCartoonOnlineProvider": {
         "language": "en",
