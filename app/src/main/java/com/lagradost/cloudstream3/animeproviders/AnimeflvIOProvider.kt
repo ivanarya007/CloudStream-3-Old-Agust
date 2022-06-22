@@ -11,7 +11,7 @@ import kotlin.collections.ArrayList
 class AnimeflvIOProvider:MainAPI() {
     override var mainUrl = "https://animeflv.io" //Also scrapes from animeid.to
     override var name = "Animeflv.io"
-    override val lang = "es"
+    override var lang = "es"
     override val hasMainPage = true
     override val hasChromecastSupport = true
     override val hasDownloadSupport = true
@@ -76,12 +76,12 @@ class AnimeflvIOProvider:MainAPI() {
             url,
             headers = headers
         ).document
-         return document.select(".item-pelicula.pull-left").map {
+        return document.select(".item-pelicula.pull-left").map {
             val title = it.selectFirst("div.item-detail p")?.text() ?: ""
             val href = fixUrl(it.selectFirst("a")?.attr("href") ?: "")
             var image = it.selectFirst("figure img")?.attr("src") ?: ""
             val isMovie = href.contains("/pelicula/")
-             if (image.contains("/static/img/picture.png")) { image = ""}
+            if (image.contains("/static/img/picture.png")) { image = ""}
             if (isMovie) {
                 MovieSearchResponse(
                     title,
@@ -114,7 +114,7 @@ class AnimeflvIOProvider:MainAPI() {
         val episodes = soup.select(".item-season-episodes a").map { li ->
             val href = fixUrl(li.selectFirst("a")?.attr("href") ?: "")
             val name = li.selectFirst("a")?.text() ?: ""
-           Episode(
+            Episode(
                 href, name,
             )
         }.reversed()
@@ -154,7 +154,7 @@ class AnimeflvIOProvider:MainAPI() {
                     null,
                     genre,
                     duration.toString().toIntOrNull(),
-                    )
+                )
             }
             else -> null
         }

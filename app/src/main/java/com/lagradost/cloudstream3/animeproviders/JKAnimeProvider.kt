@@ -22,7 +22,7 @@ class JKAnimeProvider : MainAPI() {
 
     override var mainUrl = "https://jkanime.net"
     override var name = "JKAnime"
-    override val lang = "es"
+    override var lang = "es"
     override val hasMainPage = true
     override val hasChromecastSupport = true
     override val hasDownloadSupport = true
@@ -47,7 +47,7 @@ class JKAnimeProvider : MainAPI() {
                 app.get(mainUrl).document.select(".listadoanime-home a.bloqq").map {
                     val title = it.selectFirst("h5")?.text()
                     val dubstat =if (title!!.contains("Latino") || title.contains("Castellano"))
-                            DubStatus.Dubbed else DubStatus.Subbed
+                        DubStatus.Dubbed else DubStatus.Subbed
                     val poster = it.selectFirst(".anime__sidebar__comment__item__pic img")?.attr("src") ?: ""
                     val epRegex = Regex("/(\\d+)/|/especial/|/ova/")
                     val url = it.attr("href").replace(epRegex, "")
@@ -110,11 +110,11 @@ class JKAnimeProvider : MainAPI() {
     override suspend fun search(query: String): List<SearchResponse> {
         val main = app.get("$mainUrl/ajax/ajax_search/?q=$query").text
         val json = parseJson<MainSearch>(main)
-       return json.animes.map {
+        return json.animes.map {
             val title = it.title
             val href = "$mainUrl/${it.slug}"
             val image = "https://cdn.jkanime.net/assets/images/animes/image/${it.slug}.jpg"
-              AnimeSearchResponse(
+            AnimeSearchResponse(
                 title,
                 href,
                 this.name,
@@ -162,13 +162,13 @@ class JKAnimeProvider : MainAPI() {
         @JsonProperty("file") val file: String?
     )
 
-  private fun streamClean(
-      name: String,
-      url: String,
-      referer: String,
-      quality: String?,
-      callback: (ExtractorLink) -> Unit,
-      m3u8: Boolean
+    private fun streamClean(
+        name: String,
+        url: String,
+        referer: String,
+        quality: String?,
+        callback: (ExtractorLink) -> Unit,
+        m3u8: Boolean
     ): Boolean {
         callback(
             ExtractorLink(
@@ -203,40 +203,40 @@ class JKAnimeProvider : MainAPI() {
                         val doc = app.get(link, referer = data).document
                         val gsplaykey = doc.select("form input[value]").attr("value")
                         val postgsplay = app.post("$mainUrl/gsplay/redirect_post.php",
-                        headers = mapOf(
-                            "Host" to "jkanime.net",
-                            "User-Agent" to USER_AGENT,
-                            "Accept" to "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-                            "Accept-Language" to "en-US,en;q=0.5",
-                            "Referer" to link,
-                            "Content-Type" to "application/x-www-form-urlencoded",
-                            "Origin" to "https://jkanime.net",
-                            "DNT" to "1",
-                            "Connection" to "keep-alive",
-                            "Upgrade-Insecure-Requests" to "1",
-                            "Sec-Fetch-Dest" to "iframe",
-                            "Sec-Fetch-Mode" to "navigate",
-                            "Sec-Fetch-Site" to "same-origin",
-                            "TE" to "trailers",
-                            "Pragma" to "no-cache",
-                            "Cache-Control" to "no-cache",),
-                        data = mapOf(Pair("data",gsplaykey)),
-                        allowRedirects = false).okhttpResponse.headers.values("location").apmap { loc ->
-                            val postkey = loc.replace("/gsplay/player.html#","")
-                            val nozomitext = app.post("$mainUrl/gsplay/api.php",
                             headers = mapOf(
                                 "Host" to "jkanime.net",
                                 "User-Agent" to USER_AGENT,
-                                "Accept" to "application/json, text/javascript, */*; q=0.01",
+                                "Accept" to "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
                                 "Accept-Language" to "en-US,en;q=0.5",
-                                "Content-Type" to "application/x-www-form-urlencoded; charset=UTF-8",
-                                "X-Requested-With" to "XMLHttpRequest",
+                                "Referer" to link,
+                                "Content-Type" to "application/x-www-form-urlencoded",
                                 "Origin" to "https://jkanime.net",
                                 "DNT" to "1",
                                 "Connection" to "keep-alive",
-                                "Sec-Fetch-Dest" to "empty",
-                                "Sec-Fetch-Mode" to "cors",
-                                "Sec-Fetch-Site" to "same-origin",),
+                                "Upgrade-Insecure-Requests" to "1",
+                                "Sec-Fetch-Dest" to "iframe",
+                                "Sec-Fetch-Mode" to "navigate",
+                                "Sec-Fetch-Site" to "same-origin",
+                                "TE" to "trailers",
+                                "Pragma" to "no-cache",
+                                "Cache-Control" to "no-cache",),
+                            data = mapOf(Pair("data",gsplaykey)),
+                            allowRedirects = false).okhttpResponse.headers.values("location").apmap { loc ->
+                            val postkey = loc.replace("/gsplay/player.html#","")
+                            val nozomitext = app.post("$mainUrl/gsplay/api.php",
+                                headers = mapOf(
+                                    "Host" to "jkanime.net",
+                                    "User-Agent" to USER_AGENT,
+                                    "Accept" to "application/json, text/javascript, */*; q=0.01",
+                                    "Accept-Language" to "en-US,en;q=0.5",
+                                    "Content-Type" to "application/x-www-form-urlencoded; charset=UTF-8",
+                                    "X-Requested-With" to "XMLHttpRequest",
+                                    "Origin" to "https://jkanime.net",
+                                    "DNT" to "1",
+                                    "Connection" to "keep-alive",
+                                    "Sec-Fetch-Dest" to "empty",
+                                    "Sec-Fetch-Mode" to "cors",
+                                    "Sec-Fetch-Site" to "same-origin",),
                                 data = mapOf(Pair("v",postkey)),
                                 allowRedirects = false
                             ).text
@@ -263,10 +263,10 @@ class JKAnimeProvider : MainAPI() {
                         }
                     }
                     if (link.contains("jkmedia")) {
-                       app.get(link, referer = data, allowRedirects = false).okhttpResponse.headers.values("location").apmap { xtremeurl ->
-                           val namex = "Xtreme S"
-                           streamClean(namex, xtremeurl, "", null, callback, xtremeurl.contains(".m3u8"))
-                       }
+                        app.get(link, referer = data, allowRedirects = false).okhttpResponse.headers.values("location").apmap { xtremeurl ->
+                            val namex = "Xtreme S"
+                            streamClean(namex, xtremeurl, "", null, callback, xtremeurl.contains(".m3u8"))
+                        }
                     }
                 }
             }

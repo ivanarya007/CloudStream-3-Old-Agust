@@ -15,12 +15,12 @@ class MundoDonghuaProvider : MainAPI() {
 
     override var mainUrl = "https://www.mundodonghua.com"
     override var name = "MundoDonghua"
-    override val lang = "es"
+    override var lang = "es"
     override val hasMainPage = true
     override val hasChromecastSupport = true
     override val hasDownloadSupport = true
     override val supportedTypes = setOf(
-        TvType.Donghua,
+        TvType.Anime,
     )
 
     override suspend fun getMainPage(): HomePageResponse {
@@ -55,7 +55,7 @@ class MundoDonghuaProvider : MainAPI() {
                     title,
                     fixUrl(it.selectFirst("a")?.attr("href") ?: ""),
                     this.name,
-                    TvType.Donghua,
+                    TvType.Anime,
                     fixUrl(poster),
                     null,
                     if (title.contains("Latino") || title.contains("Castellano")) EnumSet.of(
@@ -73,21 +73,21 @@ class MundoDonghuaProvider : MainAPI() {
 
     override suspend fun search(query: String): List<SearchResponse> {
         return app.get("$mainUrl/busquedas/$query", timeout = 120).document.select(".col-xs-4").map {
-                val title = it.selectFirst(".fs-14")?.text() ?: ""
-                val href = fixUrl(it.selectFirst("a")?.attr("href") ?: "")
-                val image = it.selectFirst(".fit-1 img")?.attr("src")
-                AnimeSearchResponse(
-                    title,
-                    href,
-                    this.name,
-                    TvType.Donghua,
-                    fixUrl(image ?: ""),
-                    null,
-                    if (title.contains("Latino") || title.contains("Castellano")) EnumSet.of(
-                        DubStatus.Dubbed
-                    ) else EnumSet.of(DubStatus.Subbed),
-                )
-            }
+            val title = it.selectFirst(".fs-14")?.text() ?: ""
+            val href = fixUrl(it.selectFirst("a")?.attr("href") ?: "")
+            val image = it.selectFirst(".fit-1 img")?.attr("src")
+            AnimeSearchResponse(
+                title,
+                href,
+                this.name,
+                TvType.Anime,
+                fixUrl(image ?: ""),
+                null,
+                if (title.contains("Latino") || title.contains("Castellano")) EnumSet.of(
+                    DubStatus.Dubbed
+                ) else EnumSet.of(DubStatus.Subbed),
+            )
+        }
     }
 
     override suspend fun load(url: String): LoadResponse {
@@ -107,7 +107,7 @@ class MundoDonghuaProvider : MainAPI() {
             Episode(fixUrl(link), name)
         }.reversed()
         val typeinfo = doc.select("div.row div.col-md-6.pl-15 p.fc-dark").text()
-        val tvType = if (typeinfo.contains(Regex("Tipo.*Pel.cula"))) TvType.AnimeMovie else TvType.Donghua
+        val tvType = if (typeinfo.contains(Regex("Tipo.*Pel.cula"))) TvType.AnimeMovie else TvType.Anime
         return newAnimeLoadResponse(title, url, tvType) {
             posterUrl = poster
             addEpisodes(DubStatus.Subbed, episodes)
@@ -128,25 +128,25 @@ class MundoDonghuaProvider : MainAPI() {
         @JsonProperty("default") val default: String?
     )
 
-   private fun cleanStream(
-       name: String,
-       url: String,
-       qualityString: String?,
-       callback: (ExtractorLink) -> Unit,
-       isM3U8: Boolean
-   ): Boolean {
-       callback(
-           ExtractorLink(
-               name,
-               name,
-               url,
-               "",
-               getQualityFromName(qualityString),
-               isM3U8
-           )
-       )
-       return true
-   }
+    private fun cleanStream(
+        name: String,
+        url: String,
+        qualityString: String?,
+        callback: (ExtractorLink) -> Unit,
+        isM3U8: Boolean
+    ): Boolean {
+        callback(
+            ExtractorLink(
+                name,
+                name,
+                url,
+                "",
+                getQualityFromName(qualityString),
+                isM3U8
+            )
+        )
+        return true
+    }
 
 
     override suspend fun loadLinks(
@@ -194,7 +194,7 @@ class MundoDonghuaProvider : MainAPI() {
                         }
                     }
                     if (unpack.contains("asura_player")) {
-                    val asuraRegex = Regex("(asura_player.*type)")
+                        val asuraRegex = Regex("(asura_player.*type)")
                         asuraRegex.findAll(unpack).map {
                             it.value
                         }.toList().apmap { protea ->

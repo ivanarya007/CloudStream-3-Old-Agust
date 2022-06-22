@@ -17,8 +17,10 @@ import com.lagradost.cloudstream3.mvvm.logError
 import com.lagradost.cloudstream3.syncproviders.AccountManager.Companion.aniListApi
 import com.lagradost.cloudstream3.syncproviders.AccountManager.Companion.malApi
 import com.lagradost.cloudstream3.ui.player.SubtitleData
+import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.isTvSettings
 import com.lagradost.cloudstream3.utils.AppUtils.toJson
 import com.lagradost.cloudstream3.utils.ExtractorLink
+import com.lagradost.cloudstream3.utils.loadExtractor
 import okhttp3.Interceptor
 import java.text.SimpleDateFormat
 import java.util.*
@@ -39,76 +41,101 @@ object APIHolder {
 
     private const val defProvider = 0
 
-    val allProviders by lazy {
+    val allProviders =
         arrayListOf(
-            // HenaojaraProvider(), removed due to scraping providers that are already implemented
-            AkwamProvider(),
-            AllAnimeProvider(),
-            AnimekisaProvider(),
-            AllMoviesForYouProvider(),
-            AnimefenixProvider(),
-            AnimeFlickProvider(),
-            AnimeflvIOProvider(),
-            AnimeflvnetProvider(),
-            AnimeIDProvider(),
-            AnimeonlineProvider(),
-            //AnimePaheProvider(),
-            AsianLoadProvider(),
-            BflixProvider(),
-            FmoviesToProvider(),
+            // Movie providers
+            ElifilmsProvider(),
+            EstrenosDoramasProvider(),
+            PelisplusProvider(),
+            PelisplusHDProvider(),
+            PeliSmartProvider(),
+            MeloMovieProvider(), // Captcha for links
+            DoramasYTProvider(),
             CinecalidadProvider(),
             CuevanaProvider(),
-            ComamosRamenProvider(),
-            DoramasYTProvider(),
-            DramaSeeProvider(),
-            DubbedAnimeProvider(),
-            ElifilmsProvider(),
             EntrepeliculasyseriesProvider(),
-            EstrenosDoramasProvider(),
-            FilmanProvider(),
-            FrenchStreamProvider(),
-            GogoanimeProvider(),
-            IHaveNoTvProvider(), // Documentaries provider
-            KdramaHoodProvider(),
-            KrunchyProvider(),
-            MonoschinosProvider(),
-            MundoDonghuaProvider(),
-            NineAnimeProvider(),
             PelisflixProvider(),
-            PeliSmartProvider(),
-            PelisplusHDProvider(),
-            PelisplusSOProvider(),
-            PinoyHDXyzProvider(),
-            PinoyMoviePediaProvider(),
-            PinoyMoviesEsProvider(),
             SeriesflixProvider(),
-            SflixProvider(),
-            TenshiProvider(),
-            TrailersTwoProvider(),
-            TioAnimeProvider(),
+            IHaveNoTvProvider(), // Documentaries provider
+            VMoveeProvider(),
+            AllMoviesForYouProvider(),
+            VidEmbedProvider(),
             VfFilmProvider(),
             VfSerieProvider(),
-            VidEmbedProvider(),
-            VMoveeProvider(),
-            WatchAsianProvider(),
-            WatchCartoonOnlineProvider(),
-            WcoProvider(),
-            JKAnimeProvider(),
-            ZoroProvider(),
-            YesMoviesProvider(), //Sflix mirror
-            HDTodayProvider(),
-            MoviesJoyProvider(),
-            MyflixerToProvider(),
-            FmoviesAPPProvider(), //Sflix mirror
-            SoaptwoDayProvider(),
+            FrenchStreamProvider(),
+            AsianLoadProvider(),
+            AsiaFlixProvider(), // restricted
+            BflixProvider(),
+            FmoviesToProvider(),
+            SflixProProvider(),
+            FilmanProvider(),
+            SflixProvider(),
+            DopeboxProvider(),
+            SolarmovieProvider(),
+            PinoyMoviePediaProvider(),
+            PinoyHDXyzProvider(),
+            PinoyMoviesEsProvider(),
+            TrailersTwoProvider(),
             TwoEmbedProvider(),
-            ApiMDBProvider(),
-            TheFlixToProvider(),
-            NginxProvider(),
+            DramaSeeProvider(),
+            WatchAsianProvider(),
+            DramaidProvider(),
+            KdramaHoodProvider(),
+            AkwamProvider(),
+            MyCimaProvider(),
             EgyBestProvider(),
-            FireAnimeProvider(),
+            FaselHDProvider(),
+            SoaptwoDayProvider(),
+            HDMProvider(),// disabled due to cloudflare
+            TheFlixToProvider(),
+            StreamingcommunityProvider(),
+            TantifilmProvider(),
+            CineblogProvider(),
+            AltadefinizioneProvider(),
+            FilmpertuttiProvider(),
+            HDMovie5(),
+            RebahinProvider(),
+            LayarKacaProvider(),
+            HDTodayProvider(),
+
+            // Metadata providers
+            //TmdbProvider(),
+            CrossTmdbProvider(),
+            ApiMDBProvider(),
+
+            // Anime providers
+            WatchCartoonOnlineProvider(),
+            GogoanimeProvider(),
+            AllAnimeProvider(),
+            AnimekisaProvider(),
+            //ShiroProvider(), // v2 fucked me
+            AnimeFlickProvider(),
+            AnimeflvnetProvider(),
+            AnimefenixProvider(),
+            AnimeflvIOProvider(),
+            JKAnimeProvider(),
+            TenshiProvider(),
+            WcoProvider(),
+            AnimePaheProvider(),
+            DreamSubProvider(),
+            NineAnimeProvider(),
+            AnimeWorldProvider(),
+            ZoroProvider(),
+            DubbedAnimeProvider(),
+            MonoschinosProvider(),
+            MundoDonghuaProvider(),
+            KawaiifuProvider(), // disabled due to cloudflare
+            NeonimeProvider(),
+            KuramanimeProvider(),
+            OploverzProvider(),
+            GomunimeProvider(),
+            NontonAnimeIDProvider(),
+            KuronimeProvider(),
+            //MultiAnimeProvider(),
+            NginxProvider(),
+            OlgplyProvider(),
         )
-    }
+
 
     fun initAll() {
         for (api in allProviders) {
@@ -118,7 +145,7 @@ object APIHolder {
     }
 
     var apis: List<MainAPI> = arrayListOf()
-    private var apiMap: Map<String, Int>? = null
+    var apiMap: Map<String, Int>? = null
 
     private fun initMap() {
         if (apiMap == null)
@@ -132,7 +159,6 @@ object APIHolder {
     fun getApiFromNameNull(apiName: String?): MainAPI? {
         if (apiName == null) return null
         initMap()
-
         return apiMap?.get(apiName)?.let { apis.getOrNull(it) }
     }
 
@@ -145,12 +171,12 @@ object APIHolder {
         return null
     }
 
-    fun getLoadResponseIdFromUrl(url : String, apiName: String) : Int {
+    fun getLoadResponseIdFromUrl(url: String, apiName: String): Int {
         return url.replace(getApiFromName(apiName).mainUrl, "").replace("/", "").hashCode()
     }
 
     fun LoadResponse.getId(): Int {
-        return getLoadResponseIdFromUrl(url,apiName)
+        return getLoadResponseIdFromUrl(url, apiName)
     }
 
     /**
@@ -246,7 +272,7 @@ object APIHolder {
     fun Context.getApiProviderLangSettings(): HashSet<String> {
         val settingsManager = PreferenceManager.getDefaultSharedPreferences(this)
         val hashSet = HashSet<String>()
-        hashSet.add("es") // def is only en
+        hashSet.add("en") // def is only en
         val list = settingsManager.getStringSet(
             this.getString(R.string.provider_lang_key),
             hashSet.toMutableSet()
@@ -274,6 +300,16 @@ object APIHolder {
         return realSet
     }
 
+    fun Context.updateHasTrailers() {
+        LoadResponse.isTrailersEnabled = getHasTrailers()
+    }
+
+    private fun Context.getHasTrailers(): Boolean {
+        if (this.isTvSettings()) return false
+        val settingsManager = PreferenceManager.getDefaultSharedPreferences(this)
+        return settingsManager.getBoolean(this.getString(R.string.show_trailers_key), true)
+    }
+
     fun Context.filterProviderByPreferredMedia(hasHomePageIsRequired: Boolean = true): List<MainAPI> {
         val settingsManager = PreferenceManager.getDefaultSharedPreferences(this)
         val currentPrefMedia =
@@ -285,9 +321,9 @@ object APIHolder {
             allApis
         } else {
             // Filter API depending on preferred media type
-            val listEnumAnime = listOf(TvType.Anime, TvType.AnimeMovie, TvType.OVA, TvType.Donghua)
+            val listEnumAnime = listOf(TvType.Anime, TvType.AnimeMovie, TvType.OVA)
             val listEnumMovieTv =
-                listOf(TvType.Movie, TvType.TvSeries, TvType.Cartoon, TvType.AsianDrama, TvType.Mirror)
+                listOf(TvType.Movie, TvType.TvSeries, TvType.Cartoon, TvType.AsianDrama)
             val listEnumDoc = listOf(TvType.Documentary)
             val mediaTypeList = when (currentPrefMedia) {
                 2 -> listEnumAnime
@@ -308,7 +344,7 @@ object APIHolder {
  */
 const val PROVIDER_STATUS_KEY = "PROVIDER_STATUS_KEY"
 const val PROVIDER_STATUS_URL =
-    "https://raw.githubusercontent.com/Stormunblessed/CloudStream-3/master/docs/providers.json"
+    "https://raw.githubusercontent.com/LagradOst/CloudStream-3/master/docs/providers.json"
 const val PROVIDER_STATUS_BETA_ONLY = 3
 const val PROVIDER_STATUS_SLOW = 2
 const val PROVIDER_STATUS_OK = 1
@@ -334,20 +370,21 @@ abstract class MainAPI {
     }
 
     fun overrideWithNewData(data: ProvidersInfoJson) {
+        if (!canBeOverridden) return
         this.name = data.name
         if (data.url.isNotBlank() && data.url != "NONE")
             this.mainUrl = data.url
         this.storedCredentials = data.credentials
     }
 
-
     open var name = "NONE"
     open var mainUrl = "NONE"
     open var storedCredentials: String? = null
+    open var canBeOverridden: Boolean = true
 
     //open val uniqueId : Int by lazy { this.name.hashCode() } // in case of duplicate providers you can have a shared id
 
-    open val lang = "en" // ISO_639_1 check SubtitleHelper
+    open var lang = "en" // ISO_639_1 check SubtitleHelper
 
     /**If link is stored in the "data" string, so links can be instantly loaded*/
     open val instantLinkLoading = false
@@ -370,9 +407,6 @@ abstract class MainAPI {
         TvType.Cartoon,
         TvType.Anime,
         TvType.OVA,
-        TvType.Mirror,
-        TvType.Donghua,
-        TvType.AsianDrama
     )
 
     open val vpnStatus = VPNStatus.None
@@ -459,12 +493,6 @@ fun base64Encode(array: ByteArray): String {
 
 class ErrorLoadingException(message: String? = null) : Exception(message)
 
-fun parseRating(ratingString: String?): Int? {
-    if (ratingString == null) return null
-    val floatRating = ratingString.toFloatOrNull() ?: return null
-    return (floatRating * 10).toInt()
-}
-
 fun MainAPI.fixUrlNull(url: String?): String? {
     if (url.isNullOrEmpty()) {
         return null
@@ -544,10 +572,8 @@ enum class ShowStatus {
 }
 
 enum class DubStatus(val id: Int) {
+    Dubbed(1),
     Subbed(0),
-    PremiumSub(1),
-    Dubbed(2),
-    PremiumDub(3),
 }
 
 enum class TvType {
@@ -559,9 +585,7 @@ enum class TvType {
     OVA,
     Torrent,
     Documentary,
-    Mirror,
-    Donghua,
-    AsianDrama
+    AsianDrama,
 }
 
 // IN CASE OF FUTURE ANIME MOVIE OR SMTH
@@ -571,9 +595,8 @@ fun TvType.isMovieType(): Boolean {
 
 // returns if the type has an anime opening
 fun TvType.isAnimeOp(): Boolean {
-    return this == TvType.Anime || this == TvType.OVA || this == TvType.Donghua
+    return this == TvType.Anime || this == TvType.OVA
 }
-
 
 data class SubtitleFile(val lang: String, val url: String)
 
@@ -632,6 +655,8 @@ fun getQualityFromString(string: String?): SearchQuality? {
         "dvdscr" -> SearchQuality.DVD
         "blueray" -> SearchQuality.BlueRay
         "bluray" -> SearchQuality.BlueRay
+        "blu" -> SearchQuality.BlueRay
+        "fhd" -> SearchQuality.HD
         "br" -> SearchQuality.BlueRay
         "standard" -> SearchQuality.SD
         "sd" -> SearchQuality.SD
@@ -762,12 +787,12 @@ fun AnimeSearchResponse.addDubStatus(isDub: Boolean, episodes: Int? = null) {
 }
 
 fun AnimeSearchResponse.addDub(episodes: Int?) {
-    if(episodes == null || episodes <= 0) return
+    if (episodes == null || episodes <= 0) return
     addDubStatus(DubStatus.Dubbed, episodes)
 }
 
 fun AnimeSearchResponse.addSub(episodes: Int?) {
-    if(episodes == null || episodes <= 0) return
+    if (episodes == null || episodes <= 0) return
     addDubStatus(DubStatus.Subbed, episodes)
 }
 
@@ -839,10 +864,10 @@ interface LoadResponse {
     var posterUrl: String?
     var year: Int?
     var plot: String?
-    var rating: Int? // 1-1000
+    var rating: Int? // 0-10000
     var tags: List<String>?
     var duration: Int? // in minutes
-    var trailers: List<String>?
+    var trailers: List<ExtractorLink>?
     var recommendations: List<SearchResponse>?
     var actors: List<ActorData>?
     var comingSoon: Boolean
@@ -852,6 +877,7 @@ interface LoadResponse {
     companion object {
         private val malIdPrefix = malApi.idPrefix
         private val aniListIdPrefix = aniListApi.idPrefix
+        var isTrailersEnabled = true
 
         @JvmName("addActorNames")
         fun LoadResponse.addActors(actors: List<String>?) {
@@ -873,6 +899,14 @@ interface LoadResponse {
             this.actors = actors?.map { actor -> ActorData(actor) }
         }
 
+        fun LoadResponse.getMalId(): String? {
+            return this.syncData[malIdPrefix]
+        }
+
+        fun LoadResponse.getAniListId(): String? {
+            return this.syncData[aniListIdPrefix]
+        }
+
         fun LoadResponse.addMalId(id: Int?) {
             this.syncData[malIdPrefix] = (id ?: return).toString()
         }
@@ -885,16 +919,38 @@ interface LoadResponse {
             addImdbId(imdbUrlToIdNullable(url))
         }
 
-        /**better to set trailers directly instead of calling this multiple times*/
-        fun LoadResponse.addTrailer(trailerUrl: String?) {
-            if (trailerUrl == null) return
+        /**better to call addTrailer with mutible trailers directly instead of calling this multiple times*/
+        suspend fun LoadResponse.addTrailer(trailerUrl: String?, referer: String? = null) {
+            if (!isTrailersEnabled || trailerUrl == null) return
+            try {
+                val newTrailers = loadExtractor(trailerUrl, referer)
+                addTrailer(newTrailers)
+            } catch (e: Exception) {
+                logError(e)
+            }
+        }
+
+        fun LoadResponse.addTrailer(newTrailers: List<ExtractorLink>) {
             if (this.trailers == null) {
-                this.trailers = listOf(trailerUrl)
+                this.trailers = newTrailers
             } else {
-                val update = this.trailers?.toMutableList()
-                update?.add(trailerUrl)
+                val update = this.trailers?.toMutableList() ?: mutableListOf()
+                update.addAll(newTrailers)
                 this.trailers = update
             }
+        }
+
+        suspend fun LoadResponse.addTrailer(trailerUrls: List<String>?, referer: String? = null) {
+            if (!isTrailersEnabled || trailerUrls == null) return
+            val newTrailers = trailerUrls.apmap { trailerUrl ->
+                try {
+                    loadExtractor(trailerUrl, referer)
+                } catch (e: Exception) {
+                    logError(e)
+                    emptyList()
+                }
+            }.flatten().distinct()
+            addTrailer(newTrailers)
         }
 
         fun LoadResponse.addImdbId(id: String?) {
@@ -918,7 +974,7 @@ interface LoadResponse {
         }
 
         fun LoadResponse.addRating(value: Int?) {
-            if (value ?: return < 0 || value > 1000) {
+            if ((value ?: return) < 0 || value > 10000) {
                 return
             }
             this.rating = value
@@ -948,7 +1004,7 @@ interface LoadResponse {
 
 fun LoadResponse?.isEpisodeBased(): Boolean {
     if (this == null) return false
-    return (this is AnimeLoadResponse || this is TvSeriesLoadResponse) && this.type.isEpisodeBased()
+    return this is EpisodeResponse && this.type.isEpisodeBased()
 }
 
 fun LoadResponse?.isAnimeBased(): Boolean {
@@ -958,7 +1014,18 @@ fun LoadResponse?.isAnimeBased(): Boolean {
 
 fun TvType?.isEpisodeBased(): Boolean {
     if (this == null) return false
-    return (this == TvType.TvSeries || this == TvType.Anime || this == TvType.AsianDrama || this == TvType.Donghua || this == TvType.Mirror)
+    return (this == TvType.TvSeries || this == TvType.Anime)
+}
+
+
+data class NextAiring(
+    val episode: Int,
+    val unixTime: Long,
+)
+
+interface EpisodeResponse {
+    var showStatus: ShowStatus?
+    var nextAiring: NextAiring?
 }
 
 data class TorrentLoadResponse(
@@ -974,7 +1041,7 @@ data class TorrentLoadResponse(
     override var rating: Int? = null,
     override var tags: List<String>? = null,
     override var duration: Int? = null,
-    override var trailers: List<String>? = null,
+    override var trailers: List<ExtractorLink>? = null,
     override var recommendations: List<SearchResponse>? = null,
     override var actors: List<ActorData>? = null,
     override var comingSoon: Boolean = false,
@@ -994,7 +1061,7 @@ data class AnimeLoadResponse(
     override var year: Int? = null,
 
     var episodes: MutableMap<DubStatus, List<Episode>> = mutableMapOf(),
-    var showStatus: ShowStatus? = null,
+    override var showStatus: ShowStatus? = null,
 
     override var plot: String? = null,
     override var tags: List<String>? = null,
@@ -1002,25 +1069,26 @@ data class AnimeLoadResponse(
 
     override var rating: Int? = null,
     override var duration: Int? = null,
-    override var trailers: List<String>? = null,
+    override var trailers: List<ExtractorLink>? = null,
     override var recommendations: List<SearchResponse>? = null,
     override var actors: List<ActorData>? = null,
     override var comingSoon: Boolean = false,
     override var syncData: MutableMap<String, String> = mutableMapOf(),
     override var posterHeaders: Map<String, String>? = null,
-) : LoadResponse
+    override var nextAiring: NextAiring? = null,
+) : LoadResponse, EpisodeResponse
 
 fun AnimeLoadResponse.addEpisodes(status: DubStatus, episodes: List<Episode>?) {
     if (episodes == null) return
     this.episodes[status] = episodes
 }
 
-fun MainAPI.newAnimeLoadResponse(
+suspend fun MainAPI.newAnimeLoadResponse(
     name: String,
     url: String,
     type: TvType,
     comingSoonIfNone: Boolean = true,
-    initializer: AnimeLoadResponse.() -> Unit = { },
+    initializer: suspend AnimeLoadResponse.() -> Unit = { },
 ): AnimeLoadResponse {
     val builder = AnimeLoadResponse(name = name, url = url, apiName = this.name, type = type)
     builder.initializer()
@@ -1049,7 +1117,7 @@ data class MovieLoadResponse(
     override var rating: Int? = null,
     override var tags: List<String>? = null,
     override var duration: Int? = null,
-    override var trailers: List<String>? = null,
+    override var trailers: List<ExtractorLink>? = null,
     override var recommendations: List<SearchResponse>? = null,
     override var actors: List<ActorData>? = null,
     override var comingSoon: Boolean = false,
@@ -1057,12 +1125,12 @@ data class MovieLoadResponse(
     override var posterHeaders: Map<String, String>? = null,
 ) : LoadResponse
 
-fun <T> MainAPI.newMovieLoadResponse(
+suspend fun <T> MainAPI.newMovieLoadResponse(
     name: String,
     url: String,
     type: TvType,
     data: T?,
-    initializer: MovieLoadResponse.() -> Unit = { }
+    initializer: suspend MovieLoadResponse.() -> Unit = { }
 ): MovieLoadResponse {
     // just in case
     if (data is String) return newMovieLoadResponse(
@@ -1085,12 +1153,12 @@ fun <T> MainAPI.newMovieLoadResponse(
     return builder
 }
 
-fun MainAPI.newMovieLoadResponse(
+suspend fun MainAPI.newMovieLoadResponse(
     name: String,
     url: String,
     type: TvType,
     dataUrl: String,
-    initializer: MovieLoadResponse.() -> Unit = { }
+    initializer: suspend MovieLoadResponse.() -> Unit = { }
 ): MovieLoadResponse {
     val builder = MovieLoadResponse(
         name = name,
@@ -1166,24 +1234,25 @@ data class TvSeriesLoadResponse(
     override var year: Int? = null,
     override var plot: String? = null,
 
-    var showStatus: ShowStatus? = null,
+    override var showStatus: ShowStatus? = null,
     override var rating: Int? = null,
     override var tags: List<String>? = null,
     override var duration: Int? = null,
-    override var trailers: List<String>? = null,
+    override var trailers: List<ExtractorLink>? = null,
     override var recommendations: List<SearchResponse>? = null,
     override var actors: List<ActorData>? = null,
     override var comingSoon: Boolean = false,
     override var syncData: MutableMap<String, String> = mutableMapOf(),
     override var posterHeaders: Map<String, String>? = null,
-) : LoadResponse
+    override var nextAiring: NextAiring? = null,
+) : LoadResponse, EpisodeResponse
 
-fun MainAPI.newTvSeriesLoadResponse(
+suspend fun MainAPI.newTvSeriesLoadResponse(
     name: String,
     url: String,
     type: TvType,
     episodes: List<Episode>,
-    initializer: TvSeriesLoadResponse.() -> Unit = { }
+    initializer: suspend TvSeriesLoadResponse.() -> Unit = { }
 ): TvSeriesLoadResponse {
     val builder = TvSeriesLoadResponse(
         name = name,

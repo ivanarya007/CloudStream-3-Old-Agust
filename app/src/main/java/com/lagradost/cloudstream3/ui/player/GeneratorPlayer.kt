@@ -375,8 +375,10 @@ class GeneratorPlayer : FullScreenPlayer() {
         setSubtitles(subtitleData)
 
         // this is used instead of observe, because observe is too slow
-        val subs = currentSubs.toMutableSet()
-        subs.add(subtitleData)
+        val subs = currentSubs + subtitleData
+
+        // Save current time as to not reset player to 00:00
+        player.saveData()
         player.setActiveSubtitles(subs)
         player.reloadPlayer(ctx)
 
@@ -516,7 +518,7 @@ class GeneratorPlayer : FullScreenPlayer() {
 
                 val subsArrayAdapter =
                     ArrayAdapter<String>(ctx, R.layout.sort_bottom_single_choice)
-                subsArrayAdapter.add(getString(R.string.no_subtitles))
+                subsArrayAdapter.add(ctx.getString(R.string.no_subtitles))
                 subsArrayAdapter.addAll(currentSubtitles.map { it.name })
 
                 subtitleList.adapter = subsArrayAdapter
@@ -774,11 +776,11 @@ class GeneratorPlayer : FullScreenPlayer() {
     private fun autoSelectFromSettings(): Boolean {
         // auto select subtitle based of settings
         val langCode = preferredAutoSelectSubtitles
-
         if (!langCode.isNullOrEmpty() && player.getCurrentPreferredSubtitle() == null) {
             getAutoSelectSubtitle(currentSubs, settings = true, downloads = false)?.let { sub ->
                 context?.let { ctx ->
                     if (setSubtitles(sub)) {
+                        player.saveData()
                         player.reloadPlayer(ctx)
                         player.handleEvent(CSPlayerEvent.Play)
                         return true
@@ -794,6 +796,7 @@ class GeneratorPlayer : FullScreenPlayer() {
             getAutoSelectSubtitle(currentSubs, settings = false, downloads = true)?.let { sub ->
                 context?.let { ctx ->
                     if (setSubtitles(sub)) {
+                        player.saveData()
                         player.reloadPlayer(ctx)
                         player.handleEvent(CSPlayerEvent.Play)
                         return true
@@ -835,20 +838,22 @@ class GeneratorPlayer : FullScreenPlayer() {
                 tvType = meta.tvType
             }
         }
-
-        //Generate video title
-        val playerVideoTitle = if (headerName != null) {
-            (headerName +
-                    if (tvType.isEpisodeBased() && episode != null)
-                        if (season == null)
-                            " - ${getString(R.string.episode)} $episode"
-                        else
-                            " \"${getString(R.string.season_short)}${season}:${getString(R.string.episode_short)}${episode}\""
-                    else "") + if (subName.isNullOrBlank() || subName == headerName) "" else " - $subName"
-        } else {
-            ""
+        context?.let { ctx ->
+            //Generate video title
+            val playerVideoTitle = if (headerName != null) {
+                (headerName +
+                        if (tvType.isEpisodeBased() && episode != null)
+                            if (season == null)
+                                " - ${ctx.getString(R.string.episode)} $episode"
+                            else
+                                " \"${ctx.getString(R.string.season_short)}${season}:${ctx.getString(R.string.episode_short)}${episode}\""
+                        else "") + if (subName.isNullOrBlank() || subName == headerName) "" else " - $subName"
+            } else {
+                ""
+            }
+            return playerVideoTitle
         }
-        return playerVideoTitle
+        return ""
     }
 
 
@@ -911,8 +916,9 @@ class GeneratorPlayer : FullScreenPlayer() {
         savedInstanceState: Bundle?
     ): View? {
         // this is used instead of layout-television to follow the settings and some TV devices are not classified as TV for some reason
+        isTv = context?.isTvSettings() == true
         layout =
-            if (context?.isTvSettings() == true) R.layout.fragment_player_tv else R.layout.fragment_player
+            if (isTv) R.layout.fragment_player_tv else R.layout.fragment_player
 
         viewModel = ViewModelProvider(this)[PlayerGeneratorViewModel::class.java]
         sync = ViewModelProvider(this)[SyncViewModel::class.java]
@@ -929,8 +935,8 @@ class GeneratorPlayer : FullScreenPlayer() {
 
         context?.let { ctx ->
             val settingsManager = PreferenceManager.getDefaultSharedPreferences(ctx)
-            titleRez = settingsManager.getInt(getString(R.string.prefer_limit_title_rez_key), 3)
-            limitTitle = settingsManager.getInt(getString(R.string.prefer_limit_title_key), 0)
+            titleRez = settingsManager.getInt(ctx.getString(R.string.prefer_limit_title_rez_key), 3)
+            limitTitle = settingsManager.getInt(ctx.getString(R.string.prefer_limit_title_key), 0)
             updateForcedEncoding(ctx)
         }
 
