@@ -61,6 +61,7 @@ enum class Qualities(var value: Int) {
                 0 -> "Auto"
                 Unknown.value -> ""
                 P2160.value -> "4K"
+                null -> ""
                 else -> "${qual}p"
             }
         }
@@ -103,6 +104,19 @@ suspend fun loadExtractor(
         }
     }
     return false
+}
+
+suspend fun loadExtractor(
+    url: String,
+    referer: String? = null,
+): List<ExtractorLink> {
+    for (extractor in extractorApis) {
+        if (url.startsWith(extractor.mainUrl)) {
+            return extractor.getSafeUrl(url, referer) ?: emptyList()
+
+        }
+    }
+    return emptyList()
 }
 
 val extractorApis: Array<ExtractorApi> = arrayOf(
@@ -192,12 +206,38 @@ val extractorApis: Array<ExtractorApi> = arrayOf(
 
     YourUpload(),
     Mcloud(),
-
-    // Genericm3u8Extractor(),
-    ZplayerV2(),
+    // GenericM3U8(),
+    Jawcloud(),
     Zplayer(),
+    ZplayerV2(),
+    Upstream(),
+
+    Maxstream(),
+    Tantifilm(),
+    Userload(),
+    Supervideo(),
+    GuardareStream(),
+
+    // StreamSB.kt works
+    //  SBPlay(),
+    //  SBPlay1(),
+    //  SBPlay2(),
 
     PlayerVoxzer(),
+
+    BullStream(),
+    GMPlayer(),
+
+    Blogger(),
+    Solidfiles(),
+
+    Hxfile(),
+    KotakAnimeid(),
+    Neonime8n(),
+    Neonime7n(),
+
+    YoutubeExtractor(),
+    YoutubeShortLinkExtractor(),
 )
 
 fun getExtractorApiFromName(name: String): ExtractorApi {

@@ -11,7 +11,7 @@ import kotlin.collections.ArrayList
 class FireAnimeProvider:MainAPI() {
     override var mainUrl = "https://api.fireani.me"
     override var name = "FireAnime"
-    override val lang = "de"
+    override var lang = "de"
     override val hasMainPage = true
     override val hasChromecastSupport = true
     override val hasDownloadSupport = true

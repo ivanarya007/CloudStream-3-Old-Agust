@@ -12,7 +12,7 @@ import kotlin.collections.ArrayList
 class ComamosRamenProvider : MainAPI() {
     override var mainUrl = "https://m.comamosramen.com"
     override var name = "ComamosRamen"
-    override val lang = "es"
+    override var lang = "es"
     override val hasMainPage = true
     override val hasChromecastSupport = true
     override val hasDownloadSupport = true
@@ -61,8 +61,7 @@ class ComamosRamenProvider : MainAPI() {
     )
     override suspend fun getMainPage(): HomePageResponse {
         val items = ArrayList<HomePageList>()
-        val urls = listOf(mainUrl,
-        "https://comamosramen.com")
+        val urls = listOf("https://comamosramen.com")
         urls.apmap { url ->
             val doc = app.get(url).document
             doc.select("script[type=application/json]").map { script ->

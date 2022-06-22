@@ -11,7 +11,7 @@ import kotlin.math.E
 class AnimeonlineProvider:MainAPI() {
     override var mainUrl = "https://animeonline1.ninja"
     override var name = "Animeonline"
-    override val lang = "es"
+    override var lang = "es"
     override val hasMainPage = true
     override val hasChromecastSupport = true
     override val hasDownloadSupport = true

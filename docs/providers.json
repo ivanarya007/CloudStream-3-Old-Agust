@@ -115,7 +115,7 @@
     "ComamosRamenProvider": {
         "language": "es",
         "name": "ComamosRamen",
-        "status": 0,
+        "status": 1,
         "url": "https://m.comamosramen.com"
     },
     "CrossTmdbProvider": {

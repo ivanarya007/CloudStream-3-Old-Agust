@@ -26,6 +26,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.math.absoluteValue
 
+
 const val USER_AGENT =
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
 
@@ -46,13 +47,14 @@ object APIHolder {
             // Movie providers
             ElifilmsProvider(),
             EstrenosDoramasProvider(),
-            PelisplusProvider(),
             PelisplusHDProvider(),
+            PelisplusSOProvider(),
             PeliSmartProvider(),
             MeloMovieProvider(), // Captcha for links
             DoramasYTProvider(),
             CinecalidadProvider(),
             CuevanaProvider(),
+            ComamosRamenProvider(),
             EntrepeliculasyseriesProvider(),
             PelisflixProvider(),
             SeriesflixProvider(),
@@ -97,6 +99,11 @@ object APIHolder {
             RebahinProvider(),
             LayarKacaProvider(),
             HDTodayProvider(),
+            YesMoviesProvider(),
+            MyflixerToProvider(),
+            MoviesJoyProvider(),
+            FmoviesAPPProvider(),
+            FmoviesToProvider(),
 
             // Metadata providers
             //TmdbProvider(),
@@ -113,6 +120,7 @@ object APIHolder {
             AnimeflvnetProvider(),
             AnimefenixProvider(),
             AnimeflvIOProvider(),
+            AnimeIDProvider(),
             JKAnimeProvider(),
             TenshiProvider(),
             WcoProvider(),
@@ -125,12 +133,17 @@ object APIHolder {
             MonoschinosProvider(),
             MundoDonghuaProvider(),
             KawaiifuProvider(), // disabled due to cloudflare
+            KrunchyProvider(),
             NeonimeProvider(),
             KuramanimeProvider(),
             OploverzProvider(),
             GomunimeProvider(),
             NontonAnimeIDProvider(),
             KuronimeProvider(),
+            FireAnimeProvider(),
+            TioAnimeProvider(),
+            AnimeonlineProvider(),
+            MundoDonghuaProvider(),
             //MultiAnimeProvider(),
             NginxProvider(),
             OlgplyProvider(),
@@ -272,7 +285,7 @@ object APIHolder {
     fun Context.getApiProviderLangSettings(): HashSet<String> {
         val settingsManager = PreferenceManager.getDefaultSharedPreferences(this)
         val hashSet = HashSet<String>()
-        hashSet.add("en") // def is only en
+        hashSet.add("es") // def is only en
         val list = settingsManager.getStringSet(
             this.getString(R.string.provider_lang_key),
             hashSet.toMutableSet()
@@ -321,9 +334,9 @@ object APIHolder {
             allApis
         } else {
             // Filter API depending on preferred media type
-            val listEnumAnime = listOf(TvType.Anime, TvType.AnimeMovie, TvType.OVA)
+            val listEnumAnime = listOf(TvType.Anime, TvType.AnimeMovie, TvType.OVA, TvType.Donghua)
             val listEnumMovieTv =
-                listOf(TvType.Movie, TvType.TvSeries, TvType.Cartoon, TvType.AsianDrama)
+                listOf(TvType.Movie, TvType.TvSeries, TvType.Cartoon, TvType.AsianDrama, TvType.Mirror)
             val listEnumDoc = listOf(TvType.Documentary)
             val mediaTypeList = when (currentPrefMedia) {
                 2 -> listEnumAnime
@@ -344,7 +357,7 @@ object APIHolder {
  */
 const val PROVIDER_STATUS_KEY = "PROVIDER_STATUS_KEY"
 const val PROVIDER_STATUS_URL =
-    "https://raw.githubusercontent.com/LagradOst/CloudStream-3/master/docs/providers.json"
+    "https://raw.githubusercontent.com/Stormunblessed/CloudStream-3/master/docs/providers.json"
 const val PROVIDER_STATUS_BETA_ONLY = 3
 const val PROVIDER_STATUS_SLOW = 2
 const val PROVIDER_STATUS_OK = 1
@@ -407,6 +420,9 @@ abstract class MainAPI {
         TvType.Cartoon,
         TvType.Anime,
         TvType.OVA,
+        TvType.Mirror,
+        TvType.Donghua,
+        TvType.AsianDrama
     )
 
     open val vpnStatus = VPNStatus.None
@@ -572,8 +588,10 @@ enum class ShowStatus {
 }
 
 enum class DubStatus(val id: Int) {
-    Dubbed(1),
     Subbed(0),
+    PremiumSub(1),
+    Dubbed(2),
+    PremiumDub(3),
 }
 
 enum class TvType {
@@ -585,7 +603,9 @@ enum class TvType {
     OVA,
     Torrent,
     Documentary,
-    AsianDrama,
+    Mirror,
+    Donghua,
+    AsianDrama
 }
 
 // IN CASE OF FUTURE ANIME MOVIE OR SMTH
@@ -595,7 +615,7 @@ fun TvType.isMovieType(): Boolean {
 
 // returns if the type has an anime opening
 fun TvType.isAnimeOp(): Boolean {
-    return this == TvType.Anime || this == TvType.OVA
+    return this == TvType.Anime || this == TvType.OVA || this == TvType.Donghua
 }
 
 data class SubtitleFile(val lang: String, val url: String)
@@ -1014,8 +1034,7 @@ fun LoadResponse?.isAnimeBased(): Boolean {
 
 fun TvType?.isEpisodeBased(): Boolean {
     if (this == null) return false
-    return (this == TvType.TvSeries || this == TvType.Anime)
-}
+    return (this == TvType.TvSeries || this == TvType.Anime || this == TvType.AsianDrama || this == TvType.Donghua || this == TvType.Mirror)}
 
 
 data class NextAiring(

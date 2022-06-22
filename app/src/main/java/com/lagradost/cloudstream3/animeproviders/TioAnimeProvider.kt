@@ -17,7 +17,7 @@ class TioAnimeProvider:MainAPI() {
     }
     override var mainUrl = "https://tioanime.com"
     override var name = "TioAnime"
-    override val lang = "es"
+    override var lang = "es"
     override val hasMainPage = true
     override val hasChromecastSupport = true
     override val hasDownloadSupport = true

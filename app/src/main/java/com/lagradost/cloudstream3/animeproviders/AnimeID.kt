@@ -6,7 +6,7 @@ import com.lagradost.cloudstream3.TvType
  * make the app know what functions to call
  */
 class AnimeIDProvider : AnimeIDProviderTemplate() {
-    override val lang = "es"
+    override var lang = "es"
     // mainUrl is good to have as a holder for the url to make future changes easier.
     override var mainUrl = "https://animeid.to"
 
