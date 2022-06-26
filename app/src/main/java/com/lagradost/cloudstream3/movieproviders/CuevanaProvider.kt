@@ -2,6 +2,7 @@ package com.lagradost.cloudstream3.movieproviders
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.lagradost.cloudstream3.*
+import com.lagradost.cloudstream3.LoadResponse.Companion.addTrailer
 import com.lagradost.cloudstream3.mvvm.logError
 import com.lagradost.cloudstream3.utils.AppUtils.parseJson
 import com.lagradost.cloudstream3.utils.ExtractorLink
@@ -148,35 +149,30 @@ class CuevanaProvider : MainAPI() {
                     year = null
                 )
             }
+        val trailer = soup.selectFirst("div.TPlayer.embed_div div[id=OptY] iframe")?.attr("data-src")
+
 
         return when (tvType) {
             TvType.TvSeries -> {
-                TvSeriesLoadResponse(
-                    title,
-                    url,
-                    this.name,
-                    tvType,
-                    episodes,
-                    poster,
-                    year,
-                    description,
-                    tags = tags,
-                    recommendations = recommendations
-                )
+                newTvSeriesLoadResponse(title,
+                    url, tvType, episodes,){
+                    this.posterUrl = poster
+                    this.plot = description
+                    this.year = year
+                    this.tags = tags
+                    this.recommendations = recommendations
+                }
             }
             TvType.Movie -> {
-                MovieLoadResponse(
-                    title,
-                    url,
-                    this.name,
-                    tvType,
-                    url,
-                    poster,
-                    year,
-                    description,
-                    tags = tags,
-                    recommendations = recommendations
-                )
+                newMovieLoadResponse(title, url, tvType, url){
+                    this.posterUrl = poster
+                    this.plot = description
+                    this.year = year
+                    this.tags = tags
+                    this.recommendations = recommendations
+                    if (trailer!!.isNotBlank()) addTrailer(trailer)
+                }
+
             }
             else -> null
         }

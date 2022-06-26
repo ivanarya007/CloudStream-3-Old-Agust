@@ -192,23 +192,27 @@ class JKAnimeProvider : MainAPI() {
         app.get(data).document.select("script").apmap { script ->
             if (script.data().contains("var video = []")) {
                 val videos = script.data().replace("\\/", "/")
-                fetchUrls(videos).map {
-                    it.replace("$mainUrl/jkfembed.php?u=","https://embedsito.com/v/")
-                        .replace("$mainUrl/jkokru.php?u=","http://ok.ru/videoembed/")
-                        .replace("$mainUrl/jkvmixdrop.php?u=","https://mixdrop.co/e/")
-                        .replace("$mainUrl/jk.php?u=","$mainUrl/")
+                val newlinksregex = Regex("(iframe (src|class).*width)")
+                val listlinks = newlinksregex.findAll(videos).map { it.value.trim().removeSurrounding("\"") }.toList()
+                listlinks.map {
+                    it.replace("/jkfembed.php?u=","https://embedsito.com/v/")
+                        .replace("/jkokru.php?u=","http://ok.ru/videoembed/")
+                        .replace("/jkvmixdrop.php?u=","https://mixdrop.co/e/")
+                        .replace("/jk.php?u=","$mainUrl/")
+                        .replace(Regex("(iframe.*(src|class).*src=\"|\".*width)"),"")
                 }.apmap { link ->
                     loadExtractor(link, data, callback)
                     if (link.contains("um2.php")) {
-                        val doc = app.get(link, referer = data).document
+                        val doc = app.get(fixUrl(link), referer = data).document
                         val gsplaykey = doc.select("form input[value]").attr("value")
+                        println("GSPLAYKEY $gsplaykey")
                         val postgsplay = app.post("$mainUrl/gsplay/redirect_post.php",
                             headers = mapOf(
                                 "Host" to "jkanime.net",
                                 "User-Agent" to USER_AGENT,
                                 "Accept" to "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
                                 "Accept-Language" to "en-US,en;q=0.5",
-                                "Referer" to link,
+                                "Referer" to fixUrl(link),
                                 "Content-Type" to "application/x-www-form-urlencoded",
                                 "Origin" to "https://jkanime.net",
                                 "DNT" to "1",
@@ -250,7 +254,7 @@ class JKAnimeProvider : MainAPI() {
                         }
                     }
                     if (link.contains("um.php")) {
-                        val desutext = app.get(link, referer = data).text
+                        val desutext = app.get(fixUrl(link), referer = data).text
                         val desuRegex = Regex("((https:|http:)\\/\\/.*\\.m3u8)")
                         val file = desuRegex.find(desutext)?.value
                         val namedesu = "Desu"
@@ -263,7 +267,7 @@ class JKAnimeProvider : MainAPI() {
                         }
                     }
                     if (link.contains("jkmedia")) {
-                        app.get(link, referer = data, allowRedirects = false).okhttpResponse.headers.values("location").apmap { xtremeurl ->
+                        app.get(fixUrl(link), referer = data, allowRedirects = false).okhttpResponse.headers.values("location").apmap { xtremeurl ->
                             val namex = "Xtreme S"
                             streamClean(namex, xtremeurl, "", null, callback, xtremeurl.contains(".m3u8"))
                         }
