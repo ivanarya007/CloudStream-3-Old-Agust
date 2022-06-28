@@ -455,6 +455,12 @@
         "status": 1,
         "url": "http://167.88.14.149"
     },
+    "SeriesMetroProvider": {
+        "language": "es",
+        "name": "SeriesMetro",
+        "status": 1,
+        "url": "https://seriesmetro.net"
+    },
     "SeriesflixProvider": {
         "language": "es",
         "name": "Seriesflix",
