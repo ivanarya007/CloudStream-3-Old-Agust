@@ -88,6 +88,7 @@ object APIHolder {
             EgyBestProvider(),
             FaselHDProvider(),
             SoaptwoDayProvider(),
+            SeriesMetroProvider(),
             HDMProvider(),// disabled due to cloudflare
             TheFlixToProvider(),
             StreamingcommunityProvider(),

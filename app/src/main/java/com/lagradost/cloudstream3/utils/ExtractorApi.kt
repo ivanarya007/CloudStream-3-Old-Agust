@@ -238,6 +238,8 @@ val extractorApis: Array<ExtractorApi> = arrayOf(
 
     YoutubeExtractor(),
     YoutubeShortLinkExtractor(),
+
+    Fastream(),
 )
 
 fun getExtractorApiFromName(name: String): ExtractorApi {
