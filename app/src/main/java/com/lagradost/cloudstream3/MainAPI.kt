@@ -56,7 +56,6 @@ object APIHolder {
             CuevanaProvider(),
             ComamosRamenProvider(),
             EntrepeliculasyseriesProvider(),
-            PelisflixProvider(),
             SeriesflixProvider(),
             IHaveNoTvProvider(), // Documentaries provider
             VMoveeProvider(),

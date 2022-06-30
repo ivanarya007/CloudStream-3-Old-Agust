@@ -44,7 +44,7 @@
             android:icon="@drawable/ic_baseline_skip_next_24"
             android:title="@string/show_fillers_settings"
             android:summary="@string/anime_fillerlist"
-            android:defaultValue="false" />
+            android:defaultValue="true" />
     <SwitchPreference
             android:icon="@drawable/ic_baseline_play_arrow_24"
             app:key="@string/random_button_key"
