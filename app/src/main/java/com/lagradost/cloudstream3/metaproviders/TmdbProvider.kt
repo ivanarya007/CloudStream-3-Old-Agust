@@ -45,7 +45,7 @@ open class TmdbProvider : MainAPI() {
 
     private fun getImageUrl(link: String?): String? {
         if (link == null) return null
-        return if (link.startsWith("/")) "https://image.tmdb.org/t/p/w500/$link" else link
+        return if (link.startsWith("/")) "https://image.tmdb.org/t/p/w1280/$link" else link
     }
 
     private fun getUrl(id: Int?, tvShow: Boolean): String {

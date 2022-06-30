@@ -13,7 +13,8 @@ class Fastream: ExtractorApi() {
 
 
     override suspend fun getUrl(url: String, referer: String?): List<ExtractorLink>? {
-        val id = Regex("emb\\.html\\?(.*)\\=(enc|)").find(url)?.destructured?.component1() ?: return emptyList()
+        val id = Regex("(embedapp-|emb\\.html\\?)(.*)(\\=(enc|)|\\.html)").find(url)?.destructured?.component2() ?: return emptyList()
+        println("ID $id")
         val sources = mutableListOf<ExtractorLink>()
         val response = app.post("$mainUrl/dl",
         data = mapOf(

@@ -3,7 +3,6 @@ package com.lagradost.cloudstream3.movieproviders
 
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.utils.ExtractorLink
-import com.lagradost.cloudstream3.utils.M3u8Helper
 import com.lagradost.cloudstream3.utils.M3u8Helper.Companion.generateM3u8
 import com.lagradost.cloudstream3.utils.extractorApis
 import com.lagradost.cloudstream3.utils.getQualityFromName
@@ -185,9 +184,10 @@ class PelisplusSOProvider:MainAPI() {
 
     private suspend fun getPelisStream(
         link: String,
+        lang: String? = null,
         callback: (ExtractorLink) -> Unit) : Boolean {
         val soup = app.get(link).text
-        val m3u8regex = Regex("((https:|http:)\\/\\/.*m3u8.*expiry=(\\d+))")
+        val m3u8regex = Regex("((https:|http:)\\/\\/.*m3u8(|.*expiry=(\\d+)))")
         val m3u8 = m3u8regex.find(soup)?.value ?: return false
 
         generateM3u8(
@@ -198,13 +198,30 @@ class PelisplusSOProvider:MainAPI() {
             callback(
                 ExtractorLink(
                     name,
-                    name,
+                    "$name $lang",
                     it.url,
                     mainUrl,
                     getQualityFromName(it.quality.toString()),
                     true
                 )
             )
+        }
+        return true
+    }
+
+    private suspend fun loadExtractor2(
+        url: String,
+        lang: String,
+        referer: String,
+        callback: (ExtractorLink) -> Unit,
+    ):Boolean {
+        for (extractor in extractorApis) {
+            if (url.startsWith(extractor.mainUrl)) {
+                extractor.getSafeUrl(url, referer)?.apmap {
+                    it.name += " $lang"
+                    callback(it)
+                }
+            }
         }
         return true
     }
@@ -216,85 +233,25 @@ class PelisplusSOProvider:MainAPI() {
         callback: (ExtractorLink) -> Unit
     ): Boolean {
         val document = app.get(data).document
-        argamap({
-            document.select(".server-item-1 li.tab-video").apmap {
-           val url = fixUrl(it.attr("data-video"))
-           if (url.contains("pelisplus.icu")) {
-               val doc = app.get(url).document
-               getPelisStream(url, callback)
-               doc.select("ul.list-server-items li").map {
-                   val secondurl = fixUrl(it.attr("data-video"))
-                   for (extractor in extractorApis) {
-                       if (secondurl.startsWith(extractor.mainUrl)) {
-                           extractor.getSafeUrl(secondurl, data)?.apmap {
-                               it.name += " Latino"
-                               callback(it)
-                           }
-                       }
-                   }
-               }
-           }
-            for (extractor in extractorApis) {
-                if (url.startsWith(extractor.mainUrl)) {
-                    extractor.getSafeUrl(url, data)?.apmap {
-                        it.name += " Latino"
-                        callback(it)
+        val elements = listOf(
+            Pair("Latino",".server-item-1 li.tab-video"),
+            Pair("Subtitulado",".server-item-0 li.tab-video"),
+            Pair("Castellano",".server-item-2 li.tab-video"),
+        )
+        elements.apmap { (lang, element) ->
+            document.select(element).apmap {
+                val url = fixUrl(it.attr("data-video"))
+                if (url.contains("pelisplus.icu")) {
+                    val doc = app.get(url).document
+                    getPelisStream(url, lang ,callback)
+                    doc.select("ul.list-server-items li").map {
+                        val secondurl = fixUrl(it.attr("data-video"))
+                        loadExtractor2(secondurl, lang, data, callback)
                     }
                 }
+                loadExtractor2(url, lang, data, callback)
             }
         }
-        document.select(".server-item-0 li.tab-video").apmap {
-            val url = fixUrl(it.attr("data-video"))
-            if (url.contains("pelisplus.icu")) {
-                val doc = app.get(url).document
-                getPelisStream(url, callback)
-                doc.select("ul.list-server-items li").map {
-                    val secondurl = fixUrl(it.attr("data-video"))
-                    for (extractor in extractorApis) {
-                        if (secondurl.startsWith(extractor.mainUrl)) {
-                            extractor.getSafeUrl(secondurl, data)?.apmap {
-                                it.name += " Subtitulado"
-                                callback(it)
-                            }
-                        }
-                    }
-                }
-            }
-            for (extractor in extractorApis) {
-                if (url.startsWith(extractor.mainUrl)) {
-                    extractor.getSafeUrl(url, data)?.apmap {
-                        it.name += " Subtitulado"
-                        callback(it)
-                    }
-                }
-            }
-        }
-        document.select(".server-item-2 li.tab-video").apmap {
-            val url = fixUrl(it.attr("data-video"))
-            if (url.contains("pelisplus.icu")) {
-                val doc = app.get(url).document
-                getPelisStream(url, callback)
-                doc.select("ul.list-server-items li").map {
-                    val secondurl = fixUrl(it.attr("data-video"))
-                    for (extractor in extractorApis) {
-                        if (secondurl.startsWith(extractor.mainUrl)) {
-                            extractor.getSafeUrl(secondurl, data)?.apmap {
-                                it.name += " Castellano"
-                                callback(it)
-                            }
-                        }
-                    }
-                }
-            }
-            for (extractor in extractorApis) {
-                if (url.startsWith(extractor.mainUrl)) {
-                    extractor.getSafeUrl(url, data)?.apmap {
-                        it.name += " Castellano"
-                        callback(it)
-                    }
-                }
-            }
-        } })
         return true
     }
 
