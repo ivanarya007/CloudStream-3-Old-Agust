@@ -420,6 +420,12 @@
         "status": 0,
         "url": "https://pelisflix.li"
     },
+    "PelispediaProvider": {
+        "language": "es",
+        "name": "Pelispedia",
+        "status": 1,
+        "url": "https://pelispedia.is"
+    },
     "PelisplusHDProvider": {
         "language": "es",
         "name": "PelisplusHD",
