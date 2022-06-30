@@ -105,6 +105,7 @@ object APIHolder {
             MoviesJoyProvider(),
             FmoviesAPPProvider(),
             FmoviesToProvider(),
+            OpenVidsProvider(),
 
             // Metadata providers
             //TmdbProvider(),

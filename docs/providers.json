@@ -85,7 +85,7 @@
     "ApiMDBProvider": {
         "language": "en",
         "name": "ApiMDB",
-        "status": 1,
+        "status": 0,
         "url": "https://v2.apimdb.net"
     },
     "AsiaFlixProvider": {
