@@ -58,50 +58,7 @@ CloudStream 3 does not host any content on the app, and has no control over what
 It merely scrapes 3rd-party websites that are publicly accessable via any regular web browser. It is the responsibility of user to avoid any actions that might violate the laws governing his/her locality. Use CloudStream 3 at your own risk.
 
 
+
 ***Sites used:***
-https://lagradost.github.io/CloudStream-3/
-<!-- Do not remove those two comments -->
-<!--SITE LIST START-->
-- [akwam.to](https://akwam.to) 
-- [allanime.site](https://allanime.site) 
-- [animekisa.in](https://animekisa.in) 
-- [allmoviesforyou.net](https://allmoviesforyou.net) 
-- [animeflick.net](https://animeflick.net) 
-- [asianembed.io](https://asianembed.io) 
-- [fmovies.to](https://fmovies.to) 
-- [cuevana3.me](https://cuevana3.me) 
-- [m.comamosramen.com](https://m.comamosramen.com) 
-- [doramasyt.com](https://doramasyt.com) 
-- [dramasee.net](https://dramasee.net) 
-- [bestdubbedanime.com](https://bestdubbedanime.com) 
-- [www23.estrenosdoramas.net](https://www23.estrenosdoramas.net) 
-- [filman.cc](https://filman.cc) 
-- [gogoanime.film](https://gogoanime.film) 
-- [ihavenotv.com](https://ihavenotv.com) 
-- [kdramahood.com](https://kdramahood.com) 
-- [crunchyroll.com](http://www.crunchyroll.com) 
-- [monoschinos2.com](https://monoschinos2.com) 
-- [mundodonghua.com](https://www.mundodonghua.com) 
-- [9anime.id](https://9anime.id) 
-- [pelisflix.li](https://pelisflix.li) 
-- [pelismart.com](https://pelismart.com) 
-- [pinoy-hd.xyz](https://www.pinoy-hd.xyz) 
-- [pinoymoviepedia.ru](https://pinoymoviepedia.ru) 
-- [pinoymovies.es](https://pinoymovies.es) 
-- [seriesflix.video](https://seriesflix.video) 
-- [tenshi.moe](https://tenshi.moe) 
-- [trailers.to](https://trailers.to) 
-- [vf-film.me](https://vf-film.me) 
-- [vf-serie.org](https://vf-serie.org) 
-- [vidembed.cc](https://vidembed.cc) 
-- [vmovee.watch](https://www.vmovee.watch) 
-- [watchasian.sh](https://watchasian.sh) 
-- [wcostream.com](https://www.wcostream.com) 
-- [wcostream.cc](https://wcostream.cc) 
-- [jkanime.net](https://jkanime.net) 
-- [zoro.to](https://zoro.to) 
-- [fmovies.app](https://fmovies.app) 
-- [2embed.ru](https://www.2embed.ru) 
-- [v2.apimdb.net](https://v2.apimdb.net) 
-- [theflix.to](https://theflix.to) 
-<!--SITE LIST END-->
+
+Look [here](https://stormunblessed.github.io/CloudStream-3/) for a comprehensive list
