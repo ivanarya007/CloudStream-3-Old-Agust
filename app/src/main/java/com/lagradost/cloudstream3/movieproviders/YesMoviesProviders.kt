@@ -3,14 +3,18 @@ package com.lagradost.cloudstream3.movieproviders
 import android.util.Log
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.lagradost.cloudstream3.*
+import com.lagradost.cloudstream3.LoadResponse.Companion.addActors
 import com.lagradost.cloudstream3.LoadResponse.Companion.addDuration
+import com.lagradost.cloudstream3.LoadResponse.Companion.addTrailer
 import com.lagradost.cloudstream3.animeproviders.ZoroProvider
+import com.lagradost.cloudstream3.movieproviders.SflixProvider.Companion.isValidServer
 import com.lagradost.cloudstream3.mvvm.suspendSafeApiCall
 import com.lagradost.cloudstream3.network.*
 import com.lagradost.cloudstream3.utils.*
 import com.lagradost.cloudstream3.utils.AppUtils.parseJson
 import com.lagradost.cloudstream3.utils.AppUtils.toJson
 import com.lagradost.cloudstream3.utils.AppUtils.tryParseJson
+import com.lagradost.cloudstream3.utils.M3u8Helper.Companion.generateM3u8
 import kotlinx.coroutines.delay
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
@@ -116,17 +120,46 @@ open class YesMoviesProvider : MainAPI() {
 
     override suspend fun load(url: String): LoadResponse {
         val document = app.get(url).document
+
         val details = document.select("div.detail_page-watch")
         val img = details.select("img.film-poster-img")
         val posterUrl = img.attr("src")
-        val title = img.attr("title")
+        val title = img.attr("title") ?: throw ErrorLoadingException("No Title")
+
+        /*
         val year = Regex("""[Rr]eleased:\s*(\d{4})""").find(
             document.select("div.elements").text()
         )?.groupValues?.get(1)?.toIntOrNull()
         val duration = Regex("""[Dd]uration:\s*(\d*)""").find(
             document.select("div.elements").text()
-        )?.groupValues?.get(1)?.trim()?.plus(" min")
+        )?.groupValues?.get(1)?.trim()?.plus(" min")*/
+        var duration = document.selectFirst(".fs-item > .duration")?.text()?.trim()
+        var year: Int? = null
+        var tags: List<String>? = null
+        var cast: List<String>? = null
+        val youtubeTrailer = document.selectFirst("iframe#iframe-trailer")?.attr("data-src")
+        val rating = document.selectFirst(".btn-warning")?.text()?.trim()
+            ?.removePrefix("IMDB:")?.toRatingInt()
 
+        document.select("div.elements > .row > div > .row-line").forEach { element ->
+            val type = element?.select(".type")?.text() ?: return@forEach
+            when {
+                type.contains("Released") -> {
+                    year = Regex("\\d+").find(
+                        element.ownText() ?: return@forEach
+                    )?.groupValues?.firstOrNull()?.toIntOrNull()
+                }
+                type.contains("Genre") -> {
+                    tags = element.select("a").mapNotNull { it.text() }
+                }
+                type.contains("Cast") -> {
+                    cast = element.select("a").mapNotNull { it.text() }
+                }
+                type.contains("Duration") -> {
+                    duration = duration ?: element.ownText().trim()
+                }
+            }
+        }
         val plot = details.select("div.description").text().replace("Overview:", "").trim()
 
         val isMovie = url.contains("/movie/")
@@ -136,16 +169,16 @@ open class YesMoviesProvider : MainAPI() {
         val dataId = details.attr("data-id")
         val id = if (dataId.isNullOrEmpty())
             idRegex.find(url)?.groupValues?.get(1)
-                ?: throw RuntimeException("Unable to get id from '$url'")
+                ?: throw ErrorLoadingException("Unable to get id from '$url'")
         else dataId
 
         val recommendations =
-            document.select("div.film_list-wrap > div.flw-item")?.mapNotNull { element ->
+            document.select("div.film_list-wrap > div.flw-item").mapNotNull { element ->
                 val titleHeader =
                     element.select("div.film-detail > .film-name > a") ?: return@mapNotNull null
                 val recUrl = fixUrlNull(titleHeader.attr("href")) ?: return@mapNotNull null
                 val recTitle = titleHeader.text() ?: return@mapNotNull null
-                val poster = element.select("div.film-poster > img")?.attr("data-src")
+                val poster = element.select("div.film-poster > img").attr("data-src")
                 MovieSearchResponse(
                     recTitle,
                     recUrl,
@@ -162,63 +195,80 @@ open class YesMoviesProvider : MainAPI() {
             val episodes = app.get(episodesUrl).text
 
             // Supported streams, they're identical
-            val sourceIds = Jsoup.parse(episodes).select(".link-item").mapNotNull { element ->
-                val sourceId = element.attr("data-linkid") ?: return@mapNotNull null
-                if (element.select("span")?.text()?.trim()?.isValidServer() == true) {
-                    "$url.$sourceId".replace("/movie/", "/watch-movie/")
-                } else {
-                    null
+            val sourceIds = Jsoup.parse(episodes).select("a").mapNotNull { element ->
+                val sourceId = element.attr("data-linkid")
+                if (sourceId.isNullOrEmpty())
+                    return@mapNotNull
+
+                if (element.select("span").text().trim().isValidServer()) {
+                    if (sourceId.isNullOrEmpty()) {
+                        fixUrlNull(element.attr("href"))
+                    } else {
+                        "$url.$sourceId".replace("/movie/", "/watch-movie/")
+                    }
                 }
             }
 
-            return newMovieLoadResponse(title, url, TvType.Movie, sourceIds.toJson()) {
+            val comingSoon = sourceIds.isEmpty()
+
+            return newMovieLoadResponse(title, url, TvType.Movie, sourceIds) {
                 this.year = year
                 this.posterUrl = posterUrl
                 this.plot = plot
                 addDuration(duration)
+                addActors(cast)
+                this.tags = tags
                 this.recommendations = recommendations
+                this.comingSoon = comingSoon
+                addTrailer(youtubeTrailer)
+                this.rating = rating
             }
         } else {
             val seasonsDocument = app.get("$mainUrl/ajax/v2/tv/seasons/$id").document
             val episodes = arrayListOf<Episode>()
+            var seasonItems = seasonsDocument.select(".dropdown-menu a")
+            if (seasonItems.isNullOrEmpty())
+                seasonItems = seasonsDocument.select("div.dropdown-menu > a.dropdown-item")
+            seasonItems.apmapIndexed { season, element ->
+                val seasonId = element.attr("data-id")
+                if (seasonId.isNullOrBlank()) return@apmapIndexed
 
-            seasonsDocument.select(".dropdown-menu a")
-                .forEachIndexed { season, element ->
-                    val seasonId = element.attr("data-id")
-                    if (seasonId.isNullOrBlank()) return@forEachIndexed
+                var episode = 0
+                val seasonEpisodes = app.get("$mainUrl/ajax/v2/season/episodes/$seasonId").document
+                val seasonEpisodesItems =
+                    seasonEpisodes.select(".nav-item a")
+                seasonEpisodesItems.forEach {
+                    val episodeTitle = it?.attr("title") ?: it.ownText()
+                    val episodeData = it.attr("data-id") ?: return@forEach
+                    episode++
 
-                    var episode = 0
-                    app.get("$mainUrl/ajax/v2/season/episodes/$seasonId").document
-                        .select(".nav-item a")
-                        .apmap {
-                        //    val episodeImg = null
-                            val episodeTitle = it.attr("title") ?: return@apmap
-                         //   val episodePosterUrl = null
-                            val episodeData = it.attr("data-id") ?: return@apmap
+                    val episodeNum =
+                        (it.select("strong").text()
+                            ?: episodeTitle).let { str ->
+                            Regex("""\d+""").find(str)?.groupValues?.firstOrNull()
+                                ?.toIntOrNull()
+                        } ?: episode
 
-                            episode++
-
-                            val episodeNum =
-                                (it.select("strong")?.text()
-                                    ?: episodeTitle).let { str ->
-                                    Regex("""\d+""").find(str)?.groupValues?.firstOrNull()
-                                        ?.toIntOrNull()
-                                } ?: episode
-
-                            episodes.add(
-                                newEpisode(Pair(url, episodeData)) {
-                                    this.name = episodeTitle?.removePrefix("Episode $episodeNum: ")
-                                    this.season = season + 1
-                                    this.episode = episodeNum
-                                }
-                            )
+                    episodes.add(
+                        newEpisode(Pair(url, episodeData)) {
+                            this.name = episodeTitle?.removePrefix("Eps $episodeNum: ")
+                            this.season = season + 1
+                            this.episode = episodeNum
                         }
+                    )
                 }
+            }
+
             return newTvSeriesLoadResponse(title, url, TvType.TvSeries, episodes) {
                 this.posterUrl = posterUrl
                 this.year = year
                 this.plot = plot
                 addDuration(duration)
+                addActors(cast)
+                this.tags = tags
+                this.recommendations = recommendations
+                addTrailer(youtubeTrailer)
+                this.rating = rating
             }
         }
     }
@@ -541,21 +591,21 @@ open class YesMoviesProvider : MainAPI() {
                     ignoreCase = true
                 )
                 if (isM3u8) {
-                    M3u8Helper().m3u8Generation(M3u8Helper.M3u8Stream(this.file, null), true)
-                        .map { stream ->
-                            //println("stream: ${stream.quality} at ${stream.streamUrl}")
-                            val qualityString = if ((stream.quality ?: 0) == 0) label
-                                ?: "" else "${stream.quality}p"
-                            ExtractorLink(
-                                caller.name,
-                                "${caller.name} $qualityString $name",
-                                stream.streamUrl,
-                                caller.mainUrl,
-                                getQualityFromName(stream.quality?.toString()),
-                                true,
-                                extractorData = extractorData
-                            )
-                        }
+                    generateM3u8(
+                        caller.name,
+                        this.file,
+                        caller.mainUrl
+                    ).apmap { stream ->
+                        ExtractorLink(
+                            caller.name,
+                            caller.name,
+                            stream.url,
+                            caller.mainUrl,
+                            getQualityFromName(stream.quality.toString()),
+                            true,
+                            extractorData = extractorData
+                        )
+                    }
                 } else {
                     listOf(ExtractorLink(
                         caller.name,

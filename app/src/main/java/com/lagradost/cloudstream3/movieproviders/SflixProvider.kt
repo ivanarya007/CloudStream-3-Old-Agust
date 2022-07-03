@@ -15,6 +15,7 @@ import com.lagradost.cloudstream3.utils.AppUtils.tryParseJson
 import com.lagradost.cloudstream3.utils.Coroutines.ioSafe
 import com.lagradost.cloudstream3.utils.ExtractorLink
 import com.lagradost.cloudstream3.utils.M3u8Helper
+import com.lagradost.cloudstream3.utils.M3u8Helper.Companion.generateM3u8
 import com.lagradost.cloudstream3.utils.getQualityFromName
 import com.lagradost.nicehttp.NiceResponse
 import kotlinx.coroutines.delay
@@ -594,18 +595,21 @@ open class SflixProvider : MainAPI() {
                     ignoreCase = true
                 )
                 if (isM3u8) {
-                    M3u8Helper().m3u8Generation(M3u8Helper.M3u8Stream(this.file, null), null)
-                        .map { stream ->
-                            ExtractorLink(
-                                caller.name,
-                                "${caller.name} $name",
-                                stream.streamUrl,
-                                caller.mainUrl,
-                                getQualityFromName(stream.quality?.toString()),
-                                true,
-                                extractorData = extractorData
-                            )
-                        }
+                    generateM3u8(
+                        caller.name,
+                        this.file,
+                        caller.mainUrl
+                    ).apmap { stream ->
+                        ExtractorLink(
+                            caller.name,
+                            "${caller.name} $name",
+                            stream.url,
+                            caller.mainUrl,
+                            getQualityFromName(stream.quality.toString()),
+                            true,
+                            extractorData = extractorData
+                        )
+                    }
                 } else {
                     listOf(
                         ExtractorLink(
