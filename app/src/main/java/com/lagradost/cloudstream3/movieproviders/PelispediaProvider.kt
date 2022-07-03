@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.google.android.gms.dynamite.DynamiteModule.LoadingException
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.utils.AppUtils.parseJson
+import com.lagradost.cloudstream3.utils.AppUtils.tryParseJson
 import com.lagradost.cloudstream3.utils.ExtractorLink
 import com.lagradost.cloudstream3.utils.extractorApis
 import com.lagradost.cloudstream3.utils.loadExtractor
@@ -32,15 +33,14 @@ class PelispediaProvider:MainAPI() {
 
     )
 
-    override suspend fun getMainPage(): HomePageResponse {
+    override suspend fun getMainPage(): HomePageResponse? {
         val items = ArrayList<HomePageList>()
         val urls = listOf(
             Pair("Películas","$mainUrl/hcapi/homepage/movies/"),
             Pair("Series","$mainUrl/hcapi/homepage/series/"),
         )
         urls.apmap { (name, url) ->
-            val text = app.get(url).text
-            val json = parseJson<List<PelispediaHome>>(text)
+            val json = app.get(url).parsedSafe<List<PelispediaHome>>() ?: throw ErrorLoadingException("Intenta de nuevo")
             val home = json.map {
                 val title = it.postTitle
                 val image = it.postImage
@@ -60,7 +60,7 @@ class PelispediaProvider:MainAPI() {
         return HomePageResponse(items)
     }
 
-    override suspend fun search(query: String): List<SearchResponse>? {
+    override suspend fun search(query: String): List<SearchResponse> {
         val url = "$mainUrl/hcapi/search/$query/"
         val text = app.get(url).text
         val json = parseJson<List<PelispediaHome>>(text)
@@ -134,7 +134,7 @@ class PelispediaProvider:MainAPI() {
         val tvType = if (url.contains("movie")) TvType.Movie else TvType.TvSeries
         val isMovie = tvType == TvType.Movie
         val jsonfix = if (url.contains("movie")) "{\"Movie\":$text}" else "{\"Serie\":$text}"
-        val json = parseJson<PelispediaMetadata>(jsonfix)
+        val json = tryParseJson<PelispediaMetadata>(jsonfix) ?: throw ErrorLoadingException("Intenta de nuevo")
         val metadata: TestMetadata? = if (isMovie) json.movie else json.serie
         val title = metadata?.movieName ?: metadata?.serieName
         val description = metadata?.movieContent ?: metadata?.serieContent
