@@ -24,6 +24,8 @@ class TheFlixToProvider : MainAPI() {
         TvType.TvSeries,
     )
 
+
+
     data class HomeJson(
         @JsonProperty("props") val props: HomeProps = HomeProps(),
     )
@@ -94,7 +96,36 @@ class TheFlixToProvider : MainAPI() {
         @JsonProperty("conversionDate") val conversionDate: String? = null,
         @JsonProperty("id") val id: Int? = null,
         @JsonProperty("available") val available: Boolean? = null,
+        @JsonProperty("videos"           ) var videos           : ArrayList<String>? = arrayListOf(),
     )
+
+
+    private suspend fun getCookies(): Map<String, String> {
+        val test = app.post(
+            "https://theflix.to:5679/authorization/session/continue?contentUsageType=Viewing",
+            headers = mapOf(
+                "Host" to "theflix.to:5679",
+                "User-Agent" to "Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0",
+                "Accept" to "application/json, text/plain, */*",
+                "Accept-Language" to "en-US,en;q=0.5",
+                "Content-Type" to "application/json;charset=utf-8",
+                "Content-Length" to "35",
+                "Origin" to "https://theflix.to",
+                "DNT" to "1",
+                "Connection" to "keep-alive",
+                "Referer" to "https://theflix.to/",
+                "Sec-Fetch-Dest" to "empty",
+                "Sec-Fetch-Mode" to "cors",
+                "Sec-Fetch-Site" to "same-site",)
+        ).okhttpResponse.headers.values("Set-Cookie")
+    val cookieRegex = Regex("(theflix\\.ipiid=.[a-zA-Z0-9]{0,8}[a-zA-Z0-9_-]+|theflix\\.ovid=[a-zA-Z0-9]{0,8}[a-zA-Z0-9_-]+|theflix.dvid=[a-zA-Z0-9]{0,8}[a-zA-Z0-9_-]+)")
+    val findcookie = cookieRegex.findAll(test.toString()).map { it.value }.toList()
+    val cookiesstring = findcookie.toString().replace(", ","; ").replace("[","").replace("]","")
+    val cookiesmap = mapOf("Cookie" to cookiesstring)
+    latestCookies = cookiesmap
+        println(latestCookies)
+    return latestCookies
+    }
 
 
     override suspend fun getMainPage(): HomePageResponse {
@@ -228,65 +259,52 @@ class TheFlixToProvider : MainAPI() {
         }
         return search
     }
-
-
-    data class LoadMain(
-        @JsonProperty("props") val props: LoadProps = LoadProps(),
-        @JsonProperty("page") var page: String? = null,
-        //@JsonProperty("query") val query: Query? = Query(),
-        @JsonProperty("buildId") val buildId: String? = null,
-        @JsonProperty("runtimeConfig") val runtimeConfig: RuntimeConfig? = RuntimeConfig(),
-        @JsonProperty("isFallback") val isFallback: Boolean? = null,
-        @JsonProperty("customServer") val customServer: Boolean? = null,
-        @JsonProperty("appGip") val appGip: Boolean? = null
+    data class LoadMain (
+        @JsonProperty("props"         ) val props         : LoadProps?         = LoadProps(),
+        @JsonProperty("page"          ) val page          : String?        = null,
+        @JsonProperty("buildId"       ) val buildId       : String?        = null,
+        @JsonProperty("runtimeConfig" ) val runtimeConfig : RuntimeConfig? = RuntimeConfig(),
+        @JsonProperty("isFallback"    ) val isFallback    : Boolean?       = null,
+        @JsonProperty("gssp"          ) val gssp          : Boolean?       = null,
+        @JsonProperty("customServer"  ) val customServer  : Boolean?       = null,
+        @JsonProperty("appGip"        ) val appGip        : Boolean?       = null
     )
 
-    data class RuntimeConfig(
-        @JsonProperty("AddThisService") val AddThisService: AddThisService? = AddThisService(),
-        //@JsonProperty("Application") val Application: Application? = Application(),
-        //@JsonProperty("Content") val Content: Content? = Content(),
-        //@JsonProperty("GtmService") val GtmService: GtmService? = GtmService(),
-        //@JsonProperty("IptvChannels") val IptvChannels: IptvChannels? = IptvChannels(),
-        //@JsonProperty("Notifications") val Notifications: Notifications? = Notifications(),
-        //@JsonProperty("Payments") val Payments: Payments? = Payments(),
-        //@JsonProperty("Redux") val Redux: Redux? = Redux(),
-        //@JsonProperty("Search") val Search: Search? = Search(),
-        @JsonProperty("Services") val Services: Services? = Services(),
-        //@JsonProperty("Sitemap") val Sitemap: Sitemap? = Sitemap(),
-        //@JsonProperty("Support") val Support: Support? = Support(),
-        @JsonProperty("Videos") val Videos: Videos? = Videos()
+    data class LoadProps (
+        @JsonProperty("pageProps" ) val pageProps : LoadPageProps? = LoadPageProps(),
+        @JsonProperty("__N_SSP"   ) val _NSSP     : Boolean?   = null
     )
 
-
-    data class Server(
-        @JsonProperty("Url") var Url: String? = null
-    )
-
-    data class Services(
-
-        @JsonProperty("Server") val Server: Server? = Server(),
-        @JsonProperty("TmdbServer") val TmdbServer: Server? = Server()
-
-    )
-
-    data class AddThisService(
-        @JsonProperty("PublicId") val PublicId: String? = null
-    )
-
-    data class LoadProps(
-        @JsonProperty("pageProps") val pageProps: LoadPageProps = LoadPageProps(),
-    )
-
-    data class LoadPageProps(
-        @JsonProperty("selectedTv") val selectedTv: TheFlixMetadata? = TheFlixMetadata(),
+    data class LoadPageProps (
+        @JsonProperty("selectedTv"          ) var selectedTv          : TheFlixMetadata?          = TheFlixMetadata(),
         @JsonProperty("movie") val movie: TheFlixMetadata? = TheFlixMetadata(),
-        @JsonProperty("videoUrl") val videoUrl: String? = null,
-        @JsonProperty("recommendationsList") val recommendationsList: RecommendationsList? = RecommendationsList(),
+        @JsonProperty("recommendationsList" ) var recommendationsList : RecommendationsList? = RecommendationsList(),
+        @JsonProperty("basePageSegments"    ) var basePageSegments    : ArrayList<String>?    = arrayListOf()
     )
 
-    data class Genres(
-        @JsonProperty("name") val name: String,
-        @JsonProperty("id") val id: Int? = null
+    data class TheFlixMetadata (
+        @JsonProperty("episodeRuntime"   ) var episodeRuntime   : Int?               = null,
+        @JsonProperty("name"             ) var name             : String?            = null,
+        @JsonProperty("numberOfSeasons"  ) var numberOfSeasons  : Int?               = null,
+        @JsonProperty("numberOfEpisodes" ) var numberOfEpisodes : Int?               = null,
+        @JsonProperty("originalLanguage" ) var originalLanguage : String?            = null,
+        @JsonProperty("popularity"       ) var popularity       : Double?            = null,
+        @JsonProperty("status"           ) var status           : String?            = null,
+        @JsonProperty("voteAverage"      ) var voteAverage      : Double?            = null,
+        @JsonProperty("voteCount"        ) var voteCount        : Int?               = null,
+        @JsonProperty("cast"             ) var cast             : String?            = null,
+        @JsonProperty("director"         ) var director         : String?            = null,
+        @JsonProperty("overview"         ) var overview         : String?            = null,
+        @JsonProperty("posterUrl"        ) var posterUrl        : String?            = null,
+        @JsonProperty("releaseDate"      ) var releaseDate      : String?            = null,
+        @JsonProperty("createdAt"        ) var createdAt        : String?            = null,
+        @JsonProperty("updatedAt"        ) var updatedAt        : String?            = null,
+        @JsonProperty("id"               ) var id               : Int?               = null,
+        @JsonProperty("available"        ) var available        : Boolean?           = null,
+        @JsonProperty("genres"           ) var genres           : ArrayList<Genres>?  = arrayListOf(),
+        @JsonProperty("seasons"          ) var seasons          : ArrayList<Seasons>? = arrayListOf(),
+        @JsonProperty("videos"           ) var videos           : ArrayList<String>? = arrayListOf(),
+        @JsonProperty("runtime"          ) var runtime          : Int?              = null,
     )
 
     data class Seasons(
@@ -299,7 +317,7 @@ class TheFlixToProvider : MainAPI() {
         @JsonProperty("createdAt") val createdAt: String? = null,
         @JsonProperty("updatedAt") val updatedAt: String? = null,
         @JsonProperty("id") val id: Int? = null,
-        @JsonProperty("episodes") val episodes: ArrayList<Episodes> = arrayListOf()
+        @JsonProperty("episodes") val episodes: ArrayList<Episodes>? = arrayListOf()
     )
 
     data class Episodes(
@@ -313,68 +331,55 @@ class TheFlixToProvider : MainAPI() {
         @JsonProperty("createdAt") val createdAt: String? = null,
         @JsonProperty("updatedAt") val updatedAt: String? = null,
         @JsonProperty("id") val id: Int? = null,
-        @JsonProperty("videos") val videos: ArrayList<Videos> = arrayListOf()
-    )
-
-    data class Videos(
-        @JsonProperty("language") val language: String? = null,
-        @JsonProperty("name") val name: String? = null,
-        @JsonProperty("id") val id: Int? = null
-    )
-
-    data class RecommendationsList(
-        @JsonProperty("docs") val docs: ArrayList<LoadDocs> = arrayListOf(),
-        @JsonProperty("total") val total: Int? = null,
-        @JsonProperty("page") val page: Int? = null,
-        @JsonProperty("limit") val limit: Int? = null,
-        @JsonProperty("pages") val pages: Int? = null,
-        @JsonProperty("type") val type: String? = null,
-    )
-
-    data class LoadDocs(
-        @JsonProperty("name") val name: String = String(),
-        @JsonProperty("originalLanguage") val originalLanguage: String? = null,
-        @JsonProperty("popularity") val popularity: Double? = null,
-        @JsonProperty("runtime") val runtime: Int? = null,
-        @JsonProperty("status") val status: String? = null,
-        @JsonProperty("voteAverage") val voteAverage: Double? = null,
-        @JsonProperty("voteCount") val voteCount: Int? = null,
-        @JsonProperty("cast") val cast: String? = null,
-        @JsonProperty("director") val director: String? = null,
-        @JsonProperty("overview") val overview: String? = null,
-        @JsonProperty("posterUrl") val posterUrl: String? = null,
-        @JsonProperty("releaseDate") val releaseDate: String? = null,
-        @JsonProperty("createdAt") val createdAt: String? = null,
-        @JsonProperty("updatedAt") val updatedAt: String? = null,
-        @JsonProperty("id") val id: Int? = null,
-        @JsonProperty("available") val available: Boolean? = null,
+        @JsonProperty("videos") val videos: ArrayList<String>? = arrayListOf()
     )
 
 
-    data class TheFlixMetadata(
-        @JsonProperty("episodeRuntime") val episodeRuntime: Int? = null,
-        @JsonProperty("name") val name: String = String(),
-        @JsonProperty("originalLanguage") val originalLanguage: String? = null,
-        @JsonProperty("popularity") val popularity: Double? = null,
-        @JsonProperty("runtime") val runtime: Int? = null,
-        @JsonProperty("numberOfSeasons") val numberOfSeasons: Int? = null,
-        @JsonProperty("numberOfEpisodes") val numberOfEpisodes: Int? = null,
-        @JsonProperty("status") val status: String? = null,
-        @JsonProperty("voteAverage") val voteAverage: Double? = null,
-        @JsonProperty("voteCount") val voteCount: Int? = null,
-        @JsonProperty("cast") val cast: String? = null,
-        @JsonProperty("director") val director: String? = null,
-        @JsonProperty("overview") val overview: String? = null,
-        @JsonProperty("posterUrl") val posterUrl: String? = null,
-        @JsonProperty("releaseDate") val releaseDate: String? = null,
-        @JsonProperty("conversionDate") val conversionDate: String? = null,
-        @JsonProperty("createdAt") val createdAt: String? = null,
-        @JsonProperty("updatedAt") val updatedAt: String? = null,
-        @JsonProperty("id") val id: Int? = null,
-        @JsonProperty("available") val available: Boolean? = null,
-        @JsonProperty("genres") val genres: ArrayList<Genres> = arrayListOf(),
-        @JsonProperty("videos") val videos: ArrayList<Videos> = arrayListOf(),
-        @JsonProperty("seasons") val seasons: ArrayList<Seasons> = arrayListOf()
+    data class Genres (
+        @JsonProperty("name" ) var name : String? = null,
+        @JsonProperty("id"   ) var id   : Int?    = null
+    )
+
+    data class RuntimeConfig (
+        @JsonProperty("AddThisService" ) val AddThisService : RuntimeConfigData? = RuntimeConfigData(),
+        @JsonProperty("Application"    ) val Application    : RuntimeConfigData?    = RuntimeConfigData(),
+        @JsonProperty("GtmService"     ) val GtmService     : RuntimeConfigData?     = RuntimeConfigData(),
+        @JsonProperty("Services"       ) val Services       : RuntimeConfigData?       = RuntimeConfigData(),
+    )
+
+    data class RuntimeConfigData(
+        @JsonProperty("PublicId" ) val PublicId : String? = null,
+        @JsonProperty("ContentUsageType"              ) var ContentUsageType              : String?  = null,
+        @JsonProperty("IsDevelopmentMode"             ) var IsDevelopmentMode             : Boolean? = null,
+        @JsonProperty("IsDevelopmentOrProductionMode" ) var IsDevelopmentOrProductionMode : Boolean? = null,
+        @JsonProperty("IsProductionMode"              ) var IsProductionMode              : Boolean? = null,
+        @JsonProperty("IsStagingMode"                 ) var IsStagingMode                 : Boolean? = null,
+        @JsonProperty("IsTestMode"                    ) var IsTestMode                    : Boolean? = null,
+        @JsonProperty("Mode"                          ) var Mode                          : String?  = null,
+        @JsonProperty("Name"                          ) var Name                          : String?  = null,
+        @JsonProperty("Url"                           ) var Url                           : String?  = null,
+        @JsonProperty("UseFilterInfoInUrl"            ) var UseFilterInfoInUrl            : Boolean? = null,
+        @JsonProperty("TrackingId" ) var TrackingId : String? = null,
+        @JsonProperty("Server"     ) var Server     : Server?     = Server(),
+        @JsonProperty("TmdbServer" ) var TmdbServer : TmdbServer? = TmdbServer(),
+    )
+
+    data class TmdbServer (
+        @JsonProperty("Url" ) val Url : String? = null
+    )
+
+
+    data class Server (
+        @JsonProperty("Url" ) var Url : String? = null
+    )
+
+    data class RecommendationsList (
+        @JsonProperty("docs"  ) var docs  : ArrayList<Docs> = arrayListOf(),
+        @JsonProperty("total" ) var total : Int?            = null,
+        @JsonProperty("page"  ) var page  : Int?            = null,
+        @JsonProperty("limit" ) var limit : Int?            = null,
+        @JsonProperty("pages" ) var pages : Int?            = null,
+        @JsonProperty("type"  ) var type  : String?         = null,
     )
 
     private fun cleanTitle(title: String): String {
@@ -397,60 +402,23 @@ class TheFlixToProvider : MainAPI() {
     }
 
     private suspend fun getLoadMan(url: String): LoadMain {
-        val og = app.get(url, cookies = latestCookies)
+        getCookies()
+        val og = app.get(url, headers = latestCookies)
         val soup = og.document
         val script = soup.selectFirst("script[type=application/json]")!!.data()
         return parseJson(script)
     }
 
-    // I legit cant figure this out
-    private suspend fun getLoadMainRetry(url: String): LoadMain {
-        val first = getLoadMan(url)
-        val notFound = "/404"
-        if (first.page == notFound) {
-            first.runtimeConfig?.Services?.TmdbServer?.Url?.let { authUrl ->
-                val optionsUrl = "$authUrl/authorization/session/continue?contentUsageType=Viewing"
-                val options = app.options(
-                    optionsUrl,
-                    headers = mapOf(
-                        "User-Agent" to USER_AGENT,
-                        "Access-Control-Request-Method" to "POST",
-                        "Access-Control-Request-Headers" to "content-type",
-                        "Origin" to url,
-                        "Referer" to mainUrl,
-                    )
-                )
-                //{"affiliateCode":"","pathname":"/movie/696806-the-adam-project"}
-                val data = mapOf("affiliateCode" to "", "pathname" to url.removePrefix(mainUrl))
-                val resp = app.post(
-                    optionsUrl, headers = mapOf(
-                        "User-Agent" to USER_AGENT,
-                        "Content-Type" to "application/json;charset=UTF-8",
-                        "Accept" to "application/json, text/plain, */*",
-                        "Origin" to url,
-                        "Referer" to mainUrl,
-                    ), data = data
-                )
 
-                latestCookies = resp.cookies
-                val newData = getLoadMan(url)
-                if (newData.page == notFound) {
-                    throw ErrorLoadingException("404 Not found")
-                }
-                return newData
-            }
-        }
-        return first
-    }
 
     override suspend fun load(url: String): LoadResponse? {
         val tvtype = if (url.contains("movie")) TvType.Movie else TvType.TvSeries
-        val json = getLoadMainRetry(url)
+        val json = getLoadMan(url)
         val episodes = ArrayList<Episode>()
         val isMovie = tvtype == TvType.Movie
-        val pageMain = json.props.pageProps
+        val pageMain = json.props?.pageProps
 
-        val metadata: TheFlixMetadata? = if (isMovie) pageMain.movie else pageMain.selectedTv
+        val metadata: TheFlixMetadata? = if (isMovie) pageMain?.movie else pageMain?.selectedTv
 
         val available = metadata?.available
 
@@ -465,9 +433,9 @@ class TheFlixToProvider : MainAPI() {
         val description = metadata.overview
 
         if (!isMovie) {
-            metadata.seasons.map { seasons ->
+            metadata.seasons?.map { seasons ->
                 val seasonPoster = seasons.posterUrl ?: metadata.posterUrl
-                seasons.episodes.forEach { epi ->
+                seasons.episodes?.forEach { epi ->
                     val episodenu = epi.episodeNumber
                     val seasonum = epi.seasonNumber
                     val title = epi.name
@@ -476,7 +444,7 @@ class TheFlixToProvider : MainAPI() {
                     val ratinginfo = (epi.voteAverage)?.times(10)?.toInt()
                     val rating = if (ratinginfo?.equals(0) == true) null else ratinginfo
                     val eps = Episode(
-                        "$mainUrl/tv-show/$movieId-${cleanTitle(movietitle)}/season-$seasonum/episode-$episodenu",
+                        "$mainUrl/tv-show/$movieId-${cleanTitle(movietitle!!)}/season-$seasonum/episode-$episodenu",
                         title,
                         seasonum,
                         episodenu,
@@ -484,7 +452,7 @@ class TheFlixToProvider : MainAPI() {
                         posterUrl = seasonPoster,
                         rating = rating,
                     )
-                    if (test.isNotEmpty()) {
+                    if (test!!.isNotEmpty()) {
                         episodes.add(eps)
                     } else {
                         //Nothing, will prevent seasons/episodes with no videos to be added
@@ -494,9 +462,9 @@ class TheFlixToProvider : MainAPI() {
         }
         val rating = metadata.voteAverage?.toFloat()?.times(1000)?.toInt()
 
-        val tags = metadata.genres.map { it.name }
+        val tags = metadata.genres?.map { it.name }
 
-        val recommendationsitem = pageMain.recommendationsList?.docs?.map { loadDocs ->
+        val recommendationsitem = pageMain?.recommendationsList?.docs?.map { loadDocs ->
             val title = loadDocs.name
             val posterrec = loadDocs.posterUrl
             val link = if (isMovie) "$mainUrl/movie/${loadDocs.id}-${cleanTitle(title)}"
@@ -518,26 +486,26 @@ class TheFlixToProvider : MainAPI() {
 
         return when (tvtype) {
             TvType.TvSeries -> {
-                return newTvSeriesLoadResponse(movietitle, url, TvType.TvSeries, episodes) {
+                return newTvSeriesLoadResponse(movietitle!!, url, TvType.TvSeries, episodes) {
                     this.posterUrl = poster
                     this.year = year?.toIntOrNull()
                     this.plot = description
                     this.duration = runtime
                     addActors(cast)
-                    this.tags = tags
+                    this.tags = tags as List<String>?
                     this.recommendations = recommendationsitem
                     this.comingSoon = comingsoon
                     this.rating = rating
                 }
             }
             TvType.Movie -> {
-                newMovieLoadResponse(movietitle, url, TvType.Movie, url) {
+                newMovieLoadResponse(movietitle!!, url, TvType.Movie, url) {
                     this.year = year?.toIntOrNull()
                     this.posterUrl = poster
                     this.plot = description
                     this.duration = runtime
                     addActors(cast)
-                    this.tags = tags
+                    this.tags = tags as List<String>?
                     this.recommendations = recommendationsitem
                     this.comingSoon = comingsoon
                     this.rating = rating
@@ -548,28 +516,77 @@ class TheFlixToProvider : MainAPI() {
     }
 
 
+    data class VideoData (
+        @JsonProperty("url"           ) var url           : String?        = null,
+        @JsonProperty("id"            ) var id            : String?        = null,
+        @JsonProperty("type"          ) var type          : String?        = null,
+    )
+
+
     override suspend fun loadLinks(
         data: String,
         isCasting: Boolean,
         subtitleCallback: (SubtitleFile) -> Unit,
         callback: (ExtractorLink) -> Unit
     ): Boolean {
-        val json = getLoadMainRetry(data)
-        val extractedLink = json.props.pageProps.videoUrl
-        val qualityReg = Regex("(\\d+p)")
-        if (extractedLink != null) {
-            val quality = qualityReg.find(extractedLink)?.value ?: ""
-            callback(
-                ExtractorLink(
-                    name,
-                    "$name $quality",
-                    extractedLink,
-                    "",
-                    getQualityFromName(quality),
-                    false
-                )
-            )
+       val json = getLoadMan(data)
+       val authhost = json.runtimeConfig?.Services?.Server?.Url
+       val isMovie = data.contains("/movie/")
+       val qualityReg = Regex("(\\d+p)")
+       if (isMovie){
+           json.props?.pageProps?.movie?.videos?.apmap { id ->
+           val jsonmovie = app.get("$authhost/movies/videos/$id/request-access?contentUsageType=Viewing",
+               headers = latestCookies).parsedSafe<VideoData>() ?: return@apmap false
+           val extractedlink = jsonmovie.url
+           if (!extractedlink.isNullOrEmpty()) {
+               val quality = qualityReg.find(extractedlink)?.value ?: ""
+               callback(
+                   ExtractorLink(
+                       name,
+                       name,
+                       extractedlink,
+                       "",
+                       getQualityFromName(quality),
+                       false
+                   )
+               )
+           } else null
+           }
+       }
+       else
+       {
+        val dataRegex = Regex("(season-(\\d+)\\/episode-(\\d+))")
+        val cleandatainfo = dataRegex.find(data)?.value?.replace(Regex("(season-|episode-)"),"")?.replace("/","x")
+        val tesatt = cleandatainfo.let { str ->
+               str?.split("x")?.mapNotNull { subStr -> subStr.toIntOrNull() }
+           }
+        val epID = tesatt?.getOrNull(1)
+        val seasonid = tesatt?.getOrNull(0)
+        json.props?.pageProps?.selectedTv?.seasons?.map {
+            it.episodes?.map {
+               val test = Triple(it.seasonNumber, it.episodeNumber, it.videos)
+               if (test.first == seasonid && test.second == epID) {
+               test.third?.apmap { id ->
+                   val jsonserie = app.get("$authhost/tv/videos/$id/request-access?contentUsageType=Viewing", headers = latestCookies).parsedSafe<VideoData>() ?: return@apmap false
+                   val extractedlink = jsonserie.url
+                   if (!extractedlink.isNullOrEmpty()) {
+                       val quality = qualityReg.find(extractedlink)?.value ?: ""
+                       callback(
+                           ExtractorLink(
+                               name,
+                               name,
+                               extractedlink,
+                               "",
+                               getQualityFromName(quality),
+                               false
+                           )
+                       )
+                   } else null
+               }
+               }
+            }
         }
+       }
         return true
     }
 }
