@@ -104,7 +104,6 @@ object APIHolder {
             MyflixerToProvider(),
             MoviesJoyProvider(),
             FmoviesAPPProvider(),
-            FmoviesToProvider(),
             OpenVidsProvider(),
             VidSrcProvider(),
 
