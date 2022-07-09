@@ -558,6 +558,11 @@ fun capitalizeStringNullable(str: String?): String? {
     }
 }
 
+fun fixTitle(str: String): String {
+    return str.split(" ").joinToString(" ") { it.lowercase()
+        .replaceFirstChar { char -> if (char.isLowerCase()) char.titlecase(Locale.getDefault()) else it } }
+}
+
 /** https://www.imdb.com/title/tt2861424/ -> tt2861424 */
 fun imdbUrlToId(url: String): String? {
     return Regex("/title/(tt[0-9]*)").find(url)?.groupValues?.get(1)

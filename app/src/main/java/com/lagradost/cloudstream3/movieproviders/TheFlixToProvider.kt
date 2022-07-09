@@ -101,7 +101,7 @@ class TheFlixToProvider : MainAPI() {
 
 
     private suspend fun getCookies(): Map<String, String> {
-        val test = app.post(
+        val cookieResponse = app.post(
             "https://theflix.to:5679/authorization/session/continue?contentUsageType=Viewing",
             headers = mapOf(
                 "Host" to "theflix.to:5679",
@@ -118,12 +118,11 @@ class TheFlixToProvider : MainAPI() {
                 "Sec-Fetch-Mode" to "cors",
                 "Sec-Fetch-Site" to "same-site",)
         ).okhttpResponse.headers.values("Set-Cookie")
-    val cookieRegex = Regex("(theflix\\.ipiid=.[a-zA-Z0-9]{0,8}[a-zA-Z0-9_-]+|theflix\\.ovid=[a-zA-Z0-9]{0,8}[a-zA-Z0-9_-]+|theflix.dvid=[a-zA-Z0-9]{0,8}[a-zA-Z0-9_-]+)")
-    val findcookie = cookieRegex.findAll(test.toString()).map { it.value }.toList()
+    val cookieRegex = Regex("(theflix\\..*?id\\=[a-zA-Z0-9]{0,8}[a-zA-Z0-9_-]+)")
+    val findcookie = cookieRegex.findAll(cookieResponse.toString()).map { it.value }.toList()
     val cookiesstring = findcookie.toString().replace(", ","; ").replace("[","").replace("]","")
     val cookiesmap = mapOf("Cookie" to cookiesstring)
     latestCookies = cookiesmap
-        println(latestCookies)
     return latestCookies
     }
 
@@ -164,7 +163,7 @@ class TheFlixToProvider : MainAPI() {
                         if (type?.contains("TV") == true) TvType.TvSeries else TvType.Movie
                     val link =
                         if (typeinfo == TvType.Movie) "$mainUrl/movie/${info.id}-${cleanTitle(title)}"
-                        else "$mainUrl/tv-show/${info.id}-${cleanTitle(title)}/season-1/episode-1"
+                        else "$mainUrl/tv-show/${info.id}-${cleanTitle(title).replace("?","")}/season-1/episode-1"
                     TvSeriesSearchResponse(
                         title,
                         link,
@@ -409,8 +408,6 @@ class TheFlixToProvider : MainAPI() {
         return parseJson(script)
     }
 
-
-
     override suspend fun load(url: String): LoadResponse? {
         val tvtype = if (url.contains("movie")) TvType.Movie else TvType.TvSeries
         val json = getLoadMan(url)
@@ -462,7 +459,7 @@ class TheFlixToProvider : MainAPI() {
         }
         val rating = metadata.voteAverage?.toFloat()?.times(1000)?.toInt()
 
-        val tags = metadata.genres?.map { it.name }
+        val tags = metadata.genres?.mapNotNull { it.name }
 
         val recommendationsitem = pageMain?.recommendationsList?.docs?.map { loadDocs ->
             val title = loadDocs.name
@@ -492,7 +489,7 @@ class TheFlixToProvider : MainAPI() {
                     this.plot = description
                     this.duration = runtime
                     addActors(cast)
-                    this.tags = tags as List<String>?
+                    this.tags = tags
                     this.recommendations = recommendationsitem
                     this.comingSoon = comingsoon
                     this.rating = rating
@@ -505,7 +502,7 @@ class TheFlixToProvider : MainAPI() {
                     this.plot = description
                     this.duration = runtime
                     addActors(cast)
-                    this.tags = tags as List<String>?
+                    this.tags = tags
                     this.recommendations = recommendationsitem
                     this.comingSoon = comingsoon
                     this.rating = rating
@@ -564,9 +561,9 @@ class TheFlixToProvider : MainAPI() {
         val seasonid = tesatt?.getOrNull(0)
         json.props?.pageProps?.selectedTv?.seasons?.map {
             it.episodes?.map {
-               val test = Triple(it.seasonNumber, it.episodeNumber, it.videos)
-               if (test.first == seasonid && test.second == epID) {
-               test.third?.apmap { id ->
+               val epsInfo = Triple(it.seasonNumber, it.episodeNumber, it.videos)
+               if (epsInfo.first == seasonid && epsInfo.second == epID) {
+               epsInfo.third?.apmap { id ->
                    val jsonserie = app.get("$authhost/tv/videos/$id/request-access?contentUsageType=Viewing", headers = latestCookies).parsedSafe<VideoData>() ?: return@apmap false
                    val extractedlink = jsonserie.url
                    if (!extractedlink.isNullOrEmpty()) {
