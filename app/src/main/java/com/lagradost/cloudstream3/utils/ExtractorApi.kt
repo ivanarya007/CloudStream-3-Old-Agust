@@ -9,17 +9,65 @@ import com.lagradost.cloudstream3.mvvm.suspendSafeApiCall
 import kotlinx.coroutines.delay
 import org.jsoup.Jsoup
 
-data class ExtractorLink(
-    val source: String,
-    var name: String,
-    override val url: String,
+/**
+ * For use in the ConcatenatingMediaSource.
+ * If features are missing (headers), please report and we can add it.
+ * @param durationUs use Long.toUs() for easier input
+ * */
+data class PlayListItem(
+    val url: String,
+    val durationUs: Long,
+)
+
+/**
+ * Converts Seconds to MicroSeconds, multiplication by 1_000_000
+ * */
+fun Long.toUs(): Long {
+    return this * 1_000_000
+}
+
+/**
+ * If your site has an unorthodox m3u8-like system where there are multiple smaller videos concatenated
+ * use this.
+ * */
+data class ExtractorLinkPlayList(
+    override val source: String,
+    override val name: String,
+    val playlist: List<PlayListItem>,
     override val referer: String,
-    val quality: Int,
-    val isM3u8: Boolean = false,
+    override val quality: Int,
+    override val isM3u8: Boolean = false,
     override val headers: Map<String, String> = mapOf(),
     /** Used for getExtractorVerifierJob() */
-    val extractorData: String? = null
-) : VideoDownloadManager.IDownloadableMinimum
+    override val extractorData: String? = null,
+    ) : ExtractorLink(
+    source,
+    name,
+    // Blank as un-used
+    "",
+    referer,
+    quality,
+    isM3u8,
+    headers,
+    extractorData
+)
+
+
+open class ExtractorLink(
+    open val source: String,
+    open val name: String,
+    override val url: String,
+    override val referer: String,
+    open val quality: Int,
+    open val isM3u8: Boolean = false,
+    override val headers: Map<String, String> = mapOf(),
+    /** Used for getExtractorVerifierJob() */
+    open val extractorData: String? = null,
+) : VideoDownloadManager.IDownloadableMinimum {
+    override fun toString(): String {
+        return "ExtractorLink(name=$name, url=$url, referer=$referer, isM3u8=$isM3u8)"
+    }
+}
 
 data class ExtractorUri(
     val uri: Uri,
@@ -129,16 +177,24 @@ val extractorApis: Array<ExtractorApi> = arrayOf(
     VizcloudXyz(),
     VizcloudLive(),
     VizcloudInfo(),
+    MwvnVizcloudInfo(),
     VizcloudDigital(),
     VizcloudCloud(),
-
     VideoVard(),
     VideovardSX(),
     Mp4Upload(),
     StreamTape(),
+
+    //mixdrop extractors
+    MixDropBz(),
+    MixDropCh(),
+    MixDropTo(),
+
     MixDrop(),
-    MixDrop1(),
+
+    Mcloud(),
     XStreamCdn(),
+
     StreamSB(),
     StreamSB1(),
     StreamSB2(),
@@ -150,43 +206,22 @@ val extractorApis: Array<ExtractorApi> = arrayOf(
     StreamSB8(),
     StreamSB9(),
     StreamSB10(),
-    //Streamhub(),
+    SBfull(),
+    // Streamhub(), cause Streamhub2() works
     Streamhub2(),
 
-    Tomatomatela(),
-    Cinestart(),
-
-    Solidfiles(),
-    Solidfiles1(),
-
-    Sendvid(),
-    Sendvid1(),
-
     FEmbed(),
-    Femax20(),
     FeHD(),
     Fplayer(),
-    Suzihaza(),
-    // WatchSB(),
-    // Watchsb1(),
-    // Watchsb2(),
-    // Watchsb3(),
-    //  Watchsb4(),
+    DBfilm(),
+    LayarKaca(),
+    //  WatchSB(), 'cause StreamSB.kt works
     Uqload(),
     Uqload1(),
     Evoload(),
     Evoload1(),
     VoeExtractor(),
-    //  UpstreamExtractor(),
-    Upstream(),
-
-    Jawcloud(),
-
-
-    OkRu(),
-
-    Videobin(),
-    Videobin1(),
+    // UpstreamExtractor(), GenericM3U8.kt works
 
     Tomatomatela(),
     Cinestart(),
@@ -194,18 +229,17 @@ val extractorApis: Array<ExtractorApi> = arrayOf(
     OkRuHttps(),
 
     // dood extractors
+    DoodCxExtractor(),
+    DoodPmExtractor(),
     DoodToExtractor(),
     DoodSoExtractor(),
     DoodLaExtractor(),
     DoodWsExtractor(),
     DoodShExtractor(),
-    DoodCxExtractor(),
-    DoodPmExtractor(),
+    DoodWatchExtractor(),
 
     AsianLoad(),
 
-    YourUpload(),
-    Mcloud(),
     // GenericM3U8(),
     Jawcloud(),
     Zplayer(),
@@ -250,8 +284,6 @@ val extractorApis: Array<ExtractorApi> = arrayOf(
 
     YoutubeExtractor(),
     YoutubeShortLinkExtractor(),
-
-    Fastream(),
 )
 
 fun getExtractorApiFromName(name: String): ExtractorApi {
