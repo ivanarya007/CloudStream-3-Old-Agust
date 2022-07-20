@@ -109,6 +109,7 @@
     <string name="result_open_in_browser">Open In Browser</string>
     <string name="skip_loading">Skip Loading</string>
     <string name="loading_chromecast">Loading…</string>
+    <string name="loading_download_links">Loading links…</string>
 
     <string name="type_watching">Watching</string>
     <string name="type_on_hold">On-Hold</string>
@@ -236,6 +237,7 @@
     <string name="episode_sync_settings_des">Automatically sync your current episode progress</string>
 
     <string name="restore_settings">Restore data from backup</string>
+    <string name="restore_settings_des">Select your backup file to restore your data</string>
     <string name="killswitch_settings">Download latest metadata from github</string>
     <string name="killswitch_settings_des">If you want access to all providers (even broken ones) turn this off</string>
 
@@ -245,6 +247,7 @@
     <string name="backup_success">Successfully stored data</string>
     <string name="backup_failed">Storage permissions missing, please try again</string>
     <string name="backup_failed_error_format">Error backing up %s</string>
+    <string name="backup_settings_des">Will create a JSON file with your data,\nuses the download path selected</string>
 
     <string name="search">Search</string>
     <string name="category_account">Accounts</string>
@@ -304,6 +307,10 @@
 
     <string name="status_ongoing">Ongoing</string>
     <string name="status_completed">Completed</string>
+    <string name="dub_status_subbed">Subbed</string>
+    <string name="dub_status_dubbed">Dubbed</string>
+    <string name="dub_status_premium">Dubbed (Premium)</string>
+    <string name="sub_status_premium">Subbed (Premium)</string>
     <string name="status">Status</string>
     <string name="year">Year</string>
     <string name="rating">Rating</string>
@@ -324,10 +331,12 @@
     <string name="tv_series">TV Series</string>
     <string name="cartoons">Cartoons</string>
     <string name="anime">Anime</string>
+    <string name="donghua">Donghua</string>
+    <string name="asian_drama">Asian Dramas</string>
     <string name="torrent">Torrents</string>
     <string name="documentaries">Documentaries</string>
+    <string name="mirror">Mirrors</string>
     <string name="ova">OVA</string>
-    <string name="asian_drama">Asian Dramas</string>
     <string name="livestreams">Livestreams</string>
 
     <!--singular-->
@@ -335,10 +344,13 @@
     <string name="tv_series_singular">Series</string>
     <string name="cartoons_singular">Cartoon</string>
     <string name="anime_singular">@string/anime</string>
-    <string name="ova_singular">@string/ova</string>
+    <string name="anime_fillerlist">Using animefillerlist.com</string>
+    <string name="donghua_singular">Donghua</string>
+    <string name="asian_drama_singular">Asian Drama</string>
     <string name="torrent_singular">Torrent</string>
     <string name="documentaries_singular">Documentary</string>
-    <string name="asian_drama_singular">Asian Drama</string>
+    <string name="mirror_singular">Mirror</string>
+    <string name="ova_singular">@string/ova</string>
     <string name="live_singular">Livestream</string>
 
     <string name="source_error">Source error</string>
@@ -356,6 +368,7 @@
     <string name="episode_action_auto_download">Auto download</string>
     <string name="episode_action_download_mirror">Download mirror</string>
     <string name="episode_action_reload_links">Reload links</string>
+    <string name="premium_only_crunchy">Premium-only episode, unable to load links.</string>
     <string name="episode_action_download_subtitle">Download subtitles</string>
 
     <string name="show_hd">Quality label</string>
@@ -470,6 +483,7 @@
     -->
     <string name="login_format" formatted="true">%s %s</string>
     <string name="account">account</string>
+    <string name="opensubs_account">OpenSubtitles account</string>
     <string name="logout">Logout</string>
     <string name="login">Login</string>
     <string name="switch_account">Switch account</string>

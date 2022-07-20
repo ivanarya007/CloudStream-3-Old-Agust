@@ -100,7 +100,15 @@
                 android:id="@+id/home_select_livestreams"
                 style="@style/RoundedSelectableButton"
                 android:nextFocusLeft="@id/home_select_documentaries"
+                android:nextFocusRight="@id/search_select_mirror"
                 android:text="@string/livestreams" />
+            <com.google.android.material.button.MaterialButton
+                    android:nextFocusLeft="@id/home_select_livestreams"
+                    android:nextFocusRight="@id/home_select_mirror"
+
+                    android:id="@+id/home_select_mirror"
+                    android:text="@string/mirror"
+                    style="@style/RoundedSelectableButton"/>
 
         </LinearLayout>
     </HorizontalScrollView>

@@ -165,6 +165,7 @@ class HomeFragment : Fragment() {
             movies: MaterialButton?,
             asian: MaterialButton?,
             livestream: MaterialButton?,
+            mirror: MaterialButton?,
         ): List<Pair<MaterialButton?, List<TvType>>> {
             return listOf(
                 Pair(anime, listOf(TvType.Anime, TvType.OVA, TvType.AnimeMovie)),
@@ -174,6 +175,7 @@ class HomeFragment : Fragment() {
                 Pair(movies, listOf(TvType.Movie, TvType.Torrent)),
                 Pair(asian, listOf(TvType.AsianDrama)),
                 Pair(livestream, listOf(TvType.Live)),
+                Pair(mirror, listOf(TvType.Mirror)),
             )
         }
 
@@ -210,8 +212,8 @@ class HomeFragment : Fragment() {
                 val livestream = dialog.findViewById<MaterialButton>(R.id.home_select_livestreams)
                 val cancelBtt = dialog.findViewById<MaterialButton>(R.id.cancel_btt)
                 val applyBtt = dialog.findViewById<MaterialButton>(R.id.apply_btt)
-
-                val pairList = getPairList(anime, cartoons, tvs, docs, movies, asian, livestream)
+                val mirror = dialog.findViewById<MaterialButton>(R.id.home_select_mirror)
+                val pairList = getPairList(anime, cartoons, tvs, docs, movies, asian, livestream, mirror)
 
                 cancelBtt?.setOnClickListener {
                     dialog.dismissSafe()

@@ -110,7 +110,6 @@ object APIHolder {
             // Metadata providers
             //TmdbProvider(),
             CrossTmdbProvider(),
-            ApiMDBProvider(),
 
             // Anime providers
             WatchCartoonOnlineProvider(),
@@ -423,7 +422,8 @@ abstract class MainAPI {
         TvType.OVA,
         TvType.Mirror,
         TvType.Donghua,
-        TvType.AsianDrama
+        TvType.AsianDrama,
+        TvType.Live
     )
 
     open val vpnStatus = VPNStatus.None
@@ -611,12 +611,17 @@ enum class TvType {
     Documentary,
     Mirror,
     Donghua,
-    AsianDrama
+    AsianDrama,
+    Live
 }
 
 // IN CASE OF FUTURE ANIME MOVIE OR SMTH
 fun TvType.isMovieType(): Boolean {
     return this == TvType.Movie || this == TvType.AnimeMovie || this == TvType.Torrent
+}
+
+fun TvType.isLiveStream(): Boolean {
+    return this == TvType.Live
 }
 
 // returns if the type has an anime opening
@@ -1127,6 +1132,28 @@ suspend fun MainAPI.newAnimeLoadResponse(
     }
     return builder
 }
+
+data class LiveStreamLoadResponse(
+    override var name: String,
+    override var url: String,
+    override var apiName: String,
+    var dataUrl: String,
+
+    override var posterUrl: String? = null,
+    override var year: Int? = null,
+    override var plot: String? = null,
+
+    override var type: TvType = TvType.Live,
+    override var rating: Int? = null,
+    override var tags: List<String>? = null,
+    override var duration: Int? = null,
+    override var trailers: List<ExtractorLink>? = null,
+    override var recommendations: List<SearchResponse>? = null,
+    override var actors: List<ActorData>? = null,
+    override var comingSoon: Boolean = false,
+    override var syncData: MutableMap<String, String> = mutableMapOf(),
+    override var posterHeaders: Map<String, String>? = null,
+) : LoadResponse
 
 data class MovieLoadResponse(
     override var name: String,

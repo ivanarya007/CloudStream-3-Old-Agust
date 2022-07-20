@@ -152,7 +152,6 @@
      <string name="updates_settings_des">Busca nuevas actualizaciones al iniciar</string>
      <string name="uprereleases_settings">Actualizar a Pre-releases</string>
      <string name="uprereleases_settings_des">Busca actualizaciones pre-release en vez de sólo releases completas</string>
-     <string name="github">Github</string>
      <string name="lightnovel">App light novel por los mismos devs</string>
      <string name="discord">Unirse a Discord</string>
      <string name="benene">Darle benene a los devs</string>
@@ -234,15 +233,6 @@
      <string name="watch_quality_pref">Calidad Preferida</string>
      <string name="limit_title">Cantidad de caracteres en el título dentro del reproductor de video</string>
 
-     <array name="limit_title_pref_names">
-      <item>@string/none</item>
-      <item>16 caracteres</item>
-      <item>32 caracteres</item>
-      <item>64 caracteres</item>
-      <item>128 caracteres</item>
-      <item>Esconder título</item>
-     </array>
-
      <string name="video_buffer_size_settings">Tamaño de búfer del video</string>
      <string name="video_buffer_length_settings">Duración del búfer de vídeo</string>
      <string name="video_buffer_disk_settings">Caché de video en memoria</string>
@@ -268,11 +258,6 @@
      <string name="phone_layout">De Celular</string>
      <string name="none">Ninguno</string>
      <string name="preferred_media_settings">¿Qué prefieries ver?</string>
-     <array name="media_type_pref">
-     <item>Todo</item>
-     <item>Películas y series</item>
-     <item>Anime</item>
-     </array>
      <string name="primary_color_settings">Color principal</string>
      <string name="app_theme_settings">Tema de la app</string>
      <string name="bottom_title_settings">Localización del título</string>

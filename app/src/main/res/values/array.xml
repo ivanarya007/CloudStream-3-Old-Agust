@@ -29,7 +29,7 @@
         <item>4</item>
     </array>
 
-    <array name="media_type_pref">
+    <array name="media_type_pref" tools:ignore="InconsistentArrays">
         <item>All</item>
         <item>Movies and TV</item>
         <item>Anime</item>

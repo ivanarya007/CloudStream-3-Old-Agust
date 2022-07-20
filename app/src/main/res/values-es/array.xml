@@ -316,7 +316,7 @@
         <item>Vietnamita (Windows-1258)</item>
     </string-array>
     <string-array name="subtitles_encoding_values" translatable="false" tools:ignore="TypographyDashes">
-        <item></item>
+        <item>@string/automatic</item>
         <item>UTF-8</item>
         <item>UTF-16</item>
         <item>UTF-16BE</item>

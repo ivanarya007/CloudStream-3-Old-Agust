@@ -302,8 +302,10 @@ class ResultFragment : ResultTrailerPlayer() {
                 TvType.Cartoon -> "Cartoons/$sanitizedFileName"
                 TvType.Torrent -> "Torrent"
                 TvType.Documentary -> "Documentaries"
-                TvType.AsianDrama -> "AsianDrama"
-                TvType.Live -> "LiveStreams"
+                TvType.Mirror -> "Mirror"
+                TvType.Donghua -> "Donghua"
+                TvType.AsianDrama -> "Asian Drama"
+                TvType.Live -> "Livestreams"
             }
         }
 
@@ -1753,7 +1755,12 @@ class ResultFragment : ResultTrailerPlayer() {
         }
 
         observe(viewModel.dubStatus) { status ->
-            result_dub_select?.text = status.toString()
+            val dubstatusName = if (status.name == "Subbed") getString(R.string.dub_status_subbed)
+            else if (status.name == "Dubbed") getString(R.string.dub_status_dubbed)
+            else if (status.name == "PremiumDub") getString(R.string.dub_status_premium)
+            else if (status.name == "PremiumSub") getString(R.string.sub_status_premium)
+            else ""
+            result_dub_select?.text = dubstatusName
         }
 
 //        val preferDub = context?.getApiDubstatusSettings()?.all { it == DubStatus.Dubbed } == true
@@ -1785,9 +1792,14 @@ class ResultFragment : ResultTrailerPlayer() {
             if (ranges != null) {
                 it.popupMenuNoIconsAndNoStringRes(ranges
                     .map { status ->
+                        val dubstatusName = if (status.name == "Subbed") getString(R.string.dub_status_subbed)
+                        else if (status.name == "Dubbed") getString(R.string.dub_status_dubbed)
+                        else if (status.name == "PremiumDub") getString(R.string.dub_status_premium)
+                        else if (status.name == "PremiumSub") getString(R.string.sub_status_premium)
+                        else ""
                         Pair(
                             status.ordinal,
-                            status.toString()
+                            dubstatusName
                         )
                     }
                     .toList()) {
@@ -2135,6 +2147,8 @@ class ResultFragment : ResultTrailerPlayer() {
                             TvType.Documentary -> R.string.documentaries_singular
                             TvType.Movie -> R.string.movies_singular
                             TvType.Torrent -> R.string.torrent_singular
+                            TvType.Mirror -> R.string.mirror_singular
+                            TvType.Donghua -> R.string.donghua_singular
                             TvType.AsianDrama -> R.string.asian_drama_singular
                             TvType.Live -> R.string.live_singular
                         }
