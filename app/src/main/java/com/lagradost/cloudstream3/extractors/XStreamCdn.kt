@@ -10,6 +10,11 @@ import com.lagradost.cloudstream3.utils.ExtractorLink
 import com.lagradost.cloudstream3.utils.getQualityFromName
 
 
+class Luxubu : XStreamCdn(){
+    override val name: String = "FE"
+    override val mainUrl: String = "https://www.luxubu.review"
+}
+
 class FEmbed: XStreamCdn() {
     override val name: String = "FEmbed"
     override val mainUrl: String = "https://www.fembed.com"

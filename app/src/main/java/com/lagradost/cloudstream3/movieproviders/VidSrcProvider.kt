@@ -39,34 +39,34 @@ class VidSrcProvider : TmdbProvider() {
             if (site == "imdb") "$mainUrl/embed/$suffix" else
                 "$mainUrl/embed/$suffix"
         }
-       val iframedoc = app.get(embedUrl).document
+        val iframedoc = app.get(embedUrl).document
 
-       val serverslist = iframedoc.select("div#sources.button_content div#content div#list div").map {
-       val datahash = it.attr("data-hash")
-        if (datahash.isNotBlank()) {
-            val links = try {
-                app.get("$mainUrl/src/$datahash", referer = "https://source.vidsrc.me/").url
-            } catch (e: Exception) {
-                ""
-            }
-            links
-        } else ""
-       }
+        val serverslist = iframedoc.select("div#sources.button_content div#content div#list div").map {
+            val datahash = it.attr("data-hash")
+            if (datahash.isNotBlank()) {
+                val links = try {
+                    app.get("$mainUrl/src/$datahash", referer = "https://source.vidsrc.me/").url
+                } catch (e: Exception) {
+                    ""
+                }
+                links
+            } else ""
+        }
 
-       serverslist.apmap { server ->
-           val linkfixed = server.replace("https://vidsrc.xyz/","https://embedsito.com/")
-           if (linkfixed.contains("/pro")) {
-               val srcresponse = app.get(server, referer = mainUrl).text
-               val m3u8Regex = Regex("((https:|http:)\\/\\/.*\\.m3u8)")
-               val srcm3u8 = m3u8Regex.find(srcresponse)?.value ?: return@apmap false
-               generateM3u8(
-                   name,
-                   srcm3u8,
-                   mainUrl
-               ).forEach(callback)
-           } else
-               loadExtractor(linkfixed, embedUrl, callback)
-       }
+        serverslist.apmap { server ->
+            val linkfixed = server.replace("https://vidsrc.xyz/","https://embedsito.com/")
+            if (linkfixed.contains("/pro")) {
+                val srcresponse = app.get(server, referer = mainUrl).text
+                val m3u8Regex = Regex("((https:|http:)\\/\\/.*\\.m3u8)")
+                val srcm3u8 = m3u8Regex.find(srcresponse)?.value ?: return@apmap false
+                generateM3u8(
+                    name,
+                    srcm3u8,
+                    mainUrl
+                ).forEach(callback)
+            } else
+                loadExtractor(linkfixed, embedUrl, callback)
+        }
 
         return true
     }

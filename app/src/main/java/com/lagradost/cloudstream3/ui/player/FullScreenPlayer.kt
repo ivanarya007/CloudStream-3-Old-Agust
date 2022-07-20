@@ -94,6 +94,17 @@ open class FullScreenPlayer : AbstractPlayerFragment() {
     protected var isShowing = false
     protected var isLocked = false
 
+    //private var episodes: List<Any> = listOf()
+    protected fun setEpisodes(ep: List<Any>) {
+        //hasEpisodes = ep.size > 1 // if has 2 episodes or more because you dont want to switch to your current episode
+        //(player_episode_list?.adapter as? PlayerEpisodeAdapter?)?.updateList(ep)
+    }
+
+    protected var hasEpisodes = false
+        private set
+    //protected val hasEpisodes
+    //    get() = episodes.isNotEmpty()
+
     // options for player
     protected var currentPrefQuality =
         Qualities.P2160.value // preferred maximum quality, used for ppl w bad internet or on cell
@@ -304,6 +315,8 @@ open class FullScreenPlayer : AbstractPlayerFragment() {
 
     override fun onDestroy() {
         exitFullscreen()
+        player.release()
+        player.releaseCallbacks()
         super.onDestroy()
     }
 
@@ -541,6 +554,9 @@ open class FullScreenPlayer : AbstractPlayerFragment() {
         player_pause_play?.startAnimation(fadeAnimation)
         player_ffwd_holder?.startAnimation(fadeAnimation)
         player_rew_holder?.startAnimation(fadeAnimation)
+
+        //if (hasEpisodes)
+        //    player_episodes_button?.startAnimation(fadeAnimation)
         //player_media_route_button?.startAnimation(fadeAnimation)
         //video_bar.startAnimation(fadeAnimation)
 
@@ -575,6 +591,7 @@ open class FullScreenPlayer : AbstractPlayerFragment() {
         player_pause_play?.isGone = isGone
         //player_buffering?.isGone = isGone
         player_top_holder?.isGone = isGone
+        //player_episodes_button?.isVisible = !isGone && hasEpisodes
         player_video_title?.isGone = togglePlayerTitleGone
         player_video_title_rez?.isGone = isGone
         player_episode_filler?.isGone = isGone
@@ -750,7 +767,9 @@ open class FullScreenPlayer : AbstractPlayerFragment() {
             MotionEvent.ACTION_DOWN -> {
                 // validates if the touch is inside of the player area
                 isCurrentTouchValid = isValidTouch(currentTouch.x, currentTouch.y)
-                if (isCurrentTouchValid) {
+                /*if (isCurrentTouchValid && player_episode_list?.isVisible == true) {
+                    player_episode_list?.isVisible = false
+                } else*/ if (isCurrentTouchValid) {
                     currentTouchStartTime = System.currentTimeMillis()
                     currentTouchStart = currentTouch
                     currentTouchLast = currentTouch
@@ -1087,7 +1106,6 @@ open class FullScreenPlayer : AbstractPlayerFragment() {
     @SuppressLint("ClickableViewAccessibility")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
         // init variables
         setPlayBackSpeed(getKey(PLAYBACK_SPEED_KEY) ?: 1.0f)
 
@@ -1151,6 +1169,15 @@ open class FullScreenPlayer : AbstractPlayerFragment() {
                 else false
             } else false
         }
+
+        //player_episodes_button?.setOnClickListener {
+        //    player_episodes_button?.isGone = true
+        //    player_episode_list?.isVisible = true
+        //}
+//
+        //player_episode_list?.adapter = PlayerEpisodeAdapter { click ->
+//
+        //}
 
         try {
             context?.let { ctx ->

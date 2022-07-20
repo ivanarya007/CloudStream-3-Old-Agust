@@ -163,17 +163,17 @@ class HomeFragment : Fragment() {
             tvs: MaterialButton?,
             docs: MaterialButton?,
             movies: MaterialButton?,
-            mirror: MaterialButton?,
-            asian_dramas: MaterialButton?
+            asian: MaterialButton?,
+            livestream: MaterialButton?,
         ): List<Pair<MaterialButton?, List<TvType>>> {
             return listOf(
-                Pair(anime, listOf(TvType.Anime, TvType.OVA, TvType.AnimeMovie, TvType.Donghua)),
+                Pair(anime, listOf(TvType.Anime, TvType.OVA, TvType.AnimeMovie)),
                 Pair(cartoons, listOf(TvType.Cartoon)),
                 Pair(tvs, listOf(TvType.TvSeries)),
                 Pair(docs, listOf(TvType.Documentary)),
                 Pair(movies, listOf(TvType.Movie, TvType.Torrent)),
-                Pair(mirror, listOf(TvType.Mirror)),
-                Pair(asian_dramas, listOf(TvType.AsianDrama)),
+                Pair(asian, listOf(TvType.AsianDrama)),
+                Pair(livestream, listOf(TvType.Live)),
             )
         }
 
@@ -207,11 +207,11 @@ class HomeFragment : Fragment() {
                 val docs = dialog.findViewById<MaterialButton>(R.id.home_select_documentaries)
                 val movies = dialog.findViewById<MaterialButton>(R.id.home_select_movies)
                 val asian = dialog.findViewById<MaterialButton>(R.id.home_select_asian)
-                val mirror = dialog.findViewById<MaterialButton>(R.id.home_select_mirror)
+                val livestream = dialog.findViewById<MaterialButton>(R.id.home_select_livestreams)
                 val cancelBtt = dialog.findViewById<MaterialButton>(R.id.cancel_btt)
                 val applyBtt = dialog.findViewById<MaterialButton>(R.id.apply_btt)
 
-                val pairList = getPairList(anime, cartoons, tvs, docs, movies, mirror, asian)
+                val pairList = getPairList(anime, cartoons, tvs, docs, movies, asian, livestream)
 
                 cancelBtt?.setOnClickListener {
                     dialog.dismissSafe()
@@ -425,7 +425,7 @@ class HomeFragment : Fragment() {
                     Pair(R.string.tv_series, listOf(TvType.TvSeries)),
                     Pair(R.string.documentaries, listOf(TvType.Documentary)),
                     Pair(R.string.cartoons, listOf(TvType.Cartoon)),
-                    Pair(R.string.anime, listOf(TvType.Anime, TvType.OVA, TvType.AnimeMovie, TvType.Donghua)),
+                    Pair(R.string.anime, listOf(TvType.Anime, TvType.OVA, TvType.AnimeMovie)),
                     Pair(R.string.torrent, listOf(TvType.Torrent)),
                     Pair(R.string.asian_drama, listOf(TvType.AsianDrama)),
                 ).filter { item -> currentApi.supportedTypes.any { type -> item.second.contains(type) } }

@@ -6,7 +6,6 @@ import com.lagradost.cloudstream3.LoadResponse.Companion.addActors
 import com.lagradost.cloudstream3.network.cookies
 import com.lagradost.cloudstream3.utils.AppUtils.parseJson
 import com.lagradost.cloudstream3.utils.ExtractorLink
-import com.lagradost.cloudstream3.utils.HttpSession
 import com.lagradost.cloudstream3.utils.getQualityFromName
 
 
@@ -101,46 +100,46 @@ class TheFlixToProvider : MainAPI() {
 
 
     private suspend fun getCookies(): Map<String, String> {
-      //  val cookieResponse = app.post(
-      //      "https://theflix.to:5679/authorization/session/continue?contentUsageType=Viewing",
-      //    headers = mapOf(
-      //          "Host" to "theflix.to:5679",
-      //          "User-Agent" to "Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0",
-      //          "Accept" to "application/json, text/plain,"
-      //          "Accept-Language" to "en-US,en;q=0.5",
-      //          "Content-Type" to "application/json;charset=utf-8",
-      //          "Content-Length" to "35",
-      //          "Origin" to "https://theflix.to",
-      //          "DNT" to "1",
-      //          "Connection" to "keep-alive",
-      //          "Referer" to "https://theflix.to/",
-      //          "Sec-Fetch-Dest" to "empty",
-      //          "Sec-Fetch-Mode" to "cors",
-      //          "Sec-Fetch-Site" to "same-site",)).okhttpResponse.headers.values("Set-Cookie")
+        //  val cookieResponse = app.post(
+        //      "https://theflix.to:5679/authorization/session/continue?contentUsageType=Viewing",
+        //    headers = mapOf(
+        //          "Host" to "theflix.to:5679",
+        //          "User-Agent" to "Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0",
+        //          "Accept" to "application/json, text/plain,"
+        //          "Accept-Language" to "en-US,en;q=0.5",
+        //          "Content-Type" to "application/json;charset=utf-8",
+        //          "Content-Length" to "35",
+        //          "Origin" to "https://theflix.to",
+        //          "DNT" to "1",
+        //          "Connection" to "keep-alive",
+        //          "Referer" to "https://theflix.to/",
+        //          "Sec-Fetch-Dest" to "empty",
+        //          "Sec-Fetch-Mode" to "cors",
+        //          "Sec-Fetch-Site" to "same-site",)).okhttpResponse.headers.values("Set-Cookie")
 
-    val cookies = app.post(
-        "$mainUrl:5679/authorization/session/continue?contentUsageType=Viewing",
-        headers = mapOf(
-            "Host" to "theflix.to:5679",
-            "User-Agent" to USER_AGENT,
-            "Accept" to "application/json, text/plain, */*",
-            "Accept-Language" to "en-US,en;q=0.5",
-            "Content-Type" to "application/json;charset=utf-8",
-            "Content-Length" to "35",
-            "Origin" to mainUrl,
-            "DNT" to "1",
-            "Connection" to "keep-alive",
-            "Referer" to mainUrl,
-            "Sec-Fetch-Dest" to "empty",
-            "Sec-Fetch-Mode" to "cors",
-            "Sec-Fetch-Site" to "same-site",)
-    ).cookies
-     /* val cookieRegex = Regex("(theflix\\..*?id\\=[a-zA-Z0-9]{0,8}[a-zA-Z0-9_-]+)")
-    val findcookie = cookieRegex.findAll(cookieResponse.toString()).map { it.value }.toList()
-    val cookiesstring = findcookie.toString().replace(", ","; ").replace("[","").replace("]","")
-    val cookiesmap = mapOf("Cookie" to cookiesstring) */
-    latestCookies = cookies
-    return latestCookies
+        val cookies = app.post(
+            "$mainUrl:5679/authorization/session/continue?contentUsageType=Viewing",
+            headers = mapOf(
+                "Host" to "theflix.to:5679",
+                "User-Agent" to USER_AGENT,
+                "Accept" to "application/json, text/plain, */*",
+                "Accept-Language" to "en-US,en;q=0.5",
+                "Content-Type" to "application/json;charset=utf-8",
+                "Content-Length" to "35",
+                "Origin" to mainUrl,
+                "DNT" to "1",
+                "Connection" to "keep-alive",
+                "Referer" to mainUrl,
+                "Sec-Fetch-Dest" to "empty",
+                "Sec-Fetch-Mode" to "cors",
+                "Sec-Fetch-Site" to "same-site",)
+        ).cookies
+        /* val cookieRegex = Regex("(theflix\\..*?id\\=[a-zA-Z0-9]{0,8}[a-zA-Z0-9_-]+)")
+       val findcookie = cookieRegex.findAll(cookieResponse.toString()).map { it.value }.toList()
+       val cookiesstring = findcookie.toString().replace(", ","; ").replace("[","").replace("]","")
+       val cookiesmap = mapOf("Cookie" to cookiesstring) */
+        latestCookies = cookies
+        return latestCookies
     }
 
 
@@ -542,64 +541,64 @@ class TheFlixToProvider : MainAPI() {
         subtitleCallback: (SubtitleFile) -> Unit,
         callback: (ExtractorLink) -> Unit
     ): Boolean {
-       val json = getLoadMan(data)
-       val authhost = json.runtimeConfig?.Services?.Server?.Url
-       val isMovie = data.contains("/movie/")
-       val qualityReg = Regex("(\\d+p)")
-       if (isMovie){
-           json.props?.pageProps?.movie?.videos?.apmap { id ->
-           val jsonmovie = app.get("$authhost/movies/videos/$id/request-access?contentUsageType=Viewing",
-               headers = latestCookies).parsedSafe<VideoData>() ?: return@apmap false
-           val extractedlink = jsonmovie.url
-           if (!extractedlink.isNullOrEmpty()) {
-               val quality = qualityReg.find(extractedlink)?.value ?: ""
-               callback(
-                   ExtractorLink(
-                       name,
-                       name,
-                       extractedlink,
-                       "",
-                       getQualityFromName(quality),
-                       false
-                   )
-               )
-           } else null
-           }
-       }
-       else
-       {
-        val dataRegex = Regex("(season-(\\d+)\\/episode-(\\d+))")
-        val cleandatainfo = dataRegex.find(data)?.value?.replace(Regex("(season-|episode-)"),"")?.replace("/","x")
-        val tesatt = cleandatainfo.let { str ->
-               str?.split("x")?.mapNotNull { subStr -> subStr.toIntOrNull() }
-           }
-        val epID = tesatt?.getOrNull(1)
-        val seasonid = tesatt?.getOrNull(0)
-        json.props?.pageProps?.selectedTv?.seasons?.map {
-            it.episodes?.map {
-               val epsInfo = Triple(it.seasonNumber, it.episodeNumber, it.videos)
-               if (epsInfo.first == seasonid && epsInfo.second == epID) {
-               epsInfo.third?.apmap { id ->
-                   val jsonserie = app.get("$authhost/tv/videos/$id/request-access?contentUsageType=Viewing", headers = latestCookies).parsedSafe<VideoData>() ?: return@apmap false
-                   val extractedlink = jsonserie.url
-                   if (!extractedlink.isNullOrEmpty()) {
-                       val quality = qualityReg.find(extractedlink)?.value ?: ""
-                       callback(
-                           ExtractorLink(
-                               name,
-                               name,
-                               extractedlink,
-                               "",
-                               getQualityFromName(quality),
-                               false
-                           )
-                       )
-                   } else null
-               }
-               }
+        val json = getLoadMan(data)
+        val authhost = json.runtimeConfig?.Services?.Server?.Url
+        val isMovie = data.contains("/movie/")
+        val qualityReg = Regex("(\\d+p)")
+        if (isMovie){
+            json.props?.pageProps?.movie?.videos?.apmap { id ->
+                val jsonmovie = app.get("$authhost/movies/videos/$id/request-access?contentUsageType=Viewing",
+                    headers = latestCookies).parsedSafe<VideoData>() ?: return@apmap false
+                val extractedlink = jsonmovie.url
+                if (!extractedlink.isNullOrEmpty()) {
+                    val quality = qualityReg.find(extractedlink)?.value ?: ""
+                    callback(
+                        ExtractorLink(
+                            name,
+                            name,
+                            extractedlink,
+                            "",
+                            getQualityFromName(quality),
+                            false
+                        )
+                    )
+                } else null
             }
         }
-       }
+        else
+        {
+            val dataRegex = Regex("(season-(\\d+)\\/episode-(\\d+))")
+            val cleandatainfo = dataRegex.find(data)?.value?.replace(Regex("(season-|episode-)"),"")?.replace("/","x")
+            val tesatt = cleandatainfo.let { str ->
+                str?.split("x")?.mapNotNull { subStr -> subStr.toIntOrNull() }
+            }
+            val epID = tesatt?.getOrNull(1)
+            val seasonid = tesatt?.getOrNull(0)
+            json.props?.pageProps?.selectedTv?.seasons?.map {
+                it.episodes?.map {
+                    val epsInfo = Triple(it.seasonNumber, it.episodeNumber, it.videos)
+                    if (epsInfo.first == seasonid && epsInfo.second == epID) {
+                        epsInfo.third?.apmap { id ->
+                            val jsonserie = app.get("$authhost/tv/videos/$id/request-access?contentUsageType=Viewing", headers = latestCookies).parsedSafe<VideoData>() ?: return@apmap false
+                            val extractedlink = jsonserie.url
+                            if (!extractedlink.isNullOrEmpty()) {
+                                val quality = qualityReg.find(extractedlink)?.value ?: ""
+                                callback(
+                                    ExtractorLink(
+                                        name,
+                                        name,
+                                        extractedlink,
+                                        "",
+                                        getQualityFromName(quality),
+                                        false
+                                    )
+                                )
+                            } else null
+                        }
+                    }
+                }
+            }
+        }
         return true
     }
 }

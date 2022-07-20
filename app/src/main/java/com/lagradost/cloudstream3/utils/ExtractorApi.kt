@@ -32,7 +32,7 @@ fun Long.toUs(): Long {
  * */
 data class ExtractorLinkPlayList(
     override val source: String,
-    override var name: String,
+    override val name: String,
     val playlist: List<PlayListItem>,
     override val referer: String,
     override val quality: Int,
@@ -40,7 +40,7 @@ data class ExtractorLinkPlayList(
     override val headers: Map<String, String> = mapOf(),
     /** Used for getExtractorVerifierJob() */
     override val extractorData: String? = null,
-    ) : ExtractorLink(
+) : ExtractorLink(
     source,
     name,
     // Blank as un-used
@@ -55,7 +55,7 @@ data class ExtractorLinkPlayList(
 
 open class ExtractorLink(
     open val source: String,
-    open var name: String,
+    open val name: String,
     override val url: String,
     override val referer: String,
     open val quality: Int,
@@ -91,6 +91,12 @@ data class ExtractorSubtitleLink(
     override val referer: String,
     override val headers: Map<String, String> = mapOf()
 ) : VideoDownloadManager.IDownloadableMinimum
+
+/**
+ * Removes https:// and www.
+ * To match urls regardless of schema, perhaps Uri() can be used?
+ */
+val schemaStripRegex = Regex("""^(https:|)//(www\.|)""")
 
 enum class Qualities(var value: Int) {
     Unknown(400),
@@ -146,7 +152,9 @@ suspend fun loadExtractor(
     callback: (ExtractorLink) -> Unit
 ): Boolean {
     for (extractor in extractorApis) {
-        if (url.startsWith(extractor.mainUrl)) {
+        if (url.replace(schemaStripRegex, "")
+                .startsWith(extractor.mainUrl.replace(schemaStripRegex, ""))
+        ) {
             extractor.getSafeUrl(url, referer)?.forEach(callback)
             return true
         }
@@ -177,16 +185,24 @@ val extractorApis: Array<ExtractorApi> = arrayOf(
     VizcloudXyz(),
     VizcloudLive(),
     VizcloudInfo(),
+    MwvnVizcloudInfo(),
     VizcloudDigital(),
     VizcloudCloud(),
-
     VideoVard(),
     VideovardSX(),
     Mp4Upload(),
     StreamTape(),
+
+    //mixdrop extractors
+    MixDropBz(),
+    MixDropCh(),
+    MixDropTo(),
+
     MixDrop(),
-    MixDrop1(),
+
+    Mcloud(),
     XStreamCdn(),
+
     StreamSB(),
     StreamSB1(),
     StreamSB2(),
@@ -198,43 +214,23 @@ val extractorApis: Array<ExtractorApi> = arrayOf(
     StreamSB8(),
     StreamSB9(),
     StreamSB10(),
-    //Streamhub(),
+    SBfull(),
+    // Streamhub(), cause Streamhub2() works
     Streamhub2(),
 
-    Tomatomatela(),
-    Cinestart(),
-
-    Solidfiles(),
-    Solidfiles1(),
-
-    Sendvid(),
-    Sendvid1(),
-
     FEmbed(),
-    Femax20(),
     FeHD(),
     Fplayer(),
-    Suzihaza(),
-    // WatchSB(),
-    // Watchsb1(),
-    // Watchsb2(),
-    // Watchsb3(),
-    //  Watchsb4(),
+    DBfilm(),
+    Luxubu(),
+    LayarKaca(),
+    //  WatchSB(), 'cause StreamSB.kt works
     Uqload(),
     Uqload1(),
     Evoload(),
     Evoload1(),
     VoeExtractor(),
-    //  UpstreamExtractor(),
-    Upstream(),
-
-    Jawcloud(),
-
-
-    OkRu(),
-
-    Videobin(),
-    Videobin1(),
+    // UpstreamExtractor(), GenericM3U8.kt works
 
     Tomatomatela(),
     Cinestart(),
@@ -242,18 +238,17 @@ val extractorApis: Array<ExtractorApi> = arrayOf(
     OkRuHttps(),
 
     // dood extractors
+    DoodCxExtractor(),
+    DoodPmExtractor(),
     DoodToExtractor(),
     DoodSoExtractor(),
     DoodLaExtractor(),
     DoodWsExtractor(),
     DoodShExtractor(),
-    DoodCxExtractor(),
-    DoodPmExtractor(),
+    DoodWatchExtractor(),
 
     AsianLoad(),
 
-    YourUpload(),
-    Mcloud(),
     // GenericM3U8(),
     Jawcloud(),
     Zplayer(),
@@ -296,10 +291,11 @@ val extractorApis: Array<ExtractorApi> = arrayOf(
 
     Filesim(),
 
+    Linkbox(),
+
     YoutubeExtractor(),
     YoutubeShortLinkExtractor(),
-
-    Fastream(),
+    Streamlare()
 )
 
 fun getExtractorApiFromName(name: String): ExtractorApi {

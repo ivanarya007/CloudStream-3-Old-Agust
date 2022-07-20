@@ -55,7 +55,7 @@ class MonoschinosProvider : MainAPI() {
                     val epRegex = Regex("episodio-(\\d+)")
                     val url = it.selectFirst("a")?.attr("href")!!.replace("ver/", "anime/")
                         .replace(epRegex, "sub-espanol")
-                    val epNum = it.selectFirst(".positioning h5")?.text()?.toIntOrNull()
+                    val epNum = (it.selectFirst(".positioning h5")?.text() ?: it.selectFirst("div.positioning p")?.text())?.toIntOrNull()
                     newAnimeSearchResponse(title, url) {
                         this.posterUrl = fixUrl(poster)
                         addDubStatus(getDubStatus(title), epNum)

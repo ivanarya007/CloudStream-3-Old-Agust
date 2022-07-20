@@ -1,6 +1,5 @@
 package com.lagradost.cloudstream3.animeproviders
 
-import android.util.Log
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.LoadResponse.Companion.addTrailer
@@ -69,6 +68,7 @@ class OploverzProvider : MainAPI() {
                 )?.groupValues?.get(1).toString()
                 (title.contains("-ova")) -> Regex("(.+)-ova").find(title)?.groupValues?.get(1)
                     .toString()
+                (title.contains("-movie")) -> Regex("(.+)-subtitle").find(title)?.groupValues?.get(1).toString()
                 else -> Regex("(.+)-subtitle").find(title)?.groupValues?.get(1).toString()
                     .replace(Regex("-\\d+"), "")
             }
@@ -89,12 +89,10 @@ class OploverzProvider : MainAPI() {
 
     private fun Element.toSearchResult(): AnimeSearchResponse {
         val href = getProperAnimeLink(this.selectFirst("a.tip")!!.attr("href"))
-        val title = this.selectFirst("h2[itemprop=headline]")!!.text().trim()
-        val posterUrl = fixUrl(this.selectFirst("img")!!.attr("src"))
-        val type = getType(this.selectFirst(".eggtype, .typez")!!.text().trim())
-        val epNum =
-            this.selectFirst(".eggepisode, span.epx")!!.text().replace(Regex("[^0-9]"), "").trim()
-                .toIntOrNull()
+        val title = this.selectFirst("h2[itemprop=headline]")?.text()?.trim() ?: ""
+        val posterUrl = fixUrlNull(this.selectFirst("img")?.attr("src"))
+        val type = getType(this.selectFirst(".eggtype, .typez")?.text()?.trim().toString())
+        val epNum = this.selectFirst(".eggepisode, span.epx")?.text()?.replace(Regex("[^0-9]"), "")?.trim()?.toIntOrNull()
 
         return newAnimeSearchResponse(title, href, type) {
             this.posterUrl = posterUrl
@@ -107,8 +105,8 @@ class OploverzProvider : MainAPI() {
         val document = app.get(link).document
 
         return document.select("article[itemscope=itemscope]").map {
-            val title = it.selectFirst(".tt")!!.ownText().trim()
-            val poster = it.selectFirst("img")!!.attr("src")
+            val title = it.selectFirst(".tt")?.ownText()?.trim().toString()
+            val poster = fixUrlNull(it.selectFirst("img")?.attr("src"))
             val tvType = getType(it.selectFirst(".typez")?.text().toString())
             val href = fixUrl(it.selectFirst("a.tip")!!.attr("href"))
 
@@ -136,9 +134,9 @@ class OploverzProvider : MainAPI() {
         val typeCheck =
             when (document.select(".info-content > .spe > span:nth-child(5), .info-content > .spe > span")
                 .text().trim()) {
-                "TV" -> "TV"
+                "OVA" -> "OVA"
                 "Movie" -> "Movie"
-                else -> "OVA"
+                else -> "TV"
             }
         val type = getType(typeCheck)
         val description = document.select(".entry-content > p").text().trim()

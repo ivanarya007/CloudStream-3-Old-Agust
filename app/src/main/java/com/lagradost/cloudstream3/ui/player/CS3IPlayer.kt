@@ -108,6 +108,21 @@ class CS3IPlayer : IPlayer {
     private var playerUpdated: ((Any?) -> Unit)? = null
     private var embeddedSubtitlesFetched: ((List<SubtitleData>) -> Unit)? = null
 
+    override fun releaseCallbacks() {
+        playerUpdated = null
+        updateIsPlaying = null
+        requestAutoFocus = null
+        playerError = null
+        playerDimensionsLoaded = null
+        requestedListeningPercentages = null
+        playerPositionChanged = null
+        nextEpisode = null
+        prevEpisode = null
+        subtitlesUpdates = null
+        embeddedSubtitlesFetched = null
+        requestSubtitleUpdate = null
+    }
+
     override fun initCallbacks(
         playerUpdated: (Any?) -> Unit,
         updateIsPlaying: ((Pair<CSPlayerLoading, CSPlayerLoading>) -> Unit)?,
@@ -802,6 +817,7 @@ class CS3IPlayer : IPlayer {
                         // Concatenated sources (non 1 periodCount) bypasses the invalid check as exoPlayer.duration gives only the current period
                         // If you can get the total time that'd be better, but this is already niche.
                         && exoPlayer?.currentTimeline?.periodCount == 1
+                        && exoPlayer?.isCurrentMediaItemLive != true
             } ?: false
 
             if (invalid) {

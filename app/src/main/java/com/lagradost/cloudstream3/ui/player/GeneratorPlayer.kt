@@ -143,6 +143,7 @@ class GeneratorPlayer : FullScreenPlayer() {
         currentSelectedLink = link
         currentMeta = viewModel.getMeta()
         nextMeta = viewModel.getNextMeta()
+        setEpisodes(viewModel.getAllMeta() ?: emptyList())
         isActive = true
         setPlayerDimen(null)
         setTitle()
@@ -273,8 +274,10 @@ class GeneratorPlayer : FullScreenPlayer() {
 
                     mainTextView?.text = item?.let { getName(it, false) }
 
-                    val language = item?.let { fromTwoLettersToLanguage(it.lang.trim()) ?: it.lang } ?: ""
-                    val providerSuffix = if (isSingleProvider || item == null) "" else " · ${item.source}"
+                    val language =
+                        item?.let { fromTwoLettersToLanguage(it.lang.trim()) ?: it.lang } ?: ""
+                    val providerSuffix =
+                        if (isSingleProvider || item == null) "" else " · ${item.source}"
                     secondaryTextView?.text = language + providerSuffix
 
                     setHearingImpairedIcon(drawableEnd, position)
@@ -356,12 +359,13 @@ class GeneratorPlayer : FullScreenPlayer() {
             }
         })
 
-        dialog.search_filter.setOnClickListener {
+        dialog.search_filter.setOnClickListener { view ->
             val lang639_1 = languages.map { it.ISO_639_1 }
             activity?.showDialog(
                 languages.map { it.languageName },
                 lang639_1.indexOf(currentLanguageTwoLetters),
-                context.getString(R.string.subs_subtitle_languages),
+                view?.context?.getString(R.string.subs_subtitle_languages)
+                    ?: return@setOnClickListener,
                 true,
                 { }
             ) { index ->
@@ -606,7 +610,7 @@ class GeneratorPlayer : FullScreenPlayer() {
 
                     val currentPrefMedia =
                         settingsManager.getString(
-                            getString(R.string.subtitles_encoding_key),
+                            ctx.getString(R.string.subtitles_encoding_key),
                             null
                         )
 
@@ -688,6 +692,11 @@ class GeneratorPlayer : FullScreenPlayer() {
         viewModel.loadLinksPrev()
     }
 
+    override fun hasNextMirror(): Boolean {
+        val links = sortLinks()
+        return links.isNotEmpty() && links.indexOf(currentSelectedLink) + 1 < links.size
+    }
+
     override fun nextMirror() {
         val links = sortLinks()
         if (links.isEmpty()) {
@@ -713,6 +722,9 @@ class GeneratorPlayer : FullScreenPlayer() {
     var maxEpisodeSet: Int? = null
 
     override fun playerPositionChanged(posDur: Pair<Long, Long>) {
+        // Don't save livestream data
+        if ((currentMeta as? ResultEpisode)?.tvType?.isLiveStream() == true) return
+
         val (position, duration) = posDur
         viewModel.getId()?.let {
             DataStoreHelper.setViewPos(it, position, duration)

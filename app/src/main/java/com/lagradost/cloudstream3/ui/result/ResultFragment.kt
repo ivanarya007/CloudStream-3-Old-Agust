@@ -30,8 +30,6 @@ import androidx.core.widget.NestedScrollView
 import androidx.core.widget.doOnTextChanged
 import androidx.lifecycle.ViewModelProvider
 import androidx.preference.PreferenceManager
-import androidx.recyclerview.widget.GridLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.discord.panels.OverlappingPanelsLayout
 import com.discord.panels.PanelsChildGestureRegionObserver
 import com.google.android.gms.cast.framework.CastButtonFactory
@@ -49,10 +47,8 @@ import com.lagradost.cloudstream3.CommonActivity.showToast
 import com.lagradost.cloudstream3.mvvm.*
 import com.lagradost.cloudstream3.syncproviders.providers.Kitsu
 import com.lagradost.cloudstream3.ui.WatchType
-import com.lagradost.cloudstream3.ui.download.DOWNLOAD_ACTION_DOWNLOAD
-import com.lagradost.cloudstream3.ui.download.DOWNLOAD_NAVIGATE_TO
+import com.lagradost.cloudstream3.ui.download.*
 import com.lagradost.cloudstream3.ui.download.DownloadButtonSetup.handleDownloadClick
-import com.lagradost.cloudstream3.ui.download.EasyDownloadButton
 import com.lagradost.cloudstream3.ui.player.CSPlayerEvent
 import com.lagradost.cloudstream3.ui.player.GeneratorPlayer
 import com.lagradost.cloudstream3.ui.player.RepoLinkGenerator
@@ -97,7 +93,10 @@ import kotlinx.android.synthetic.main.fragment_trailer.*
 import kotlinx.android.synthetic.main.result_recommendations.*
 import kotlinx.android.synthetic.main.result_sync.*
 import kotlinx.android.synthetic.main.trailer_custom_layout.*
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.concurrent.TimeUnit
 
@@ -303,9 +302,9 @@ class ResultFragment : ResultTrailerPlayer() {
                 TvType.Cartoon -> "Cartoons/$sanitizedFileName"
                 TvType.Torrent -> "Torrent"
                 TvType.Documentary -> "Documentaries"
-                TvType.Mirror -> "Mirror"
-                TvType.Donghua -> "Donghua"
-                TvType.AsianDrama -> "Asian Drama"                }
+                TvType.AsianDrama -> "AsianDrama"
+                TvType.Live -> "LiveStreams"
+            }
         }
 
         fun startDownload(
@@ -476,17 +475,21 @@ class ResultFragment : ResultTrailerPlayer() {
     }
 
     override fun onDestroyView() {
+        updateUIListener = null
         (result_episodes?.adapter as EpisodeAdapter?)?.killAdapter()
+        downloadButton?.dispose()
+        //somehow this still leaks and I dont know why????
+        // todo look at https://github.com/discord/OverlappingPanels/blob/70b4a7cf43c6771873b1e091029d332896d41a1a/sample_app/src/main/java/com/discord/sampleapp/MainActivity.kt
+        PanelsChildGestureRegionObserver.Provider.get().removeGestureRegionsUpdateListener(this)
+        result_cast_items?.let {
+            PanelsChildGestureRegionObserver.Provider.get().unregister(it)
+        }
         super.onDestroyView()
     }
 
     override fun onDestroy() {
         //requireActivity().viewModelStore.clear() // REMEMBER THE CLEAR
-        downloadButton?.dispose()
-        updateUIListener = null
-        result_cast_items?.let {
-            PanelsChildGestureRegionObserver.Provider.get().unregister(it)
-        }
+
 
         super.onDestroy()
     }
@@ -611,11 +614,51 @@ class ResultFragment : ResultTrailerPlayer() {
         loadTrailer()
     }
 
+    override fun hasNextMirror(): Boolean {
+        return currentTrailerIndex + 1 < currentTrailers.size
+    }
+
     override fun playerError(exception: Exception) {
         if (player.getIsPlaying()) { // because we dont want random toasts in player
             super.playerError(exception)
         } else {
             nextMirror()
+        }
+    }
+
+    private fun handleDownloadButton(downloadClickEvent: DownloadClickEvent) {
+        if (downloadClickEvent.action == DOWNLOAD_ACTION_DOWNLOAD) {
+            currentEpisodes?.firstOrNull()?.let { episode ->
+                handleAction(
+                    EpisodeClickEvent(
+                        ACTION_DOWNLOAD_EPISODE,
+                        ResultEpisode(
+                            currentHeaderName ?: return@let,
+                            currentHeaderName,
+                            null,
+                            0,
+                            null,
+                            episode.data,
+                            apiName,
+                            currentId ?: return@let,
+                            0,
+                            0L,
+                            0L,
+                            null,
+                            null,
+                            null,
+                            currentType ?: return@let,
+                            currentId ?: return@let,
+                        )
+                    )
+                )
+            }
+        } else {
+            DownloadButtonSetup.handleDownloadClick(
+                activity,
+                currentHeaderName,
+                downloadClickEvent
+            )
         }
     }
 
@@ -698,7 +741,8 @@ class ResultFragment : ResultTrailerPlayer() {
                         }?.also { text ->
                             result_next_airing_time?.text = text
                             result_next_airing?.text =
-                                ctx.getString(R.string.next_episode_format).format(nextAiring.episode)
+                                ctx.getString(R.string.next_episode_format)
+                                    .format(nextAiring.episode)
                         } != null
                     }
                 } catch (e: Exception) { // mistranslation
@@ -803,13 +847,412 @@ class ResultFragment : ResultTrailerPlayer() {
         viewModel.reloadEpisodes()
     }
 
+    var apiName: String = ""
+    private fun handleAction(episodeClick: EpisodeClickEvent): Job = main {
+        if (episodeClick.action == ACTION_DOWNLOAD_EPISODE) {
+            val isMovie = currentIsMovie ?: return@main
+            val headerName = currentHeaderName ?: return@main
+            val tvType = currentType ?: return@main
+            val poster = currentPoster ?: return@main
+            val id = currentId ?: return@main
+            val curl = url ?: return@main
+            showToast(activity, R.string.download_started, Toast.LENGTH_SHORT)
+            downloadEpisode(
+                activity,
+                episodeClick.data,
+                isMovie,
+                headerName,
+                tvType,
+                poster,
+                apiName,
+                id,
+                curl,
+            )
+            return@main
+        }
+
+        var currentLinks: Set<ExtractorLink>? = null
+        var currentSubs: Set<SubtitleData>? = null
+
+        //val id = episodeClick.data.id
+        currentLoadingCount++
+
+        val showTitle =
+            episodeClick.data.name ?: context?.getString(R.string.episode_name_format)
+                ?.format(
+                    getString(R.string.episode),
+                    episodeClick.data.episode
+                )
+
+
+        fun acquireSingleExtractorLink(
+            links: List<ExtractorLink>,
+            title: String,
+            callback: (ExtractorLink) -> Unit
+        ) {
+            val builder = AlertDialog.Builder(requireContext(), R.style.AlertDialogCustom)
+
+            builder.setTitle(title)
+            builder.setItems(links.map { "${it.name} ${Qualities.getStringByInt(it.quality)}" }
+                .toTypedArray()) { dia, which ->
+                callback.invoke(links[which])
+                dia?.dismiss()
+            }
+            builder.create().show()
+        }
+
+        fun acquireSingleSubtitleLink(
+            links: List<SubtitleData>,
+            title: String,
+            callback: (SubtitleData) -> Unit
+        ) {
+            val builder = AlertDialog.Builder(requireContext(), R.style.AlertDialogCustom)
+
+            builder.setTitle(title)
+            builder.setItems(links.map { it.name }.toTypedArray()) { dia, which ->
+                callback.invoke(links[which])
+                dia?.dismiss()
+            }
+            builder.create().show()
+        }
+
+        fun acquireSingeExtractorLink(title: String, callback: (ExtractorLink) -> Unit) {
+            acquireSingleExtractorLink(sortUrls(currentLinks ?: return), title, callback)
+        }
+
+        fun startChromecast(startIndex: Int) {
+            val eps = currentEpisodes ?: return
+            activity?.getCastSession()?.startCast(
+                apiName,
+                currentIsMovie ?: return,
+                currentHeaderName,
+                currentPoster,
+                episodeClick.data.index,
+                eps,
+                sortUrls(currentLinks ?: return),
+                sortSubs(currentSubs ?: return),
+                startTime = episodeClick.data.getRealPosition(),
+                startIndex = startIndex
+            )
+        }
+
+        suspend fun requireLinks(isCasting: Boolean, displayLoading: Boolean = true): Boolean {
+            val skipLoading = getApiFromName(apiName).instantLinkLoading
+
+            var loadingDialog: AlertDialog? = null
+            val currentLoad = currentLoadingCount
+
+            if (!skipLoading && displayLoading) {
+                val builder =
+                    AlertDialog.Builder(requireContext(), R.style.AlertDialogCustomTransparent)
+                val customLayout = layoutInflater.inflate(R.layout.dialog_loading, null)
+                builder.setView(customLayout)
+
+                loadingDialog = builder.create()
+
+                loadingDialog.show()
+                loadingDialog.setOnDismissListener {
+                    currentLoadingCount++
+                }
+            }
+
+            val data = viewModel.loadEpisode(episodeClick.data, isCasting)
+            if (currentLoadingCount != currentLoad) return false
+            loadingDialog?.dismissSafe(activity)
+
+            when (data) {
+                is Resource.Success -> {
+                    currentLinks = data.value.first
+                    currentSubs = data.value.second
+                    return true
+                }
+                is Resource.Failure -> {
+                    showToast(
+                        activity,
+                        R.string.error_loading_links_toast,
+                        Toast.LENGTH_SHORT
+                    )
+                }
+                else -> Unit
+            }
+            return false
+        }
+
+        val isLoaded = when (episodeClick.action) {
+            ACTION_PLAY_EPISODE_IN_PLAYER -> true
+            ACTION_CLICK_DEFAULT -> true
+            ACTION_SHOW_TOAST -> true
+            ACTION_DOWNLOAD_EPISODE -> {
+                showToast(activity, R.string.download_started, Toast.LENGTH_SHORT)
+                requireLinks(false, false)
+            }
+            ACTION_CHROME_CAST_EPISODE -> requireLinks(true)
+            ACTION_CHROME_CAST_MIRROR -> requireLinks(true)
+            ACTION_SHOW_DESCRIPTION -> true
+            else -> requireLinks(false)
+        }
+        if (!isLoaded) return@main // CANT LOAD
+
+        when (episodeClick.action) {
+            ACTION_SHOW_TOAST -> {
+                showToast(activity, R.string.play_episode_toast, Toast.LENGTH_SHORT)
+            }
+
+            ACTION_SHOW_DESCRIPTION -> {
+                val builder: AlertDialog.Builder =
+                    AlertDialog.Builder(requireContext(), R.style.AlertDialogCustom)
+                builder.setMessage(episodeClick.data.description ?: return@main)
+                    .setTitle(R.string.torrent_plot)
+                    .show()
+            }
+
+            ACTION_CLICK_DEFAULT -> {
+                context?.let { ctx ->
+                    if (ctx.isConnectedToChromecast()) {
+                        handleAction(
+                            EpisodeClickEvent(
+                                ACTION_CHROME_CAST_EPISODE,
+                                episodeClick.data
+                            )
+                        )
+                    } else {
+                        handleAction(
+                            EpisodeClickEvent(
+                                ACTION_PLAY_EPISODE_IN_PLAYER,
+                                episodeClick.data
+                            )
+                        )
+                    }
+                }
+            }
+
+            ACTION_DOWNLOAD_EPISODE_SUBTITLE -> {
+                acquireSingleSubtitleLink(
+                    sortSubs(
+                        currentSubs ?: return@main
+                    ),//(currentLinks ?: return@main).filter { !it.isM3u8 },
+                    getString(R.string.episode_action_download_subtitle)
+                ) { link ->
+                    downloadSubtitle(
+                        context,
+                        link,
+                        getMeta(
+                            episodeClick.data,
+                            currentHeaderName ?: return@acquireSingleSubtitleLink,
+                            apiName,
+                            currentPoster ?: return@acquireSingleSubtitleLink,
+                            currentIsMovie ?: return@acquireSingleSubtitleLink,
+                            currentType ?: return@acquireSingleSubtitleLink
+                        )
+                    )
+                    showToast(activity, R.string.download_started, Toast.LENGTH_SHORT)
+                }
+            }
+
+            ACTION_SHOW_OPTIONS -> {
+                context?.let { ctx ->
+                    val builder = AlertDialog.Builder(ctx, R.style.AlertDialogCustom)
+                    var dialog: AlertDialog? = null
+                    builder.setTitle(showTitle)
+                    val options =
+                        requireContext().resources.getStringArray(R.array.episode_long_click_options)
+                    val optionsValues =
+                        requireContext().resources.getIntArray(R.array.episode_long_click_options_values)
+
+                    val verifiedOptions = ArrayList<String>()
+                    val verifiedOptionsValues = ArrayList<Int>()
+
+                    val hasDownloadSupport = getApiFromName(apiName).hasDownloadSupport
+
+                    for (i in options.indices) {
+                        val opv = optionsValues[i]
+                        val op = options[i]
+
+                        val isConnected = ctx.isConnectedToChromecast()
+                        val add = when (opv) {
+                            ACTION_CHROME_CAST_EPISODE -> isConnected
+                            ACTION_CHROME_CAST_MIRROR -> isConnected
+                            ACTION_DOWNLOAD_EPISODE_SUBTITLE -> !currentSubs.isNullOrEmpty()
+                            ACTION_DOWNLOAD_EPISODE -> hasDownloadSupport
+                            ACTION_DOWNLOAD_MIRROR -> hasDownloadSupport
+                            ACTION_PLAY_EPISODE_IN_VLC_PLAYER -> context?.isAppInstalled(
+                                VLC_PACKAGE
+                            ) ?: false
+                            else -> true
+                        }
+                        if (add) {
+                            verifiedOptions.add(op)
+                            verifiedOptionsValues.add(opv)
+                        }
+                    }
+
+                    builder.setItems(
+                        verifiedOptions.toTypedArray()
+                    ) { _, which ->
+                        handleAction(
+                            EpisodeClickEvent(
+                                verifiedOptionsValues[which],
+                                episodeClick.data
+                            )
+                        )
+                        dialog?.dismissSafe(activity)
+                    }
+
+                    dialog = builder.create()
+                    dialog.show()
+                }
+            }
+            ACTION_COPY_LINK -> {
+                activity?.let { act ->
+                    try {
+                        acquireSingeExtractorLink(act.getString(R.string.episode_action_copy_link)) { link ->
+                            val serviceClipboard =
+                                (act.getSystemService(CLIPBOARD_SERVICE) as? ClipboardManager?)
+                                    ?: return@acquireSingeExtractorLink
+                            val clip = ClipData.newPlainText(link.name, link.url)
+                            serviceClipboard.setPrimaryClip(clip)
+                            showToast(act, R.string.copy_link_toast, Toast.LENGTH_SHORT)
+                        }
+                    } catch (e: Exception) {
+                        showToast(act, e.toString(), Toast.LENGTH_LONG)
+                        logError(e)
+                    }
+                }
+            }
+
+            ACTION_PLAY_EPISODE_IN_BROWSER -> {
+                acquireSingeExtractorLink(getString(R.string.episode_action_play_in_browser)) { link ->
+                    try {
+                        val i = Intent(ACTION_VIEW)
+                        i.data = Uri.parse(link.url)
+                        startActivity(i)
+                    } catch (e: Exception) {
+                        logError(e)
+                    }
+                }
+            }
+
+            ACTION_CHROME_CAST_MIRROR -> {
+                acquireSingeExtractorLink(getString(R.string.episode_action_chromecast_mirror)) { link ->
+                    val mirrorIndex = currentLinks?.indexOf(link) ?: -1
+                    startChromecast(if (mirrorIndex == -1) 0 else mirrorIndex)
+                }
+            }
+
+            ACTION_CHROME_CAST_EPISODE -> {
+                startChromecast(0)
+            }
+
+            ACTION_PLAY_EPISODE_IN_VLC_PLAYER -> {
+                activity?.let { act ->
+                    try {
+                        if (!act.checkWrite()) {
+                            act.requestRW()
+                            if (act.checkWrite()) return@main
+                        }
+                        val data = currentLinks ?: return@main
+                        val subs = currentSubs ?: return@main
+
+                        val outputDir = act.cacheDir
+                        val outputFile = withContext(Dispatchers.IO) {
+                            File.createTempFile("mirrorlist", ".m3u8", outputDir)
+                        }
+                        var text = "#EXTM3U"
+                        for (sub in sortSubs(subs)) {
+                            text += "\n#EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID=\"subs\",NAME=\"${sub.name}\",DEFAULT=NO,AUTOSELECT=NO,FORCED=NO,LANGUAGE=\"${sub.name}\",URI=\"${sub.url}\""
+                        }
+                        for (link in data.sortedBy { -it.quality }) {
+                            text += "\n#EXTINF:, ${link.name}\n${link.url}"
+                        }
+                        outputFile.writeText(text)
+
+                        val vlcIntent = Intent(VLC_INTENT_ACTION_RESULT)
+
+                        vlcIntent.setPackage(VLC_PACKAGE)
+                        vlcIntent.addFlags(FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
+                        vlcIntent.addFlags(FLAG_GRANT_PREFIX_URI_PERMISSION)
+                        vlcIntent.addFlags(FLAG_GRANT_READ_URI_PERMISSION)
+                        vlcIntent.addFlags(FLAG_GRANT_WRITE_URI_PERMISSION)
+
+                        vlcIntent.setDataAndType(
+                            FileProvider.getUriForFile(
+                                act,
+                                act.applicationContext.packageName + ".provider",
+                                outputFile
+                            ), "video/*"
+                        )
+
+                        val startId = VLC_FROM_PROGRESS
+
+                        var position = startId
+                        if (startId == VLC_FROM_START) {
+                            position = 1
+                        } else if (startId == VLC_FROM_PROGRESS) {
+                            position = 0
+                        }
+
+                        vlcIntent.putExtra("position", position)
+
+                        vlcIntent.component = VLC_COMPONENT
+                        act.setKey(VLC_LAST_ID_KEY, episodeClick.data.id)
+                        act.startActivityForResult(vlcIntent, VLC_REQUEST_CODE)
+                    } catch (e: Exception) {
+                        logError(e)
+                        showToast(act, e.toString(), Toast.LENGTH_LONG)
+                    }
+                }
+            }
+
+            ACTION_PLAY_EPISODE_IN_PLAYER -> {
+                viewModel.getGenerator(episodeClick.data)
+                    ?.let { generator ->
+                        activity?.navigate(
+                            R.id.global_to_navigation_player,
+                            GeneratorPlayer.newInstance(
+                                generator, syncdata?.let { HashMap(it) }
+                            )
+                        )
+                    }
+            }
+
+            ACTION_RELOAD_EPISODE -> {
+                viewModel.loadEpisode(episodeClick.data, false, clearCache = true)
+            }
+
+            ACTION_DOWNLOAD_MIRROR -> {
+                acquireSingleExtractorLink(
+                    sortUrls(
+                        currentLinks ?: return@main
+                    ),//(currentLinks ?: return@main).filter { !it.isM3u8 },
+                    getString(R.string.episode_action_download_mirror)
+                ) { link ->
+                    startDownload(
+                        context,
+                        episodeClick.data,
+                        currentIsMovie ?: return@acquireSingleExtractorLink,
+                        currentHeaderName ?: return@acquireSingleExtractorLink,
+                        currentType ?: return@acquireSingleExtractorLink,
+                        currentPoster ?: return@acquireSingleExtractorLink,
+                        apiName,
+                        currentId ?: return@acquireSingleExtractorLink,
+                        url ?: return@acquireSingleExtractorLink,
+                        listOf(link),
+                        sortSubs(currentSubs ?: return@acquireSingleExtractorLink),
+                    )
+                    showToast(activity, R.string.download_started, Toast.LENGTH_SHORT)
+                }
+            }
+        }
+    }
+
     @SuppressLint("SetTextI18n")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
         result_cast_items?.let {
             PanelsChildGestureRegionObserver.Provider.get().register(it)
         }
-        result_cast_items?.adapter = ActorAdaptor()
+        //result_cast_items?.adapter = ActorAdaptor()
         fixGrid()
         result_recommendations?.spanCount = 3
         result_overlapping_panels?.setStartPanelLockState(OverlappingPanelsLayout.LockState.CLOSE)
@@ -848,7 +1291,7 @@ class ResultFragment : ResultTrailerPlayer() {
         // activity?.fixPaddingStatusbar(result_toolbar)
 
         url = arguments?.getString(URL_BUNDLE)
-        val apiName = arguments?.getString(API_NAME_BUNDLE) ?: return
+        apiName = arguments?.getString(API_NAME_BUNDLE) ?: return
         startAction = arguments?.getInt(START_ACTION_BUNDLE) ?: START_ACTION_NORMAL
         startValue = arguments?.getInt(START_VALUE_BUNDLE)
         val resumeEpisode = arguments?.getInt(EPISODE_BUNDLE)
@@ -858,26 +1301,23 @@ class ResultFragment : ResultTrailerPlayer() {
         val api = getApiFromName(apiName)
         if (media_route_button != null) {
             val chromecastSupport = api.hasChromecastSupport
-
             media_route_button?.alpha = if (chromecastSupport) 1f else 0.3f
             if (!chromecastSupport) {
                 media_route_button?.setOnClickListener {
                     showToast(activity, R.string.no_chromecast_support_toast, Toast.LENGTH_LONG)
                 }
             }
-
             activity?.let { act ->
                 if (act.isCastApiAvailable()) {
                     try {
                         CastButtonFactory.setUpMediaRouteButton(act, media_route_button)
                         val castContext = CastContext.getSharedInstance(act.applicationContext)
-
                         media_route_button?.isGone =
                             castContext.castState == CastState.NO_DEVICES_AVAILABLE
-
-                        castContext.addCastStateListener { state ->
-                            media_route_button?.isGone = state == CastState.NO_DEVICES_AVAILABLE
-                        }
+                        // this shit leaks for some reason
+                        //castContext.addCastStateListener { state ->
+                        //    media_route_button?.isGone = state == CastState.NO_DEVICES_AVAILABLE
+                        //}
                     } catch (e: Exception) {
                         logError(e)
                     }
@@ -897,7 +1337,6 @@ class ResultFragment : ResultTrailerPlayer() {
                     player.handleEvent(CSPlayerEvent.Pause)
                 }
             }
-
             //result_poster_blur_holder?.translationY = -scrollY.toFloat()
         })
 
@@ -905,404 +1344,7 @@ class ResultFragment : ResultTrailerPlayer() {
             activity?.popCurrentPage()
         }
 
-        fun handleAction(episodeClick: EpisodeClickEvent): Job = main {
-            if (episodeClick.action == ACTION_DOWNLOAD_EPISODE) {
-                val isMovie = currentIsMovie ?: return@main
-                val headerName = currentHeaderName ?: return@main
-                val tvType = currentType ?: return@main
-                val poster = currentPoster ?: return@main
-                val id = currentId ?: return@main
-                val curl = url ?: return@main
-                showToast(activity, R.string.download_started, Toast.LENGTH_SHORT)
-                downloadEpisode(
-                    activity,
-                    episodeClick.data,
-                    isMovie,
-                    headerName,
-                    tvType,
-                    poster,
-                    apiName,
-                    id,
-                    curl,
-                )
-                return@main
-            }
-
-            var currentLinks: Set<ExtractorLink>? = null
-            var currentSubs: Set<SubtitleData>? = null
-
-            //val id = episodeClick.data.id
-            currentLoadingCount++
-
-            val showTitle =
-                episodeClick.data.name ?: context?.getString(R.string.episode_name_format)
-                    ?.format(
-                        getString(R.string.episode),
-                        episodeClick.data.episode
-                    )
-
-
-            fun acquireSingleExtractorLink(
-                links: List<ExtractorLink>,
-                title: String,
-                callback: (ExtractorLink) -> Unit
-            ) {
-                val builder = AlertDialog.Builder(requireContext(), R.style.AlertDialogCustom)
-
-                builder.setTitle(title)
-                builder.setItems(links.map { "${it.name} ${Qualities.getStringByInt(it.quality)}" }
-                    .toTypedArray()) { dia, which ->
-                    callback.invoke(links[which])
-                    dia?.dismiss()
-                }
-                builder.create().show()
-            }
-
-            fun acquireSingleSubtitleLink(
-                links: List<SubtitleData>,
-                title: String,
-                callback: (SubtitleData) -> Unit
-            ) {
-                val builder = AlertDialog.Builder(requireContext(), R.style.AlertDialogCustom)
-
-                builder.setTitle(title)
-                builder.setItems(links.map { it.name }.toTypedArray()) { dia, which ->
-                    callback.invoke(links[which])
-                    dia?.dismiss()
-                }
-                builder.create().show()
-            }
-
-            fun acquireSingeExtractorLink(title: String, callback: (ExtractorLink) -> Unit) {
-                acquireSingleExtractorLink(sortUrls(currentLinks ?: return), title, callback)
-            }
-
-            fun startChromecast(startIndex: Int) {
-                val eps = currentEpisodes ?: return
-                activity?.getCastSession()?.startCast(
-                    apiName,
-                    currentIsMovie ?: return,
-                    currentHeaderName,
-                    currentPoster,
-                    episodeClick.data.index,
-                    eps,
-                    sortUrls(currentLinks ?: return),
-                    sortSubs(currentSubs ?: return),
-                    startTime = episodeClick.data.getRealPosition(),
-                    startIndex = startIndex
-                )
-            }
-
-            suspend fun requireLinks(isCasting: Boolean, displayLoading: Boolean = true): Boolean {
-                val skipLoading = getApiFromName(apiName).instantLinkLoading
-
-                var loadingDialog: AlertDialog? = null
-                val currentLoad = currentLoadingCount
-
-                if (!skipLoading && displayLoading) {
-                    val builder =
-                        AlertDialog.Builder(requireContext(), R.style.AlertDialogCustomTransparent)
-                    val customLayout = layoutInflater.inflate(R.layout.dialog_loading, null)
-                    builder.setView(customLayout)
-
-                    loadingDialog = builder.create()
-
-                    loadingDialog.show()
-                    loadingDialog.setOnDismissListener {
-                        currentLoadingCount++
-                    }
-                }
-
-                val data = viewModel.loadEpisode(episodeClick.data, isCasting)
-                if (currentLoadingCount != currentLoad) return false
-                loadingDialog?.dismissSafe(activity)
-
-                when (data) {
-                    is Resource.Success -> {
-                        currentLinks = data.value.first
-                        currentSubs = data.value.second
-                        return true
-                    }
-                    is Resource.Failure -> {
-                        showToast(
-                            activity,
-                            R.string.error_loading_links_toast,
-                            Toast.LENGTH_SHORT
-                        )
-                    }
-                    else -> Unit
-                }
-                return false
-            }
-
-            val isLoaded = when (episodeClick.action) {
-                ACTION_PLAY_EPISODE_IN_PLAYER -> true
-                ACTION_CLICK_DEFAULT -> true
-                ACTION_SHOW_TOAST -> true
-                ACTION_DOWNLOAD_EPISODE -> {
-                    showToast(activity, R.string.download_started, Toast.LENGTH_SHORT)
-                    requireLinks(false, false)
-                }
-                ACTION_CHROME_CAST_EPISODE -> requireLinks(true)
-                ACTION_CHROME_CAST_MIRROR -> requireLinks(true)
-                ACTION_SHOW_DESCRIPTION -> true
-                else -> requireLinks(false)
-            }
-            if (!isLoaded) return@main // CANT LOAD
-
-            when (episodeClick.action) {
-                ACTION_SHOW_TOAST -> {
-                    showToast(activity, R.string.play_episode_toast, Toast.LENGTH_SHORT)
-                }
-
-                ACTION_SHOW_DESCRIPTION -> {
-                    val builder: AlertDialog.Builder =
-                        AlertDialog.Builder(requireContext(), R.style.AlertDialogCustom)
-                    builder.setMessage(episodeClick.data.description ?: return@main)
-                        .setTitle(R.string.torrent_plot)
-                        .show()
-                }
-
-                ACTION_CLICK_DEFAULT -> {
-                    context?.let { ctx ->
-                        if (ctx.isConnectedToChromecast()) {
-                            handleAction(
-                                EpisodeClickEvent(
-                                    ACTION_CHROME_CAST_EPISODE,
-                                    episodeClick.data
-                                )
-                            )
-                        } else {
-                            handleAction(
-                                EpisodeClickEvent(
-                                    ACTION_PLAY_EPISODE_IN_PLAYER,
-                                    episodeClick.data
-                                )
-                            )
-                        }
-                    }
-                }
-
-                ACTION_DOWNLOAD_EPISODE_SUBTITLE -> {
-                    acquireSingleSubtitleLink(
-                        sortSubs(
-                            currentSubs ?: return@main
-                        ),//(currentLinks ?: return@main).filter { !it.isM3u8 },
-                        getString(R.string.episode_action_download_subtitle)
-                    ) { link ->
-                        downloadSubtitle(
-                            context,
-                            link,
-                            getMeta(
-                                episodeClick.data,
-                                currentHeaderName ?: return@acquireSingleSubtitleLink,
-                                apiName,
-                                currentPoster ?: return@acquireSingleSubtitleLink,
-                                currentIsMovie ?: return@acquireSingleSubtitleLink,
-                                currentType ?: return@acquireSingleSubtitleLink
-                            )
-                        )
-                        showToast(activity, R.string.download_started, Toast.LENGTH_SHORT)
-                    }
-                }
-
-                ACTION_SHOW_OPTIONS -> {
-                    context?.let { ctx ->
-                        val builder = AlertDialog.Builder(ctx, R.style.AlertDialogCustom)
-                        var dialog: AlertDialog? = null
-                        builder.setTitle(showTitle)
-                        val options =
-                            requireContext().resources.getStringArray(R.array.episode_long_click_options)
-                        val optionsValues =
-                            requireContext().resources.getIntArray(R.array.episode_long_click_options_values)
-
-                        val verifiedOptions = ArrayList<String>()
-                        val verifiedOptionsValues = ArrayList<Int>()
-
-                        val hasDownloadSupport = api.hasDownloadSupport
-
-                        for (i in options.indices) {
-                            val opv = optionsValues[i]
-                            val op = options[i]
-
-                            val isConnected = ctx.isConnectedToChromecast()
-                            val add = when (opv) {
-                                ACTION_CHROME_CAST_EPISODE -> isConnected
-                                ACTION_CHROME_CAST_MIRROR -> isConnected
-                                ACTION_DOWNLOAD_EPISODE_SUBTITLE -> !currentSubs.isNullOrEmpty()
-                                ACTION_DOWNLOAD_EPISODE -> hasDownloadSupport
-                                ACTION_DOWNLOAD_MIRROR -> hasDownloadSupport
-                                ACTION_PLAY_EPISODE_IN_VLC_PLAYER -> context?.isAppInstalled(
-                                    VLC_PACKAGE
-                                ) ?: false
-                                else -> true
-                            }
-                            if (add) {
-                                verifiedOptions.add(op)
-                                verifiedOptionsValues.add(opv)
-                            }
-                        }
-
-                        builder.setItems(
-                            verifiedOptions.toTypedArray()
-                        ) { _, which ->
-                            handleAction(
-                                EpisodeClickEvent(
-                                    verifiedOptionsValues[which],
-                                    episodeClick.data
-                                )
-                            )
-                            dialog?.dismissSafe(activity)
-                        }
-
-                        dialog = builder.create()
-                        dialog.show()
-                    }
-                }
-                ACTION_COPY_LINK -> {
-                    activity?.let { act ->
-                        try {
-                            acquireSingeExtractorLink(act.getString(R.string.episode_action_copy_link)) { link ->
-                                val serviceClipboard =
-                                    (act.getSystemService(CLIPBOARD_SERVICE) as ClipboardManager?)
-                                        ?: return@acquireSingeExtractorLink
-                                val clip = ClipData.newPlainText(link.name, link.url)
-                                serviceClipboard.setPrimaryClip(clip)
-                                showToast(act, R.string.copy_link_toast, Toast.LENGTH_SHORT)
-                            }
-                        } catch (e: Exception) {
-                            showToast(act, e.toString(), Toast.LENGTH_LONG)
-                            logError(e)
-                        }
-                    }
-                }
-
-                ACTION_PLAY_EPISODE_IN_BROWSER -> {
-                    acquireSingeExtractorLink(getString(R.string.episode_action_play_in_browser)) { link ->
-                        try {
-                            val i = Intent(ACTION_VIEW)
-                            i.data = Uri.parse(link.url)
-                            startActivity(i)
-                        } catch (e: Exception) {
-                            logError(e)
-                        }
-                    }
-                }
-
-                ACTION_CHROME_CAST_MIRROR -> {
-                    acquireSingeExtractorLink(getString(R.string.episode_action_chromecast_mirror)) { link ->
-                        val mirrorIndex = currentLinks?.indexOf(link) ?: -1
-                        startChromecast(if (mirrorIndex == -1) 0 else mirrorIndex)
-                    }
-                }
-
-                ACTION_CHROME_CAST_EPISODE -> {
-                    startChromecast(0)
-                }
-
-                ACTION_PLAY_EPISODE_IN_VLC_PLAYER -> {
-                    activity?.let { act ->
-                        try {
-                            if (!act.checkWrite()) {
-                                act.requestRW()
-                                if (act.checkWrite()) return@main
-                            }
-                            val data = currentLinks ?: return@main
-                            val subs = currentSubs ?: return@main
-
-                            val outputDir = act.cacheDir
-                            val outputFile = withContext(Dispatchers.IO) {
-                                File.createTempFile("mirrorlist", ".m3u8", outputDir)
-                            }
-                            var text = "#EXTM3U"
-                            for (sub in sortSubs(subs)) {
-                                text += "\n#EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID=\"subs\",NAME=\"${sub.name}\",DEFAULT=NO,AUTOSELECT=NO,FORCED=NO,LANGUAGE=\"${sub.name}\",URI=\"${sub.url}\""
-                            }
-                            for (link in data.sortedBy { -it.quality }) {
-                                text += "\n#EXTINF:, ${link.name}\n${link.url}"
-                            }
-                            outputFile.writeText(text)
-
-                            val vlcIntent = Intent(VLC_INTENT_ACTION_RESULT)
-
-                            vlcIntent.setPackage(VLC_PACKAGE)
-                            vlcIntent.addFlags(FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
-                            vlcIntent.addFlags(FLAG_GRANT_PREFIX_URI_PERMISSION)
-                            vlcIntent.addFlags(FLAG_GRANT_READ_URI_PERMISSION)
-                            vlcIntent.addFlags(FLAG_GRANT_WRITE_URI_PERMISSION)
-
-                            vlcIntent.setDataAndType(
-                                FileProvider.getUriForFile(
-                                    act,
-                                    act.applicationContext.packageName + ".provider",
-                                    outputFile
-                                ), "video/*"
-                            )
-
-                            val startId = VLC_FROM_PROGRESS
-
-                            var position = startId
-                            if (startId == VLC_FROM_START) {
-                                position = 1
-                            } else if (startId == VLC_FROM_PROGRESS) {
-                                position = 0
-                            }
-
-                            vlcIntent.putExtra("position", position)
-
-                            vlcIntent.component = VLC_COMPONENT
-                            act.setKey(VLC_LAST_ID_KEY, episodeClick.data.id)
-                            act.startActivityForResult(vlcIntent, VLC_REQUEST_CODE)
-                        } catch (e: Exception) {
-                            logError(e)
-                            showToast(act, e.toString(), Toast.LENGTH_LONG)
-                        }
-                    }
-                }
-
-                ACTION_PLAY_EPISODE_IN_PLAYER -> {
-                    viewModel.getGenerator(episodeClick.data)
-                        ?.let { generator ->
-                            activity?.navigate(
-                                R.id.global_to_navigation_player,
-                                GeneratorPlayer.newInstance(
-                                    generator, syncdata?.let { HashMap(it) }
-                                )
-                            )
-                        }
-                }
-
-                ACTION_RELOAD_EPISODE -> {
-                    viewModel.loadEpisode(episodeClick.data, false, clearCache = true)
-                }
-
-                ACTION_DOWNLOAD_MIRROR -> {
-                    acquireSingleExtractorLink(
-                        sortUrls(
-                            currentLinks ?: return@main
-                        ),//(currentLinks ?: return@main).filter { !it.isM3u8 },
-                        getString(R.string.episode_action_download_mirror)
-                    ) { link ->
-                        startDownload(
-                            context,
-                            episodeClick.data,
-                            currentIsMovie ?: return@acquireSingleExtractorLink,
-                            currentHeaderName ?: return@acquireSingleExtractorLink,
-                            currentType ?: return@acquireSingleExtractorLink,
-                            currentPoster ?: return@acquireSingleExtractorLink,
-                            apiName,
-                            currentId ?: return@acquireSingleExtractorLink,
-                            url ?: return@acquireSingleExtractorLink,
-                            listOf(link),
-                            sortSubs(currentSubs ?: return@acquireSingleExtractorLink),
-                        )
-                        showToast(activity, R.string.download_started, Toast.LENGTH_SHORT)
-                    }
-                }
-            }
-        }
-
-        val adapter: RecyclerView.Adapter<RecyclerView.ViewHolder> =
+        result_episodes.adapter =
             EpisodeAdapter(
                 ArrayList(),
                 api.hasDownloadSupport,
@@ -1313,9 +1355,6 @@ class ResultFragment : ResultTrailerPlayer() {
                     handleDownloadClick(activity, currentHeaderName, downloadClickEvent)
                 }
             )
-
-        result_episodes.adapter = adapter
-        result_episodes.layoutManager = GridLayoutManager(context, 1)
 
         result_bookmark_button.setOnClickListener {
             it.popupMenuNoIcons(
@@ -1460,7 +1499,8 @@ class ResultFragment : ResultTrailerPlayer() {
                 }
             }
         }
-        val imgAdapter = ImageAdapter(
+
+        result_mini_sync?.adapter = ImageAdapter(
             R.layout.result_mini_image,
             nextFocusDown = R.id.result_sync_set_score,
             clickCallback = { action ->
@@ -1472,7 +1512,6 @@ class ResultFragment : ResultTrailerPlayer() {
                     }
                 }
             })
-        result_mini_sync?.adapter = imgAdapter
 
         observe(syncModel.synced) { list ->
             result_sync_names?.text =
@@ -1627,11 +1666,16 @@ class ResultFragment : ResultTrailerPlayer() {
             }
 
             result_resume_progress_holder?.isVisible = isProgressVisible
-            context?.getString(if (isProgressVisible) R.string.resume else R.string.play_movie_button)
-                ?.let {
-                    result_play_movie?.text = it
+            context?.getString(
+                when {
+                    currentType?.isLiveStream() == true -> R.string.play_livestream_button
+                    isProgressVisible -> R.string.resume
+                    else -> R.string.play_movie_button
                 }
-            println("startAction = $startAction")
+            )?.let {
+                result_play_movie?.text = it
+            }
+            //println("startAction = $startAction")
 
             when (startAction) {
                 START_ACTION_RESUME_LATEST -> {
@@ -1709,12 +1753,7 @@ class ResultFragment : ResultTrailerPlayer() {
         }
 
         observe(viewModel.dubStatus) { status ->
-            val dubstatusName = if (status.name == "Subbed") getString(R.string.dub_status_subbed)
-            else if (status.name == "Dubbed") getString(R.string.dub_status_dubbed)
-            else if (status.name == "PremiumDub") getString(R.string.dub_status_premium)
-            else if (status.name == "PremiumSub") getString(R.string.sub_status_premium)
-            else ""
-            result_dub_select?.text = dubstatusName
+            result_dub_select?.text = status.toString()
         }
 
 //        val preferDub = context?.getApiDubstatusSettings()?.all { it == DubStatus.Dubbed } == true
@@ -1736,7 +1775,7 @@ class ResultFragment : ResultTrailerPlayer() {
             }
         }
 
-        result_cast_items?.setOnFocusChangeListener { v, hasFocus ->
+        result_cast_items?.setOnFocusChangeListener { _, hasFocus ->
             // Always escape focus
             if (hasFocus) result_bookmark_button?.requestFocus()
         }
@@ -1746,14 +1785,9 @@ class ResultFragment : ResultTrailerPlayer() {
             if (ranges != null) {
                 it.popupMenuNoIconsAndNoStringRes(ranges
                     .map { status ->
-                        val dubstatusName = if (status.name == "Subbed") getString(R.string.dub_status_subbed)
-                        else if (status.name == "Dubbed") getString(R.string.dub_status_dubbed)
-                        else if (status.name == "PremiumDub") getString(R.string.dub_status_premium)
-                        else if (status.name == "PremiumSub") getString(R.string.sub_status_premium)
-                        else ""
                         Pair(
                             status.ordinal,
-                            dubstatusName
+                            status.toString()
                         )
                     }
                     .toList()) {
@@ -1915,10 +1949,10 @@ class ResultFragment : ResultTrailerPlayer() {
 
                     result_poster_holder?.visibility = VISIBLE
 
-                    /*result_play_movie?.text =
-                        if (d.type == TvType.Torrent) getString(R.string.play_torrent_button) else getString(
+                    result_play_movie?.text =
+                        if (d.type == TvType.Live) getString(R.string.play_livestream_button) else getString(
                             R.string.play_movie_button
-                        )*/
+                        )
                     //result_plot_header?.text =
                     //    if (d.type == TvType.Torrent) getString(R.string.torrent_plot) else getString(R.string.result_plot)
                     val syno = d.plot
@@ -1995,6 +2029,7 @@ class ResultFragment : ResultTrailerPlayer() {
                         result_movie_progress_downloaded_holder?.isVisible = hasDownloadSupport
                         if (hasDownloadSupport) {
                             val localId = d.getId()
+
                             val file =
                                 VideoDownloadManager.getDownloadFileInfoAndUpdateSettings(
                                     requireContext(),
@@ -2021,42 +2056,9 @@ class ResultFragment : ResultTrailerPlayer() {
                                     d.rating,
                                     d.plot,
                                     System.currentTimeMillis(),
-                                )
-                            ) { downloadClickEvent ->
-                                if (downloadClickEvent.action == DOWNLOAD_ACTION_DOWNLOAD) {
-                                    currentEpisodes?.firstOrNull()?.let { episode ->
-                                        handleAction(
-                                            EpisodeClickEvent(
-                                                ACTION_DOWNLOAD_EPISODE,
-                                                ResultEpisode(
-                                                    d.name,
-                                                    d.name,
-                                                    null,
-                                                    0,
-                                                    null,
-                                                    episode.data,
-                                                    d.apiName,
-                                                    localId,
-                                                    0,
-                                                    0L,
-                                                    0L,
-                                                    null,
-                                                    null,
-                                                    null,
-                                                    d.type,
-                                                    localId,
-                                                )
-                                            )
-                                        )
-                                    }
-                                } else {
-                                    handleDownloadClick(
-                                        activity,
-                                        currentHeaderName,
-                                        downloadClickEvent
-                                    )
-                                }
-                            }
+                                ),
+                                ::handleDownloadButton
+                            )
 
                             result_download_movie?.setOnLongClickListener {
                                 val card =
@@ -2133,9 +2135,9 @@ class ResultFragment : ResultTrailerPlayer() {
                             TvType.Documentary -> R.string.documentaries_singular
                             TvType.Movie -> R.string.movies_singular
                             TvType.Torrent -> R.string.torrent_singular
-                            TvType.Mirror -> R.string.mirror_singular
-                            TvType.Donghua -> R.string.donghua_singular
-                            TvType.AsianDrama -> R.string.asian_drama_singular                        }
+                            TvType.AsianDrama -> R.string.asian_drama_singular
+                            TvType.Live -> R.string.live_singular
+                        }
                     )?.let {
                         result_meta_type?.text = it
                     }
@@ -2162,16 +2164,14 @@ class ResultFragment : ResultTrailerPlayer() {
             }
         }
 
-        val recAdapter: RecyclerView.Adapter<RecyclerView.ViewHolder>? = activity?.let {
+        result_recommendations?.adapter =
             SearchAdapter(
                 ArrayList(),
                 result_recommendations,
             ) { callback ->
                 SearchHelper.handleSearchClickCallback(activity, callback)
             }
-        }
 
-        result_recommendations?.adapter = recAdapter
 
         context?.let { ctx ->
             result_bookmark_button?.isVisible = ctx.isTvSettings()
