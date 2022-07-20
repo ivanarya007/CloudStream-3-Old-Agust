@@ -89,7 +89,6 @@
         "url": "https://animeonline1.ninja"
     },
     "ApiMDBProvider": {
-        "language": "en",
         "name": "ApiMDB",
         "status": 0,
         "url": "https://v2.apimdb.net"
@@ -221,7 +220,7 @@
         "language": "it",
         "name": "Filmpertutti",
         "status": 1,
-        "url": "https://www.filmpertutti.buzz"
+        "url": "https://www.filmpertutti.love"
     },
     "FireAnimeProvider": {
         "language": "de",
@@ -270,6 +269,12 @@
         "status": 1,
         "url": "https://hdtoday.cc"
     },
+    "HDrezkaProvider": {
+        "language": "ru",
+        "name": "HDrezka",
+        "status": 1,
+        "url": "https://rezka.ag"
+    },
     "HenaojaraProvider": {
         "name": "Henaojara",
         "status": 1,
@@ -285,7 +290,7 @@
         "language": "id",
         "name": "Idlix",
         "status": 1,
-        "url": ""
+        "url": "https://94.103.82.88"
     },
     "JKAnimeProvider": {
         "language": "es",
@@ -304,6 +309,12 @@
         "name": "KDramaHood",
         "status": 1,
         "url": "https://kdramahood.com"
+    },
+    "KimCartoonProvider": {
+        "language": "en",
+        "name": "Kim Cartoon",
+        "status": 1,
+        "url": "https://kimcartoon.li"
     },
     "KrunchyProvider": {
         "language": "es",
@@ -472,6 +483,12 @@
         "status": 1,
         "url": "https://pelisplus.so"
     },
+    "PhimmoichillProvider": {
+        "language": "vi",
+        "name": "Phimmoichill",
+        "status": 1,
+        "url": "https://phimmoichill.net"
+    },
     "PinoyHDXyzProvider": {
         "language": "tl",
         "name": "Pinoy-HD",
@@ -582,7 +599,13 @@
         "language": "en",
         "name": "2Embed",
         "status": 1,
-        "url": "https://www.2embed.to"
+        "url": "https://2embed.org"
+    },
+    "UakinoProvider": {
+        "language": "uk",
+        "name": "Uakino",
+        "status": 1,
+        "url": "https://uakino.club"
     },
     "VMoveeProvider": {
         "language": "en",
