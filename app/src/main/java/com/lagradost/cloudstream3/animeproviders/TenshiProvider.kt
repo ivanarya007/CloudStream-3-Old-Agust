@@ -2,10 +2,10 @@ package com.lagradost.cloudstream3.animeproviders
 
 import android.annotation.SuppressLint
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.module.kotlin.readValue
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.network.DdosGuardKiller
 import com.lagradost.cloudstream3.network.getHeaders
+import com.lagradost.cloudstream3.utils.AppUtils.parseJson
 import com.lagradost.cloudstream3.utils.ExtractorLink
 import com.lagradost.cloudstream3.utils.getQualityFromName
 import org.jsoup.nodes.Document
@@ -44,7 +44,7 @@ class TenshiProvider : MainAPI() {
         }
     }*/
 
-    override suspend fun getMainPage(): HomePageResponse {
+    override suspend fun getMainPage(page: Int, request : MainPageRequest): HomePageResponse {
         val items = ArrayList<HomePageList>()
         val soup = app.get(mainUrl, interceptor = ddosGuardKiller).document
         for (section in soup.select("#content > section")) {
@@ -254,7 +254,7 @@ class TenshiProvider : MainAPI() {
             }
         })
 
-        val similarAnime = document.select("ul.anime-loop > li > a")?.mapNotNull { element ->
+        val similarAnime = document.select("ul.anime-loop > li > a").mapNotNull { element ->
             val href = element.attr("href") ?: return@mapNotNull null
             val title =
                 element.selectFirst("> .overlay > .thumb-title")?.text() ?: return@mapNotNull null
@@ -323,7 +323,7 @@ class TenshiProvider : MainAPI() {
                 sourceHTML
             )
             if (match != null) {
-                val qualities = mapper.readValue<List<Quality>>(
+                val qualities = parseJson<List<Quality>>(
                     match.destructured.component1()
                         .replace("'", "\"")
                         .replace(Regex("""(\w+): """), "\"\$1\": ")

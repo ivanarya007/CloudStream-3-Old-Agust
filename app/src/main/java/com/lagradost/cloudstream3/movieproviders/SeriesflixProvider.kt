@@ -18,7 +18,7 @@ class SeriesflixProvider : MainAPI() {
         TvType.TvSeries,
     )
 
-    override suspend fun getMainPage(): HomePageResponse {
+    override suspend fun getMainPage(page: Int, request : MainPageRequest): HomePageResponse {
         val items = ArrayList<HomePageList>()
         val urls = listOf(
             Pair("$mainUrl/ver-series-online/", "Series"),
@@ -213,7 +213,7 @@ class SeriesflixProvider : MainAPI() {
                     allowRedirects = false
                 ).okhttpResponse.headers.values("location").apmap { link ->
                     val url1 = link.replace("#bu", "")
-                    loadExtractor(url1, data, callback)
+                    loadExtractor(url1, data, subtitleCallback, callback)
                 }
             }
         }

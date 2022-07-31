@@ -1226,7 +1226,7 @@ class ResultFragment : ResultTrailerPlayer() {
                     sortUrls(
                         currentLinks ?: return@main
                     ),//(currentLinks ?: return@main).filter { !it.isM3u8 },
-                    getString(R.string.episode_action_download_mirror)
+                    context?.getString(R.string.episode_action_download_mirror) ?: ""
                 ) { link ->
                     startDownload(
                         context,
@@ -1254,7 +1254,7 @@ class ResultFragment : ResultTrailerPlayer() {
         result_cast_items?.let {
             PanelsChildGestureRegionObserver.Provider.get().register(it)
         }
-        //result_cast_items?.adapter = ActorAdaptor()
+        result_cast_items?.adapter = ActorAdaptor()
         fixGrid()
         result_recommendations?.spanCount = 3
         result_overlapping_panels?.setStartPanelLockState(OverlappingPanelsLayout.LockState.CLOSE)
@@ -1913,7 +1913,7 @@ class ResultFragment : ResultTrailerPlayer() {
                     setRecommendations(d.recommendations, null)
                     setActors(d.actors)
                     setNextEpisode(if (d is EpisodeResponse) d.nextAiring else null)
-                    setTrailers(d.trailers)
+                    setTrailers(d.trailers.flatMap { it.mirros }) // I dont care about subtitles yet!
 
                     if (syncModel.addSyncs(d.syncData)) {
                         syncModel.updateMetaAndUser()

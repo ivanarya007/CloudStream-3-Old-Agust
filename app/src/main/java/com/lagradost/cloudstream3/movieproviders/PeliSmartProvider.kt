@@ -17,7 +17,7 @@ class PeliSmartProvider: MainAPI() {
     )
     override val vpnStatus = VPNStatus.MightBeNeeded //Due to evoload sometimes not loading
 
-    override suspend fun getMainPage(): HomePageResponse {
+    override suspend fun getMainPage(page: Int, request : MainPageRequest): HomePageResponse {
         val items = ArrayList<HomePageList>()
         val urls = listOf(
             Pair("$mainUrl/peliculas/", "Peliculas"),
@@ -25,23 +25,28 @@ class PeliSmartProvider: MainAPI() {
             Pair("$mainUrl/documentales/", "Documentales"),
         )
 
+        // has no inf loading
         urls.apmap { (url, name) ->
-            val soup = app.get(url).document
-            val home = soup.select(".description-off").map {
-                val title = it.selectFirst("h3.entry-title a")!!.text()
-                val link = it.selectFirst("a")!!.attr("href")
-                TvSeriesSearchResponse(
-                    title,
-                    link,
-                    this.name,
-                    if (link.contains("pelicula")) TvType.Movie else TvType.TvSeries,
-                    it.selectFirst("div img")!!.attr("src"),
-                    null,
-                    null,
-                )
-            }
+            try {
+                val soup = app.get(url).document
+                val home = soup.select(".description-off").map {
+                    val title = it.selectFirst("h3.entry-title a")!!.text()
+                    val link = it.selectFirst("a")!!.attr("href")
+                    TvSeriesSearchResponse(
+                        title,
+                        link,
+                        this.name,
+                        if (link.contains("pelicula")) TvType.Movie else TvType.TvSeries,
+                        it.selectFirst("div img")!!.attr("src"),
+                        null,
+                        null,
+                    )
+                }
 
-            items.add(HomePageList(name, home))
+                items.add(HomePageList(name, home))
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
 
         if (items.size <= 0) throw ErrorLoadingException()
@@ -148,7 +153,7 @@ class PeliSmartProvider: MainAPI() {
              .replace("https://pelismarthd.com/p/1.php?v=","https://evoload.io/e/")
              .replace("https://pelismarthd.com/p/2.php?v=","https://streamtape.com/e/")
              .replace("https://pelismarthd.com/p/4.php?v=","https://dood.to/e/")
-             loadExtractor(urlc, data, callback)
+             loadExtractor(urlc, data, subtitleCallback, callback)
          }
         return true
     }

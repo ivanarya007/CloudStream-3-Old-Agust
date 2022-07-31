@@ -31,11 +31,14 @@ class AnimeWorldProvider : MainAPI() {
     companion object {
         private var cookies = emptyMap<String, String>()
 
+        // Disabled authentication as site did
         private suspend fun request(url: String): NiceResponse {
-            if (cookies.isEmpty()) {
-                cookies = getCookies(url)
-            }
-            return app.get(url, cookies = cookies)
+//            if (cookies.isEmpty()) {
+//                cookies = getCookies(url)
+//            }
+            return app.get(url
+//                , cookies = cookies
+            )
         }
 
         private suspend fun getCookies(url: String): Map<String, String> {
@@ -127,7 +130,7 @@ class AnimeWorldProvider : MainAPI() {
         }
     }
 
-    override suspend fun getMainPage(): HomePageResponse {
+    override suspend fun getMainPage(page: Int, request : MainPageRequest): HomePageResponse {
         val document = request(mainUrl).document
         val list = ArrayList<HomePageList>()
 

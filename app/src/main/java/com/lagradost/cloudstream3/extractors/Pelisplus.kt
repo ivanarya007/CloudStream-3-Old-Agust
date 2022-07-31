@@ -1,5 +1,6 @@
 package com.lagradost.cloudstream3.extractors
 
+import com.lagradost.cloudstream3.SubtitleFile
 import com.lagradost.cloudstream3.apmap
 import com.lagradost.cloudstream3.app
 import com.lagradost.cloudstream3.mvvm.suspendSafeApiCall
@@ -20,67 +21,59 @@ class Pelisplus(val mainUrl: String) {
         return "$mainUrl/play?id=$id"
     }
 
-    private fun getExtractorUrl2(id: String): String {
-        return "$mainUrl/play?id=$id="
-    }
-
-    private fun getExtractorUrl3(id: String): String {
-        return "$mainUrl/play?id=$id&option=castell"
+    private fun getDownloadUrl(id: String): String {
+        return "$mainUrl/download?id=$id"
     }
 
     private val normalApis = arrayListOf(MultiQuality())
 
     // https://gogo-stream.com/streaming.php?id=MTE3NDg5
-    suspend fun getUrl(id: String, isCasting: Boolean = false, callback: (ExtractorLink) -> Unit): Boolean {
+    suspend fun getUrl(
+        id: String,
+        isCasting: Boolean = false,
+        subtitleCallback: (SubtitleFile) -> Unit,
+        callback: (ExtractorLink) -> Unit
+    ): Boolean {
         try {
             normalApis.apmap { api ->
                 val url = api.getExtractorUrl(id)
-                val source = api.getSafeUrl(url)
-                source?.forEach {
-                    it.name += " Latino"
-                    callback.invoke(it) }
+                api.getSafeUrl(url, subtitleCallback = subtitleCallback, callback = callback)
             }
             val extractorUrl = getExtractorUrl(id)
-            with(app.get(extractorUrl, timeout = 60)) {
-                val document = Jsoup.parse(this.text)
-                val primaryLinks = document.select("ul.list-server-items > li.linkserver")
-                //val extractedLinksList: MutableList<ExtractorLink> = mutableListOf()
-                // All vidstream links passed to extractors
-                primaryLinks.distinctBy { it.attr("data-video") }.forEach { element ->
-                    val link = element.attr("data-video")
-                    //val name = element.text()
 
-                    // Matches vidstream links with extractors
-                    extractorApis.filter { !it.requiresReferer || !isCasting }.apmap { api ->
-                        if (link.startsWith(api.mainUrl)) {
-                            val extractedLinks = api.getSafeUrl(link, extractorUrl)
-                            if (extractedLinks?.isNotEmpty() == true) {
-                                extractedLinks.forEach {
-                                    it.name += " Latino"
-                                    callback.invoke(it)
-                                }
-                            }
-                        }
+            /** Stolen from GogoanimeProvider.kt extractor */
+            suspendSafeApiCall {
+                val link = getDownloadUrl(id)
+                println("Generated vidstream download link: $link")
+                val page = app.get(link, referer = extractorUrl)
+
+                val pageDoc = Jsoup.parse(page.text)
+                val qualityRegex = Regex("(\\d+)P")
+
+                //a[download]
+                pageDoc.select(".dowload > a")?.apmap { element ->
+                    val href = element.attr("href") ?: return@apmap
+                    val qual = if (element.text()
+                            .contains("HDP")
+                    ) "1080" else qualityRegex.find(element.text())?.destructured?.component1()
+                        .toString()
+
+                    if (!loadExtractor(href, link, subtitleCallback, callback)) {
+                        callback.invoke(
+                            ExtractorLink(
+                                this.name,
+                                name = this.name,
+                                href,
+                                page.url,
+                                getQualityFromName(qual),
+                                element.attr("href").contains(".m3u8")
+                            )
+                        )
                     }
                 }
-                return true
             }
-        } catch (e: Exception) {
-            return false
-        }
-    }
 
-    suspend fun getUrl2(id: String, isCasting: Boolean = false, callback: (ExtractorLink) -> Unit): Boolean {
-        try {
-            normalApis.apmap { api ->
-                val url = api.getExtractorUrl(id)
-                val source = api.getSafeUrl(url)
-                source?.forEach {
-                    it.name += " Subtitulado"
-                    callback.invoke(it) }
-            }
-            val extractorUrl = getExtractorUrl2(id)
-            with(app.get(extractorUrl, timeout = 60)) {
+            with(app.get(extractorUrl)) {
                 val document = Jsoup.parse(this.text)
                 val primaryLinks = document.select("ul.list-server-items > li.linkserver")
                 //val extractedLinksList: MutableList<ExtractorLink> = mutableListOf()
@@ -93,13 +86,7 @@ class Pelisplus(val mainUrl: String) {
                     // Matches vidstream links with extractors
                     extractorApis.filter { !it.requiresReferer || !isCasting }.apmap { api ->
                         if (link.startsWith(api.mainUrl)) {
-                            val extractedLinks = api.getSafeUrl(link, extractorUrl)
-                            if (extractedLinks?.isNotEmpty() == true) {
-                                extractedLinks.forEach {
-                                    it.name += " Subtitulado"
-                                    callback.invoke(it)
-                                }
-                            }
+                            api.getSafeUrl(link, extractorUrl, subtitleCallback, callback)
                         }
                     }
                 }
@@ -109,44 +96,4 @@ class Pelisplus(val mainUrl: String) {
             return false
         }
     }
-
-
-    suspend fun getUrl3(id: String, isCasting: Boolean = false, callback: (ExtractorLink) -> Unit): Boolean {
-        try {
-            normalApis.apmap { api ->
-                val url = api.getExtractorUrl(id)
-                val source = api.getSafeUrl(url)
-                source?.forEach {
-                    it.name += " Castellano"
-                    callback.invoke(it) }
-            }
-            val extractorUrl = getExtractorUrl3(id)
-            with(app.get(extractorUrl, timeout = 60)) {
-                val document = Jsoup.parse(this.text)
-                val primaryLinks = document.select("ul.list-server-items > li.linkserver")
-                //val extractedLinksList: MutableList<ExtractorLink> = mutableListOf()
-                // All vidstream links passed to extractors
-                primaryLinks.distinctBy { it.attr("data-video") }.forEach { element ->
-                    val link = element.attr("data-video")
-                    //val name = element.text()
-                    // Matches vidstream links with extractors
-                    extractorApis.filter { !it.requiresReferer || !isCasting }.apmap { api ->
-                        if (link.startsWith(api.mainUrl)) {
-                            val extractedLinks = api.getSafeUrl(link,extractorUrl)
-                            if (extractedLinks?.isNotEmpty() == true) {
-                                extractedLinks.forEach {
-                                    it.name += " Castellano"
-                                    callback.invoke(it)
-                                }
-                            }
-                        }
-                    }
-                }
-                return true
-            }
-        } catch (e: Exception) {
-            return false
-        }
-    }
-
 }
