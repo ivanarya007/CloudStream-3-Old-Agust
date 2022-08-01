@@ -21,7 +21,13 @@
         "language": "it",
         "name": "Altadefinizione",
         "status": 1,
-        "url": "https://altadefinizione.hair"
+        "url": "https://altadefinizione.tienda"
+    },
+    "AniPlayProvider": {
+        "language": "it",
+        "name": "AniPlay",
+        "status": 1,
+        "url": "https://aniplay.it"
     },
     "AniflixProvider": {
         "language": "en",
@@ -46,6 +52,18 @@
         "name": "AnimePahe",
         "status": 0,
         "url": "https://animepahe.com"
+    },
+    "AnimeSailProvider": {
+        "language": "id",
+        "name": "AnimeSail",
+        "status": 1,
+        "url": "https://111.90.143.42"
+    },
+    "AnimeSaturnProvider": {
+        "language": "it",
+        "name": "AnimeSaturn",
+        "status": 1,
+        "url": "https://www.animesaturn.cc"
     },
     "AnimeWorldProvider": {
         "language": "it",
@@ -83,7 +101,6 @@
         "url": "https://animekisa.in"
     },
     "AnimeonlineProvider": {
-        "language": "es",
         "name": "Animeonline",
         "status": 0,
         "url": "https://animeonline1.ninja"
@@ -110,6 +127,12 @@
         "name": "Bflix",
         "status": 1,
         "url": "https://bflix.ru"
+    },
+    "CimaNowProvider": {
+        "language": "ar",
+        "name": "CimaNow",
+        "status": 1,
+        "url": "https://cimanow.cc"
     },
     "CineblogProvider": {
         "language": "it",
@@ -220,7 +243,7 @@
         "language": "it",
         "name": "Filmpertutti",
         "status": 1,
-        "url": "https://www.filmpertutti.love"
+        "url": "https://filmpertutti.photo"
     },
     "FireAnimeProvider": {
         "language": "de",
@@ -250,7 +273,7 @@
         "language": "en",
         "name": "GogoAnime",
         "status": 1,
-        "url": "https://gogoanime.sk"
+        "url": "https://gogoanime.lu"
     },
     "GomunimeProvider": {
         "language": "id",
@@ -273,7 +296,7 @@
         "language": "ru",
         "name": "HDrezka",
         "status": 1,
-        "url": "https://rezka.ag"
+        "url": "https://hdrezka19139.org"
     },
     "HenaojaraProvider": {
         "name": "Henaojara",
@@ -291,6 +314,12 @@
         "name": "Idlix",
         "status": 1,
         "url": "https://94.103.82.88"
+    },
+    "IlGenioDelloStreamingProvider": {
+        "language": "it",
+        "name": "IlGenioDelloStreaming",
+        "status": 1,
+        "url": "https://ilgeniodellostreaming.quest"
     },
     "JKAnimeProvider": {
         "language": "es",
@@ -553,7 +582,7 @@
         "language": "it",
         "name": "Streamingcommunity",
         "status": 1,
-        "url": "https://streamingcommunity.org"
+        "url": "https://streamingcommunity.best"
     },
     "TantiFilmProvider": {
         "name": "TantiFilm",
@@ -564,7 +593,7 @@
         "language": "it",
         "name": "Tantifilm",
         "status": 1,
-        "url": "https://www.tantifilm.pics"
+        "url": "https://tantifilm.autos"
     },
     "TenshiProvider": {
         "language": "en",
@@ -589,6 +618,12 @@
         "status": 1,
         "url": ""
     },
+    "TocanimeProvider": {
+        "language": "vi",
+        "name": "Tocanime",
+        "status": 1,
+        "url": "https://tocanime.co"
+    },
     "TrailersTwoProvider": {
         "language": "en",
         "name": "Trailers.to",
@@ -599,7 +634,7 @@
         "language": "en",
         "name": "2Embed",
         "status": 1,
-        "url": "https://2embed.org"
+        "url": "https://www.2embed.to"
     },
     "UakinoProvider": {
         "language": "uk",
@@ -629,7 +664,7 @@
         "language": "en",
         "name": "VidEmbed",
         "status": 1,
-        "url": "https://vidembed.cc"
+        "url": "https://membed.net"
     },
     "VidSrcProvider": {
         "language": "en",
@@ -655,10 +690,22 @@
         "status": 1,
         "url": "https://wcostream.cc"
     },
+    "XcineProvider": {
+        "language": "de",
+        "name": "Xcine",
+        "status": 1,
+        "url": "https://xcine.me"
+    },
     "YesMoviesProvider": {
         "name": "YesMovies",
         "status": 1,
         "url": "https://yesmovies.mn"
+    },
+    "YomoviesProvider": {
+        "language": "hi",
+        "name": "Yomovies",
+        "status": 1,
+        "url": "https://yomovies.vip"
     },
     "ZoroProvider": {
         "language": "en",
