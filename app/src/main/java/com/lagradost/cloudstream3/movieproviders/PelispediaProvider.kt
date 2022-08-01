@@ -33,15 +33,16 @@ class PelispediaProvider:MainAPI() {
 
     )
 
-    override suspend fun getMainPage(): HomePageResponse? {
+    override suspend fun getMainPage(page: Int, request : MainPageRequest): HomePageResponse {
         val items = ArrayList<HomePageList>()
         val urls = listOf(
             Pair("Películas","$mainUrl/hcapi/homepage/movies/"),
             Pair("Series","$mainUrl/hcapi/homepage/series/"),
         )
         urls.apmap { (name, url) ->
-            val json = app.get(url).parsedSafe<List<PelispediaHome>>() ?: throw ErrorLoadingException("Intenta de nuevo")
-            val home = json.map {
+            val json = app.get(url).text
+            val aaa = parseJson<List<PelispediaHome>>(json)
+            val home = aaa.map {
                 val title = it.postTitle
                 val image = it.postImage
                 val postlink = if (url.contains("movies")) "$mainUrl/hcapi/movie/${it.postId}" else "$mainUrl/hcapi/serie/${it.postId}"
@@ -190,14 +191,15 @@ class PelispediaProvider:MainAPI() {
     }
 
     private fun getStream(MovieStream: List<MovieStreams>,
-                        callback: (ExtractorLink) -> Unit
+                        callback: (ExtractorLink) -> Unit,
+                          subtitleCallback: (SubtitleFile) -> Unit
     ): List<Unit> = MovieStream.apmap {
         for (extractor in extractorApis) {
             val reallang = it.lang?.replace("VOSE", "Subtitulado")
             if (it.link!!.startsWith(extractor.mainUrl)) {
-                extractor.getSafeUrl(it.link)?.apmap { extract ->
-                    extract.name += " $reallang"
-                    callback(extract)
+                extractor.getSafeUrl2(it.link)?.forEach {
+                    it.name += " $reallang"
+                    callback(it)
                 }
             }
         }
@@ -213,11 +215,11 @@ class PelispediaProvider:MainAPI() {
         val isMovie = tvType == TvType.Movie
         if (isMovie) {
             val jsonmovie = parseJson<List<MovieStreams>>(data)
-            getStream(jsonmovie, callback)
+            getStream(jsonmovie, callback, subtitleCallback)
         } else {
             val response = app.get(data).text
             val jsonserie = parseJson<List<MovieStreams>>(response)
-            getStream(jsonserie, callback)
+            getStream(jsonserie, callback, subtitleCallback)
         }
         return true
     }

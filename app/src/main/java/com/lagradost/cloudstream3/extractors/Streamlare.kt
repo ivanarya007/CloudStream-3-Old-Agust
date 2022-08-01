@@ -15,7 +15,7 @@ class Streamlare : Slmaxed() {
 }
 
 open class Slmaxed : ExtractorApi() {
-    override val name = "Streamlare"
+    override var name = "Streamlare"
     override val mainUrl = "https://slmaxed.com/"
     override val requiresReferer = true
 

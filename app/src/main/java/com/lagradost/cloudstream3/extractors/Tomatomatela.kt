@@ -9,14 +9,14 @@ import com.lagradost.cloudstream3.utils.AppUtils.parseJson
 
 
 class Cinestart: Tomatomatela() {
-    override val name: String = "Cinestart"
+    override var name: String = "Cinestart"
     override val mainUrl: String = "https://cinestart.net"
     override val details = "vr.php?v="
 }
 
 
 open class Tomatomatela : ExtractorApi() {
-    override val name = "Tomatomatela"
+    override var name = "Tomatomatela"
     override val mainUrl = "https://tomatomatela.com"
     override val requiresReferer = false
     private data class Tomato (

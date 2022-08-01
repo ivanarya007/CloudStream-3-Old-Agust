@@ -47,15 +47,15 @@ object APIHolder {
             // Movie providers
             ElifilmsProvider(),
             EstrenosDoramasProvider(),
-            PelisplusProvider(),
             PelisplusHDProvider(),
+            PelisplusSOProvider(),
             PeliSmartProvider(),
             MeloMovieProvider(), // Captcha for links
             DoramasYTProvider(),
             CinecalidadProvider(),
             CuevanaProvider(),
+            ComamosRamenProvider(),
             EntrepeliculasyseriesProvider(),
-            PelisflixProvider(),
             SeriesflixProvider(),
             IHaveNoTvProvider(), // Documentaries provider
             VMoveeProvider(),
@@ -65,8 +65,7 @@ object APIHolder {
             VfSerieProvider(),
             FrenchStreamProvider(),
             AsianLoadProvider(),
-            AsiaFlixProvider(), // This should be removed in favor of asianembed.io, same source
-            EjaTv(),
+            AsiaFlixProvider(), // restricted
             BflixProvider(),
             FmoviesToProvider(),
             SflixProProvider(),
@@ -77,6 +76,7 @@ object APIHolder {
             PinoyMoviePediaProvider(),
             PinoyHDXyzProvider(),
             PinoyMoviesEsProvider(),
+            PelispediaProvider(),
             TrailersTwoProvider(),
             TwoEmbedProvider(),
             DramaSeeProvider(),
@@ -85,31 +85,27 @@ object APIHolder {
             KdramaHoodProvider(),
             AkwamProvider(),
             MyCimaProvider(),
-            CimaNowProvider(),
             EgyBestProvider(),
             FaselHDProvider(),
             SoaptwoDayProvider(),
+            SeriesMetroProvider(),
             HDMProvider(),// disabled due to cloudflare
             TheFlixToProvider(),
             StreamingcommunityProvider(),
             TantifilmProvider(),
             CineblogProvider(),
-            IlGenioDelloStreamingProvider(),
             AltadefinizioneProvider(),
             FilmpertuttiProvider(),
             HDMovie5(),
             RebahinProvider(),
             LayarKacaProvider(),
             HDTodayProvider(),
+            YesMoviesProvider(),
+            MyflixerToProvider(),
+            MoviesJoyProvider(),
+            FmoviesAPPProvider(),
             OpenVidsProvider(),
-            IdlixProvider(),
-            MultiplexProvider(),
             VidSrcProvider(),
-            UakinoProvider(),
-            PhimmoichillProvider(),
-            HDrezkaProvider(),
-            YomoviesProvider(),
-
 
             // Metadata providers
             //TmdbProvider(),
@@ -125,35 +121,31 @@ object APIHolder {
             AnimeflvnetProvider(),
             AnimefenixProvider(),
             AnimeflvIOProvider(),
+            AnimeIDProvider(),
             JKAnimeProvider(),
             TenshiProvider(),
             WcoProvider(),
             AnimePaheProvider(),
             NineAnimeProvider(),
             AnimeWorldProvider(),
-            AnimeSaturnProvider(),
-            AniPlayProvider(),
             ZoroProvider(),
             DubbedAnimeProvider(),
             MonoschinosProvider(),
             MundoDonghuaProvider(),
             KawaiifuProvider(), // disabled due to cloudflare
+            KrunchyProvider(),
             NeonimeProvider(),
             KuramanimeProvider(),
             OploverzProvider(),
             GomunimeProvider(),
             NontonAnimeIDProvider(),
             KuronimeProvider(),
-            OtakudesuProvider(),
-            AnimeIndoProvider(),
-            AnimeSailProvider(),
-            TocanimeProvider(),
+            FireAnimeProvider(),
+            TioAnimeProvider(),
             //MultiAnimeProvider(),
             NginxProvider(),
             OlgplyProvider(),
             AniflixProvider(),
-            KimCartoonProvider(),
-            XcineProvider()
         )
 
 
@@ -292,7 +284,7 @@ object APIHolder {
     fun Context.getApiProviderLangSettings(): HashSet<String> {
         val settingsManager = PreferenceManager.getDefaultSharedPreferences(this)
         val hashSet = HashSet<String>()
-        hashSet.add("en") // def is only en
+        hashSet.add("es") // def is only en
         val list = settingsManager.getStringSet(
             this.getString(R.string.provider_lang_key),
             hashSet.toMutableSet()
@@ -364,7 +356,7 @@ object APIHolder {
  */
 const val PROVIDER_STATUS_KEY = "PROVIDER_STATUS_KEY"
 const val PROVIDER_STATUS_URL =
-    "https://raw.githubusercontent.com/LagradOst/CloudStream-3/master/docs/providers.json"
+    "https://raw.githubusercontent.com/Stormunblessed/CloudStream-3/master/docs/providers.json"
 const val PROVIDER_STATUS_BETA_ONLY = 3
 const val PROVIDER_STATUS_SLOW = 2
 const val PROVIDER_STATUS_OK = 1
@@ -458,6 +450,10 @@ abstract class MainAPI {
         TvType.Cartoon,
         TvType.Anime,
         TvType.OVA,
+        TvType.Mirror,
+        TvType.Donghua,
+        TvType.AsianDrama,
+        TvType.Live
     )
 
     open val vpnStatus = VPNStatus.None
@@ -635,8 +631,10 @@ enum class ShowStatus {
 }
 
 enum class DubStatus(val id: Int) {
-    Dubbed(1),
     Subbed(0),
+    PremiumSub(1),
+    Dubbed(2),
+    PremiumDub(3),
 }
 
 enum class TvType {
@@ -648,8 +646,10 @@ enum class TvType {
     OVA,
     Torrent,
     Documentary,
+    Mirror,
+    Donghua,
     AsianDrama,
-    Live,
+    Live
 }
 
 // IN CASE OF FUTURE ANIME MOVIE OR SMTH
@@ -663,7 +663,7 @@ fun TvType.isLiveStream(): Boolean {
 
 // returns if the type has an anime opening
 fun TvType.isAnimeOp(): Boolean {
-    return this == TvType.Anime || this == TvType.OVA
+    return this == TvType.Anime || this == TvType.OVA || this == TvType.Donghua
 }
 
 data class SubtitleFile(val lang: String, val url: String)

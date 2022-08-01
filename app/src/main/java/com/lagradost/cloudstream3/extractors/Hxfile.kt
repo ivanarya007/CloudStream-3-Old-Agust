@@ -6,35 +6,35 @@ import com.lagradost.cloudstream3.utils.*
 import com.lagradost.cloudstream3.utils.AppUtils.tryParseJson
 
 class Neonime7n : Hxfile() {
-    override val name = "Neonime7n"
+    override var name = "Neonime7n"
     override val mainUrl = "https://7njctn.neonime.watch"
     override val redirect = false
 }
 
 class Neonime8n : Hxfile() {
-    override val name = "Neonime8n"
+    override var name = "Neonime8n"
     override val mainUrl = "https://8njctn.neonime.net"
     override val redirect = false
 }
 
 class KotakAnimeid : Hxfile() {
-    override val name = "KotakAnimeid"
+    override var name = "KotakAnimeid"
     override val mainUrl = "https://kotakanimeid.com"
     override val requiresReferer = true
 }
 
 class Yufiles : Hxfile() {
-    override val name = "Yufiles"
+    override var name = "Yufiles"
     override val mainUrl = "https://yufiles.com"
 }
 
 class Aico : Hxfile() {
-    override val name = "Aico"
+    override var name = "Aico"
     override val mainUrl = "https://aico.pw"
 }
 
 open class Hxfile : ExtractorApi() {
-    override val name = "Hxfile"
+    override var name = "Hxfile"
     override val mainUrl = "https://hxfile.co"
     override val requiresReferer = false
     open val redirect = true

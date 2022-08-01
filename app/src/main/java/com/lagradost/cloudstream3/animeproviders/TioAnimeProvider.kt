@@ -27,7 +27,7 @@ class TioAnimeProvider:MainAPI() {
         TvType.Anime,
     )
 
-    override suspend fun getMainPage(): HomePageResponse {
+    override suspend fun getMainPage(page: Int, request : MainPageRequest): HomePageResponse {
         val urls = listOf(
             Pair("$mainUrl/directorio?year=1950%2C2022&status=2&sort=recent", "Animes"),
             Pair("$mainUrl/directorio?year=1950%2C2022&status=1&sort=recent", "En Emisión"),
@@ -162,7 +162,7 @@ class TioAnimeProvider:MainAPI() {
                     it.replace("https://embedsb.com/e/","https://watchsb.com/e/")
                         .replace("https://ok.ru","http://ok.ru")
                 }.toList().apmap {
-                    loadExtractor(it, data, callback)
+                    loadExtractor(it, subtitleCallback, callback)
                 }
             }
         }

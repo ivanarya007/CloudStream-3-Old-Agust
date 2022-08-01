@@ -17,7 +17,7 @@ class SeriesMetroProvider: MainAPI() {
         TvType.TvSeries,
     )
 
-    override suspend fun getMainPage(): HomePageResponse {
+    override suspend fun getMainPage(page: Int, request : MainPageRequest): HomePageResponse {
         val items = ArrayList<HomePageList>()
         val soup = app.get(mainUrl).document
         val list = listOf(
@@ -206,7 +206,7 @@ class SeriesMetroProvider: MainAPI() {
             val embedlink = response.select("body iframe").attr("src")
             val secondresponse = app.get(embedlink).document
             val trueembedlink = secondresponse.select(".Video iframe").attr("src")
-            loadExtractor(trueembedlink, data, callback)
+            loadExtractor(trueembedlink, subtitleCallback, callback)
         }
         return true
     }

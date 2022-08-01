@@ -29,7 +29,7 @@ class OkRuHttps: OkRu(){
 }
 
 open class OkRu : ExtractorApi() {
-    override val name = "Okru"
+    override var name = "Okru"
     override val mainUrl = "http://ok.ru"
     override val requiresReferer = false
 

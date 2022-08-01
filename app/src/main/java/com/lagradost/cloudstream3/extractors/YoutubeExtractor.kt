@@ -22,7 +22,7 @@ class YoutubeShortLinkExtractor : YoutubeExtractor() {
 open class YoutubeExtractor : ExtractorApi() {
     override val mainUrl = "https://www.youtube.com"
     override val requiresReferer = false
-    override val name = "YouTube"
+    override var name = "YouTube"
 
     companion object {
         private var ytVideos: MutableMap<String, List<VideoStream>> = mutableMapOf()

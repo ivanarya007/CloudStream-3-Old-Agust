@@ -7,7 +7,7 @@ import com.lagradost.cloudstream3.utils.ExtractorLink
 import com.lagradost.cloudstream3.utils.getQualityFromName
 
 class Linkbox : ExtractorApi() {
-    override val name = "Linkbox"
+    override var name = "Linkbox"
     override val mainUrl = "https://www.linkbox.to"
     override val requiresReferer = true
 

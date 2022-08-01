@@ -59,7 +59,7 @@ class ComamosRamenProvider : MainAPI() {
         @JsonProperty("vertical") var vertical   : String? = null,
         @JsonProperty("horizontal") var horizontal : String? = null
     )
-    override suspend fun getMainPage(): HomePageResponse {
+    override suspend fun getMainPage(page: Int, request : MainPageRequest): HomePageResponse {
         val items = ArrayList<HomePageList>()
         val urls = listOf("https://comamosramen.com")
         urls.apmap { url ->
@@ -299,7 +299,7 @@ class ComamosRamenProvider : MainAPI() {
                     val validid = servers.id?.replace("/v/","")?.replace("v/","")
                         ?.replace("/","")?.replace(".html","")
                     val link = validserver+validid
-                    loadExtractor(link, data, callback)
+                    loadExtractor(link, subtitleCallback, callback)
                 }
             }
         }

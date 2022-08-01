@@ -8,7 +8,7 @@ class Uqload1 : Uqload() {
 }
 
 open class Uqload : ExtractorApi() {
-    override val name: String = "Uqload"
+    override var name: String = "Uqload"
     override val mainUrl: String = "https://www.uqload.com"
     private val srcRegex = Regex("""sources:.\[(.*?)\]""")  // would be possible to use the parse and find src attribute
     override val requiresReferer = true

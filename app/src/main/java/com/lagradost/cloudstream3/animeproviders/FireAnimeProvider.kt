@@ -44,7 +44,7 @@ class FireAnimeProvider:MainAPI() {
         @JsonProperty("episodes"     ) var episodes     : Int?    = null
     )
 
-    override suspend fun getMainPage(): HomePageResponse {
+    override suspend fun getMainPage(page: Int, request : MainPageRequest): HomePageResponse {
         val urls = listOf(
             Pair("$mainUrl/api/public/airing", "Airings"),
             Pair("$mainUrl/api/public/new","Neu hinzugefügt")
@@ -247,7 +247,7 @@ class FireAnimeProvider:MainAPI() {
                )
                    ).text
                val jsonlinks = parseJson<LinksResponse>(responselink)
-               loadExtractor(jsonlinks.links!!, data, callback)
+               loadExtractor(jsonlinks.links!!, subtitleCallback, callback)
            }
         }
         if (cdns!!.isNotEmpty()) {

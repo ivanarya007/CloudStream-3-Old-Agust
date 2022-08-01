@@ -6,7 +6,7 @@ import com.lagradost.cloudstream3.utils.ExtractorLink
 import com.lagradost.cloudstream3.utils.M3u8Helper
 
 class GMPlayer : ExtractorApi() {
-    override val name = "GM Player"
+    override var name = "GM Player"
     override val mainUrl = "https://gmplayer.xyz"
     override val requiresReferer = true
 

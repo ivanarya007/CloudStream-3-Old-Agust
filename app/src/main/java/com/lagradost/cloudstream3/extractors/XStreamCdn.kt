@@ -8,38 +8,46 @@ import com.lagradost.cloudstream3.utils.ExtractorLink
 import com.lagradost.cloudstream3.utils.getQualityFromName
 
 class LayarKaca: XStreamCdn() {
-    override val name: String = "LayarKaca-xxi"
+    override var name: String = "LayarKaca-xxi"
     override val mainUrl: String = "https://layarkacaxxi.icu"
 }
 
 class DBfilm: XStreamCdn() {
-    override val name: String = "DBfilm"
+    override var name: String = "DBfilm"
     override val mainUrl: String = "https://dbfilm.bar"
 }
 
 class Luxubu : XStreamCdn(){
-    override val name: String = "FE"
+    override var name: String = "FE"
     override val mainUrl: String = "https://www.luxubu.review"
 }
 
 class FEmbed: XStreamCdn() {
-    override val name: String = "FEmbed"
+    override var name: String = "FEmbed"
     override val mainUrl: String = "https://www.fembed.com"
 }
 
 class Fplayer: XStreamCdn() {
-    override val name: String = "Fplayer"
+    override var name: String = "Fplayer"
     override val mainUrl: String = "https://fplayer.info"
 }
 
 class FeHD: XStreamCdn() {
-    override val name: String = "FeHD"
+    override var name: String = "FeHD"
     override val mainUrl: String = "https://fembed-hd.com"
     override var domainUrl: String = "fembed-hd.com"
 }
 
+class Suzihaza: XStreamCdn() {
+    override val mainUrl: String = "https://suzihaza.com"
+}
+
+class Femax20: XStreamCdn() {
+    override val mainUrl: String = "https://femax20.com"
+}
+
 open class XStreamCdn : ExtractorApi() {
-    override val name: String = "XStreamCdn"
+    override var name: String = "XStreamCdn"
     override val mainUrl: String = "https://embedsito.com"
     override val requiresReferer = false
     open var domainUrl: String = "embedsito.com"

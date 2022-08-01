@@ -11,7 +11,7 @@ class Sendvid1: Sendvid() {
 }
 
 open class Sendvid : ExtractorApi() {
-    override val name = "Sendvid"
+    override var name = "Sendvid"
     override val mainUrl = "https://sendvid.com"
     override val requiresReferer = false
 

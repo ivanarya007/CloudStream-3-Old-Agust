@@ -16,7 +16,7 @@ class PelisplusHDProvider:MainAPI() {
         TvType.Movie,
         TvType.TvSeries,
     )
-    override suspend fun getMainPage(): HomePageResponse {
+    override suspend fun getMainPage(page: Int, request : MainPageRequest): HomePageResponse {
         val items = ArrayList<HomePageList>()
         val document = app.get(mainUrl).document
         val map = mapOf(
@@ -179,11 +179,11 @@ class PelisplusHDProvider:MainAPI() {
                             val secondlink = it.attr("onclick")
                                 .replace(Regex("https://owodeuwu.xyz|https://sypl.xyz"),"https://embedsito.com")
                                 .replace(Regex(".poster.*|.cover.*"),"").replace(Regex("go_to_player\\('|'\\)"),"")
-                            loadExtractor(linkdecoded, link, callback)
-                            loadExtractor(secondlink, link, callback)
+                            loadExtractor(linkdecoded, link,subtitleCallback, callback)
+                            loadExtractor(secondlink, link, subtitleCallback, callback)
                         }
                     }
-                loadExtractor(link, data, callback)
+                loadExtractor(link, data, subtitleCallback, callback)
             }
         }
         return true

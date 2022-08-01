@@ -4,20 +4,22 @@ import android.util.Log
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.LoadResponse.Companion.addDuration
+import com.lagradost.cloudstream3.animeproviders.ZoroProvider
 import com.lagradost.cloudstream3.mvvm.suspendSafeApiCall
 import com.lagradost.cloudstream3.network.*
+import com.lagradost.cloudstream3.utils.*
 import com.lagradost.cloudstream3.utils.AppUtils.parseJson
 import com.lagradost.cloudstream3.utils.AppUtils.toJson
 import com.lagradost.cloudstream3.utils.AppUtils.tryParseJson
-import com.lagradost.cloudstream3.utils.ExtractorLink
-import com.lagradost.cloudstream3.utils.M3u8Helper
-import com.lagradost.cloudstream3.utils.getQualityFromName
 import kotlinx.coroutines.delay
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 import java.net.URI
 import kotlin.system.measureTimeMillis
 import com.lagradost.nicehttp.NiceResponse
+import okhttp3.RequestBody.Companion.toRequestBody
+import java.util.*
+import kotlin.collections.ArrayList
 
 
 class FmoviesAPPProvider : MainAPI() {
@@ -35,7 +37,7 @@ class FmoviesAPPProvider : MainAPI() {
     )
     override val vpnStatus = VPNStatus.None
 
-    override suspend fun getMainPage(): HomePageResponse {
+    override suspend fun getMainPage(page: Int, request : MainPageRequest): HomePageResponse {
         val html = app.get("$mainUrl/home").text
         val document = Jsoup.parse(html)
 
@@ -233,7 +235,7 @@ class FmoviesAPPProvider : MainAPI() {
             // Supported streams, they're identical
             app.get(episodesUrl).document.select("a").mapNotNull { element ->
                 val id = element?.attr("data-id") ?: return@mapNotNull null
-                if (element.select("span")?.text()?.trim()?.isValidServer() == true) {
+                if (element.select("span").text().trim().isValidServer()) {
                     "$prefix.$id".replace("/tv/", "/watch-tv/")
                 } else {
                     null
@@ -243,15 +245,6 @@ class FmoviesAPPProvider : MainAPI() {
 
         urls?.apmap { url ->
             suspendSafeApiCall {
-//                val resolved = WebViewResolver(
-//                    Regex("""/getSources"""),
-//                    // This is unreliable, generating my own link instead
-////                  additionalUrls = listOf(Regex("""^.*transport=polling(?!.*sid=).*$"""))
-//                ).resolveUsingWebView(getRequestCreator(url))
-////              val extractorData = resolved.second.getOrNull(0)?.url?.toString()
-
-                // ------- Main site -------
-
                 // Possible without token
 
 //                val response = app.get(url)
@@ -262,176 +255,63 @@ class FmoviesAPPProvider : MainAPI() {
 
                 val serverId = url.substringAfterLast(".")
                 val iframeLink =
-                    app.get("$mainUrl/ajax/get_link/$serverId").parsed<IframeJson>().link
+                    app.get("${this.mainUrl}/ajax/get_link/$serverId").parsed<SflixProvider.IframeJson>().link
                         ?: return@suspendSafeApiCall
 
                 // Some smarter ws11 or w10 selection might be required in the future.
                 val extractorData =
                     "https://ws11.rabbitstream.net/socket.io/?EIO=4&transport=polling"
 
-                extractRabbitStream(iframeLink, subtitleCallback, callback, extractorData) { it }
+                if (iframeLink.contains("streamlare", ignoreCase = true)) {
+                    loadExtractor(iframeLink, null, subtitleCallback, callback)
+                } else {
+                    extractRabbitStream(iframeLink, subtitleCallback, callback, false) { it }
+                }
             }
         }
 
         return !urls.isNullOrEmpty()
     }
 
-    data class PollingData(
-        @JsonProperty("sid") val sid: String? = null,
-        @JsonProperty("upgrades") val upgrades: ArrayList<String> = arrayListOf(),
-        @JsonProperty("pingInterval") val pingInterval: Int? = null,
-        @JsonProperty("pingTimeout") val pingTimeout: Int? = null
-    )
-
-    /*
-    # python code to figure out the time offset based on code if necessary
-    chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_"
-    code = "Nxa_-bM"
-    total = 0
-    for i, char in enumerate(code[::-1]):
-        index = chars.index(char)
-        value = index * 64**i
-        total += value
-    print(f"total {total}")
-    */
-    private fun generateTimeStamp(): String {
-        val chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_"
-        var code = ""
-        var time = APIHolder.unixTimeMS
-        while (time > 0) {
-            code += chars[(time % (chars.length)).toInt()]
-            time /= chars.length
-        }
-        return code.reversed()
-    }
-
-
-    /**
-     * Generates a session
-     * */
-    private suspend fun negotiateNewSid(baseUrl: String): PollingData? {
-        // Tries multiple times
-        for (i in 1..5) {
-            val jsonText =
-                app.get("$baseUrl&t=${generateTimeStamp()}").text.replaceBefore("{", "")
-//            println("Negotiated sid $jsonText")
-            parseJson<PollingData?>(jsonText)?.let { return it }
-            delay(1000L * i)
-        }
-        return null
-    }
-
-    /**
-     * Generates a new session if the request fails
-     * @return the data and if it is new.
-     * */
-    private suspend fun getUpdatedData(
-        response: NiceResponse,
-        data: PollingData,
-        baseUrl: String
-    ): Pair<PollingData, Boolean> {
-        if (!response.okhttpResponse.isSuccessful) {
-            return negotiateNewSid(baseUrl)?.let {
-                it to true
-            } ?: data to false
-        }
-        return data to false
-    }
-
     override suspend fun extractorVerifierJob(extractorData: String?) {
-        if (extractorData == null) return
-
-        val headers = mapOf(
-            "Referer" to "https://rabbitstream.net/"
-        )
-
-        var data = negotiateNewSid(extractorData) ?: return
-        // 40 is hardcoded, dunno how it's generated, but it seems to work everywhere.
-        // This request is obligatory
-        app.post(
-            "$extractorData&t=${generateTimeStamp()}&sid=${data.sid}",
-            json = "40", headers = headers
-        )//.also { println("First post ${it.text}") }
-        // This makes the second get request work, and re-connect work.
-        val reconnectSid =
-            parseJson<PollingData>(
-                app.get(
-                    "$extractorData&t=${generateTimeStamp()}&sid=${data.sid}",
-                    headers = headers
-                )
-//                    .also { println("First get ${it.text}") }
-                    .text.replaceBefore("{", "")
-            ).sid
-        // This response is used in the post requests. Same contents in all it seems.
-        val authInt =
-            app.get(
-                "$extractorData&t=${generateTimeStamp()}&sid=${data.sid}",
-                timeout = 60,
-                headers = headers
-            ).text
-                //.also { println("Second get ${it}") }
-                // Dunno if it's actually generated like this, just guessing.
-                .toIntOrNull()?.plus(1) ?: 3
-
-        // Prevents them from fucking us over with doing a while(true){} loop
-        val interval = maxOf(data.pingInterval?.toLong()?.plus(2000) ?: return, 10000L)
-        var reconnect = false
-        var newAuth = false
-        while (true) {
-            val authData =
-                when {
-                    newAuth -> "40"
-                    reconnect -> """42["_reconnect", "$reconnectSid"]"""
-                    else -> authInt
-                }
-
-            val url = "${extractorData}&t=${generateTimeStamp()}&sid=${data.sid}"
-
-            getUpdatedData(
-                app.post(url, json = authData, headers = headers),
-                data,
-                extractorData
-            ).also {
-                newAuth = it.second
-                data = it.first
-            }
-
-            //.also { println("Sflix post job ${it.text}") }
-            Log.d(this.name, "Running ${this.name} job $url")
-
-            val time = measureTimeMillis {
-                // This acts as a timeout
-                val getResponse = app.get(
-                    "${extractorData}&t=${generateTimeStamp()}&sid=${data.sid}",
-                    timeout = 60,
-                    headers = headers
-                )
-//                    .also { println("Sflix get job ${it.text}") }
-                if (getResponse.text.contains("sid")) {
-                    reconnect = true
-//                    println("Reconnecting")
-                }
-            }
-            // Always waits even if the get response is instant, to prevent a while true loop.
-            if (time < interval - 4000)
-                delay(4000)
-        }
+        runSflixExtractorVerifierJob(this, extractorData, "https://rabbitstream.net/")
     }
 
     private fun Element.toSearchResult(): SearchResponse {
-        val img = this.select("img")
+        val inner = this.selectFirst("div.film-poster")
+        val img = inner!!.select("img")
         val title = img.attr("title")
-        val posterUrl = img.attr("data-src")
-        val href = fixUrl(this.select("a").attr("href"))
+        val posterUrl = img.attr("data-src") ?: img.attr("src")
+        val href = fixUrl(inner.select("a").attr("href"))
         val isMovie = href.contains("/movie/")
+        val otherInfo =
+            this.selectFirst("div.film-detail > div.fd-infor")?.select("span")?.toList() ?: listOf()
+        //var rating: Int? = null
+        var year: Int? = null
+        var quality: SearchQuality? = null
+        when (otherInfo.size) {
+            1 -> {
+                year = otherInfo[0]?.text()?.trim()?.toIntOrNull()
+            }
+            2 -> {
+                year = otherInfo[0]?.text()?.trim()?.toIntOrNull()
+            }
+            3 -> {
+                //rating = otherInfo[0]?.text()?.toRatingInt()
+                quality = getQualityFromString(otherInfo[1]?.text())
+                year = otherInfo[2]?.text()?.trim()?.toIntOrNull()
+            }
+        }
+
         return if (isMovie) {
             MovieSearchResponse(
                 title,
                 href,
                 this@FmoviesAPPProvider.name,
                 TvType.Movie,
-                posterUrl,
-                null
+                posterUrl = posterUrl,
+                year = year,
+                quality = quality,
             )
         } else {
             TvSeriesSearchResponse(
@@ -440,31 +320,192 @@ class FmoviesAPPProvider : MainAPI() {
                 this@FmoviesAPPProvider.name,
                 TvType.Movie,
                 posterUrl,
-                null,
-                null
+                year = year,
+                episodes = null,
+                quality = quality,
             )
         }
     }
 
     companion object {
+        data class PollingData(
+            @JsonProperty("sid") val sid: String? = null,
+            @JsonProperty("upgrades") val upgrades: java.util.ArrayList<String> = arrayListOf(),
+            @JsonProperty("pingInterval") val pingInterval: Int? = null,
+            @JsonProperty("pingTimeout") val pingTimeout: Int? = null
+        )
+
+        /*
+        # python code to figure out the time offset based on code if necessary
+        chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_"
+        code = "Nxa_-bM"
+        total = 0
+        for i, char in enumerate(code[::-1]):
+            index = chars.index(char)
+            value = index * 64**i
+            total += value
+        print(f"total {total}")
+        */
+        private fun generateTimeStamp(): String {
+            val chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_"
+            var code = ""
+            var time = APIHolder.unixTimeMS
+            while (time > 0) {
+                code += chars[(time % (chars.length)).toInt()]
+                time /= chars.length
+            }
+            return code.reversed()
+        }
+
+
+        /**
+         * Generates a session
+         * 1 Get request.
+         * */
+        private suspend fun negotiateNewSid(baseUrl: String): PollingData? {
+            // Tries multiple times
+            for (i in 1..5) {
+                val jsonText =
+                    app.get("$baseUrl&t=${generateTimeStamp()}").text.replaceBefore("{", "")
+//            println("Negotiated sid $jsonText")
+                parseJson<PollingData?>(jsonText)?.let { return it }
+                delay(1000L * i)
+            }
+            return null
+        }
+
+        /**
+         * Generates a new session if the request fails
+         * @return the data and if it is new.
+         * */
+        private suspend fun getUpdatedData(
+            response: NiceResponse,
+            data: PollingData,
+            baseUrl: String
+        ): Pair<PollingData, Boolean> {
+            if (!response.okhttpResponse.isSuccessful) {
+                return negotiateNewSid(baseUrl)?.let {
+                    it to true
+                } ?: data to false
+            }
+            return data to false
+        }
+
+
+        private suspend fun initPolling(
+            extractorData: String,
+            referer: String
+        ): Pair<PollingData?, String?> {
+            val headers = mapOf(
+                "Referer" to referer // "https://rabbitstream.net/"
+            )
+
+            val data = negotiateNewSid(extractorData) ?: return null to null
+            app.post(
+                "$extractorData&t=${generateTimeStamp()}&sid=${data.sid}",
+                requestBody = "40".toRequestBody(),
+                headers = headers
+            )
+
+            // This makes the second get request work, and re-connect work.
+            val reconnectSid =
+                parseJson<PollingData>(
+                    app.get(
+                        "$extractorData&t=${generateTimeStamp()}&sid=${data.sid}",
+                        headers = headers
+                    )
+//                    .also { println("First get ${it.text}") }
+                        .text.replaceBefore("{", "")
+                ).sid
+
+            // This response is used in the post requests. Same contents in all it seems.
+            val authInt =
+                app.get(
+                    "$extractorData&t=${generateTimeStamp()}&sid=${data.sid}",
+                    timeout = 60,
+                    headers = headers
+                ).text
+                    //.also { println("Second get ${it}") }
+                    // Dunno if it's actually generated like this, just guessing.
+                    .toIntOrNull()?.plus(1) ?: 3
+
+            return data to reconnectSid
+        }
+
+        suspend fun runSflixExtractorVerifierJob(
+            api: MainAPI,
+            extractorData: String?,
+            referer: String
+        ) {
+            if (extractorData == null) return
+            val headers = mapOf(
+                "Referer" to referer // "https://rabbitstream.net/"
+            )
+
+            lateinit var data: PollingData
+            var reconnectSid = ""
+
+            initPolling(extractorData, referer)
+                .also {
+                    data = it.first ?: throw RuntimeException("Data Null")
+                    reconnectSid = it.second ?: throw RuntimeException("ReconnectSid Null")
+                }
+
+            // Prevents them from fucking us over with doing a while(true){} loop
+            val interval = maxOf(data.pingInterval?.toLong()?.plus(2000) ?: return, 10000L)
+            var reconnect = false
+            var newAuth = false
+
+
+            while (true) {
+                val authData =
+                    when {
+                        newAuth -> "40"
+                        reconnect -> """42["_reconnect", "$reconnectSid"]"""
+                        else -> "3"
+                    }
+
+                val url = "${extractorData}&t=${generateTimeStamp()}&sid=${data.sid}"
+
+                getUpdatedData(
+                    app.post(url, json = authData, headers = headers),
+                    data,
+                    extractorData
+                ).also {
+                    newAuth = it.second
+                    data = it.first
+                }
+
+                //.also { println("Sflix post job ${it.text}") }
+                Log.d(api.name, "Running ${api.name} job $url")
+
+                val time = measureTimeMillis {
+                    // This acts as a timeout
+                    val getResponse = app.get(
+                        url,
+                        timeout = interval / 1000,
+                        headers = headers
+                    )
+//                    .also { println("Sflix get job ${it.text}") }
+                    reconnect = getResponse.text.contains("sid")
+                }
+                // Always waits even if the get response is instant, to prevent a while true loop.
+                if (time < interval - 4000)
+                    delay(4000)
+            }
+        }
+
+        // Only scrape servers with these names
         fun String?.isValidServer(): Boolean {
-            if (this.isNullOrEmpty()) return false
-            if (this.equals("UpCloud", ignoreCase = true) || this.equals(
-                    "Vidcloud",
-                    ignoreCase = true
-                ) || this.equals("RapidStream", ignoreCase = true)
-                || this.equals("DoodStream", ignoreCase = true) ||
-                this.equals("Voe", ignoreCase = true)
-                || this.equals("Mixdrop", ignoreCase = true)
-            ) return true
-            return false
+            val list = listOf("upcloud", "vidcloud", "streamlare")
+            return list.contains(this?.lowercase(Locale.ROOT))
         }
 
         // For re-use in Zoro
-        fun YesMoviesProvider.Sources.toExtractorLink(
+        private suspend fun SflixProvider.Sources.toExtractorLink(
             caller: MainAPI,
             name: String,
-            extractorData: String? = null
+            extractorData: String? = null,
         ): List<ExtractorLink>? {
             return this.file?.let { file ->
                 //println("FILE::: $file")
@@ -472,37 +513,55 @@ class FmoviesAPPProvider : MainAPI() {
                     "hls",
                     ignoreCase = true
                 )
-                if (isM3u8) {
-                    M3u8Helper().m3u8Generation(M3u8Helper.M3u8Stream(this.file, null), true)
-                        .map { stream ->
-                            //println("stream: ${stream.quality} at ${stream.streamUrl}")
-                            val qualityString = if ((stream.quality ?: 0) == 0) label
-                                ?: "" else "${stream.quality}p"
-                            ExtractorLink(
-                                caller.name,
-                                "${caller.name} $qualityString $name",
-                                stream.streamUrl,
-                                caller.mainUrl,
-                                getQualityFromName(stream.quality.toString()),
-                                true,
-                                extractorData = extractorData
-                            )
-                        }
+                return if (isM3u8) {
+                    suspendSafeApiCall {
+                        M3u8Helper().m3u8Generation(
+                            M3u8Helper.M3u8Stream(
+                                this.file,
+                                null,
+                                mapOf("Referer" to "https://mzzcloud.life/")
+                            ), false
+                        )
+                            .map { stream ->
+                                ExtractorLink(
+                                    caller.name,
+                                    "${caller.name} $name",
+                                    stream.streamUrl,
+                                    caller.mainUrl,
+                                    getQualityFromName(stream.quality?.toString()),
+                                    true,
+                                    extractorData = extractorData
+                                )
+                            }
+                    } ?: listOf(
+                        // Fallback if m3u8 extractor fails
+                        ExtractorLink(
+                            caller.name,
+                            "${caller.name} $name",
+                            this.file,
+                            caller.mainUrl,
+                            getQualityFromName(this.label),
+                            isM3u8,
+                            extractorData = extractorData
+                        )
+                    )
                 } else {
-                    listOf(ExtractorLink(
-                        caller.name,
-                        this.label?.let { "${caller.name} - $it" } ?: caller.name,
-                        file,
-                        caller.mainUrl,
-                        getQualityFromName(this.type ?: ""),
-                        false,
-                        extractorData = extractorData
-                    ))
+                    listOf(
+                        ExtractorLink(
+                            caller.name,
+                            caller.name,
+                            file,
+                            caller.mainUrl,
+                            getQualityFromName(this.label),
+                            false,
+                            extractorData = extractorData
+                        )
+                    )
                 }
             }
         }
 
-        fun YesMoviesProvider.Tracks.toSubtitleFile(): SubtitleFile? {
+        private fun SflixProvider.Tracks.toSubtitleFile(): SubtitleFile? {
             return this.file?.let {
                 SubtitleFile(
                     this.label ?: "Unknown",
@@ -511,73 +570,97 @@ class FmoviesAPPProvider : MainAPI() {
             }
         }
 
-
         suspend fun MainAPI.extractRabbitStream(
             url: String,
             subtitleCallback: (SubtitleFile) -> Unit,
             callback: (ExtractorLink) -> Unit,
+            useSidAuthentication: Boolean,
             /** Used for extractorLink name, input: Source name */
             extractorData: String? = null,
-            nameTransformer: (String) -> String
-        ) {
+            nameTransformer: (String) -> String,
+        ) = suspendSafeApiCall {
             // https://rapid-cloud.ru/embed-6/dcPOVRE57YOT?z= -> https://rapid-cloud.ru/embed-6
-            if (url.contains("rapid-cloud.ru")  || url.contains("rabbitstream")) {
-                val mainIframeUrl =
-                    url.substringBeforeLast("/")
-                val mainIframeId = url.substringAfterLast("/")
-                    .substringBefore("?") // https://rapid-cloud.ru/embed-6/dcPOVRE57YOT?z= -> dcPOVRE57YOT
-                val iframe = app.get(url, referer = mainUrl)
-                val iframeKey =
-                    iframe.document.select("script[src*=https://www.google.com/recaptcha/api.js?render=]")
-                        .attr("src").substringAfter("render=")
-                val iframeToken = APIHolder.getCaptchaToken(url, iframeKey)
-                val number =
-                    Regex("""recaptchaNumber = '(.*?)'""").find(iframe.text)?.groupValues?.get(1)
+            val mainIframeUrl =
+                url.substringBeforeLast("/")
+            val mainIframeId = url.substringAfterLast("/")
+                .substringBefore("?") // https://rapid-cloud.ru/embed-6/dcPOVRE57YOT?z= -> dcPOVRE57YOT
+            val iframe = app.get(url, referer = mainUrl)
+            val iframeKey =
+                iframe.document.select("script[src*=https://www.google.com/recaptcha/api.js?render=]")
+                    .attr("src").substringAfter("render=")
+            val iframeToken = APIHolder.getCaptchaToken(url, iframeKey)
+            val number =
+                Regex("""recaptchaNumber = '(.*?)'""").find(iframe.text)?.groupValues?.get(1)
 
-                val mapped = app.get(
-                    "${
-                        mainIframeUrl.replace(
-                            "/embed",
-                            "/ajax/embed"
-                        )
-                    }/getSources?id=$mainIframeId&_token=$iframeToken&_number=$number",
-                    referer = mainUrl,
-                    headers = mapOf(
-                        "X-Requested-With" to "XMLHttpRequest",
-                        "Accept" to "*/*",
-                        "Accept-Language" to "en-US,en;q=0.5",
+            var sid: String? = null
+            if (useSidAuthentication && extractorData != null) {
+                negotiateNewSid(extractorData)?.also {
+                    app.post(
+                        "$extractorData&t=${generateTimeStamp()}&sid=${it.sid}",
+                        requestBody = "40".toRequestBody(),
+                        timeout = 60
+                    )
+                    val text = app.get(
+                        "$extractorData&t=${generateTimeStamp()}&sid=${it.sid}",
+                        timeout = 60
+                    ).text.replaceBefore("{", "")
+
+                    sid = parseJson<PollingData>(text).sid
+                    Coroutines.ioSafe { app.get("$extractorData&t=${generateTimeStamp()}&sid=${it.sid}") }
+                }
+            }
+
+            val mapped = app.get(
+                "${
+                    mainIframeUrl.replace(
+                        "/embed",
+                        "/ajax/embed"
+                    )
+                }/getSources?id=$mainIframeId&_token=$iframeToken&_number=$number${sid?.let { "$&sId=$it" } ?: ""}",
+                referer = mainUrl,
+                headers = mapOf(
+                    "X-Requested-With" to "XMLHttpRequest",
+                    "Accept" to "*/*",
+                    "Accept-Language" to "en-US,en;q=0.5",
 //                        "Cache-Control" to "no-cache",
-                        "Connection" to "keep-alive",
+                    "Connection" to "keep-alive",
 //                        "Sec-Fetch-Dest" to "empty",
 //                        "Sec-Fetch-Mode" to "no-cors",
 //                        "Sec-Fetch-Site" to "cross-site",
 //                        "Pragma" to "no-cache",
 //                        "Cache-Control" to "no-cache",
-                        "TE" to "trailers"
-                    )
-                ).parsed<YesMoviesProvider.SourceObject>()
-
-                mapped.tracks?.apmap { track ->
-                    track?.toSubtitleFile()?.let { subtitleFile ->
-                        subtitleCallback.invoke(subtitleFile)
-                    }
-                }
-
-                val list = listOf(
-                    mapped.sources to "source 1",
-                    mapped.sources1 to "source 2",
-                    mapped.sources2 to "source 3",
-                    mapped.sourcesBackup to "source backup"
+                    "TE" to "trailers"
                 )
+            ).parsed<SflixProvider.SourceObject>()
 
-                list.apmap { subList ->
-                    subList.first?.apmap { source ->
-                        source?.toExtractorLink(this, nameTransformer(subList.second), extractorData)
-                            ?.forEach(callback)
-                    }
+            mapped.tracks?.forEach { track ->
+                track?.toSubtitleFile()?.let { subtitleFile ->
+                    subtitleCallback.invoke(subtitleFile)
+                }
+            }
+
+            val list = listOf(
+                mapped.sources to "source 1",
+                mapped.sources1 to "source 2",
+                mapped.sources2 to "source 3",
+                mapped.sourcesBackup to "source backup"
+            )
+            list.forEach { subList ->
+                subList.first?.forEach { source ->
+                    source?.toExtractorLink(
+                        this,
+                        nameTransformer(subList.second),
+                        extractorData,
+                    )
+                        ?.forEach {
+                            // Sets Zoro SID used for video loading
+                            (this as? ZoroProvider)?.sid?.set(it.url.hashCode(), sid)
+                            callback(it)
+                        }
                 }
             }
         }
     }
 }
+
 

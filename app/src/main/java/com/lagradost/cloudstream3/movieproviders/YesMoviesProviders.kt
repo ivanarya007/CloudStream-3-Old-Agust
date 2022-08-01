@@ -21,7 +21,9 @@ import org.jsoup.nodes.Element
 import java.net.URI
 import kotlin.system.measureTimeMillis
 import com.lagradost.nicehttp.NiceResponse
-
+import okhttp3.RequestBody.Companion.toRequestBody
+import java.util.*
+import kotlin.collections.ArrayList
 
 
 class HDTodayProvider : YesMoviesProvider() {
@@ -53,7 +55,7 @@ open class YesMoviesProvider : MainAPI() {
     )
     override val vpnStatus = VPNStatus.None
 
-    override suspend fun getMainPage(): HomePageResponse {
+    override suspend fun getMainPage(page: Int, request : MainPageRequest): HomePageResponse {
         val html = app.get("$mainUrl/home").text
         val document = Jsoup.parse(html)
 
@@ -313,7 +315,7 @@ open class YesMoviesProvider : MainAPI() {
             // Supported streams, they're identical
             app.get(episodesUrl).document.select("a").mapNotNull { element ->
                 val id = element?.attr("data-id") ?: return@mapNotNull null
-                if (element.select("span")?.text()?.trim()?.isValidServer() == true) {
+                if (element.select("span").text().trim().isValidServer()) {
                     "$prefix.$id".replace("/tv/", "/watch-tv/")
                 } else {
                     null
@@ -333,14 +335,18 @@ open class YesMoviesProvider : MainAPI() {
 
                 val serverId = url.substringAfterLast(".")
                 val iframeLink =
-                    app.get("${this.mainUrl}/ajax/get_link/$serverId").parsed<IframeJson>().link
+                    app.get("${this.mainUrl}/ajax/get_link/$serverId").parsed<SflixProvider.IframeJson>().link
                         ?: return@suspendSafeApiCall
 
                 // Some smarter ws11 or w10 selection might be required in the future.
                 val extractorData =
                     "https://ws11.rabbitstream.net/socket.io/?EIO=4&transport=polling"
 
-                extractRabbitStream(iframeLink, subtitleCallback, callback, extractorData) { it }
+                if (iframeLink.contains("streamlare", ignoreCase = true)) {
+                    loadExtractor(iframeLink, null, subtitleCallback, callback)
+                } else {
+                    extractRabbitStream(iframeLink, subtitleCallback, callback, false) { it }
+                }
             }
         }
 
@@ -353,10 +359,10 @@ open class YesMoviesProvider : MainAPI() {
 
     private fun Element.toSearchResult(): SearchResponse {
         val inner = this.selectFirst("div.film-poster")
-        val img = inner?.select("img")
-        val title = img?.attr("title")
-        val posterUrl = img?.attr("data-src") ?: img?.attr("src")
-        val href = fixUrl(inner?.select("a")?.attr("href") ?: "")
+        val img = inner!!.select("img")
+        val title = img.attr("title")
+        val posterUrl = img.attr("data-src") ?: img.attr("src")
+        val href = fixUrl(inner.select("a").attr("href"))
         val isMovie = href.contains("/movie/")
         val otherInfo =
             this.selectFirst("div.film-detail > div.fd-infor")?.select("span")?.toList() ?: listOf()
@@ -379,7 +385,7 @@ open class YesMoviesProvider : MainAPI() {
 
         return if (isMovie) {
             MovieSearchResponse(
-                title ?: "",
+                title,
                 href,
                 this@YesMoviesProvider.name,
                 TvType.Movie,
@@ -389,7 +395,7 @@ open class YesMoviesProvider : MainAPI() {
             )
         } else {
             TvSeriesSearchResponse(
-                title ?: "",
+                title,
                 href,
                 this@YesMoviesProvider.name,
                 TvType.Movie,
@@ -404,7 +410,7 @@ open class YesMoviesProvider : MainAPI() {
     companion object {
         data class PollingData(
             @JsonProperty("sid") val sid: String? = null,
-            @JsonProperty("upgrades") val upgrades: ArrayList<String> = arrayListOf(),
+            @JsonProperty("upgrades") val upgrades: java.util.ArrayList<String> = arrayListOf(),
             @JsonProperty("pingInterval") val pingInterval: Int? = null,
             @JsonProperty("pingTimeout") val pingTimeout: Int? = null
         )
@@ -477,7 +483,8 @@ open class YesMoviesProvider : MainAPI() {
             val data = negotiateNewSid(extractorData) ?: return null to null
             app.post(
                 "$extractorData&t=${generateTimeStamp()}&sid=${data.sid}",
-                json = "40", headers = headers
+                requestBody = "40".toRequestBody(),
+                headers = headers
             )
 
             // This makes the second get request work, and re-connect work.
@@ -568,18 +575,14 @@ open class YesMoviesProvider : MainAPI() {
             }
         }
 
+        // Only scrape servers with these names
         fun String?.isValidServer(): Boolean {
-            if (this.isNullOrEmpty()) return false
-            if (this.equals("UpCloud", ignoreCase = true) || this.equals(
-                    "Vidcloud",
-                    ignoreCase = true
-                ) || this.equals("RapidStream", ignoreCase = true)
-            ) return true
-            return false
+            val list = listOf("upcloud", "vidcloud", "streamlare")
+            return list.contains(this?.lowercase(Locale.ROOT))
         }
 
         // For re-use in Zoro
-        fun Sources.toExtractorLink(
+        private suspend fun SflixProvider.Sources.toExtractorLink(
             caller: MainAPI,
             name: String,
             extractorData: String? = null,
@@ -590,37 +593,55 @@ open class YesMoviesProvider : MainAPI() {
                     "hls",
                     ignoreCase = true
                 )
-                if (isM3u8) {
-                    generateM3u8(
-                        caller.name,
-                        this.file,
-                        caller.mainUrl
-                    ).apmap { stream ->
+                return if (isM3u8) {
+                    suspendSafeApiCall {
+                        M3u8Helper().m3u8Generation(
+                            M3u8Helper.M3u8Stream(
+                                this.file,
+                                null,
+                                mapOf("Referer" to "https://mzzcloud.life/")
+                            ), false
+                        )
+                            .map { stream ->
+                                ExtractorLink(
+                                    caller.name,
+                                    "${caller.name} $name",
+                                    stream.streamUrl,
+                                    caller.mainUrl,
+                                    getQualityFromName(stream.quality?.toString()),
+                                    true,
+                                    extractorData = extractorData
+                                )
+                            }
+                    } ?: listOf(
+                        // Fallback if m3u8 extractor fails
+                        ExtractorLink(
+                            caller.name,
+                            "${caller.name} $name",
+                            this.file,
+                            caller.mainUrl,
+                            getQualityFromName(this.label),
+                            isM3u8,
+                            extractorData = extractorData
+                        )
+                    )
+                } else {
+                    listOf(
                         ExtractorLink(
                             caller.name,
                             caller.name,
-                            stream.url,
+                            file,
                             caller.mainUrl,
-                            getQualityFromName(stream.quality.toString()),
-                            true,
+                            getQualityFromName(this.label),
+                            false,
                             extractorData = extractorData
                         )
-                    }
-                } else {
-                    listOf(ExtractorLink(
-                        caller.name,
-                        this.label?.let { "${caller.name} - $it" } ?: caller.name,
-                        file,
-                        caller.mainUrl,
-                        getQualityFromName(this.type ?: ""),
-                        false,
-                        extractorData = extractorData
-                    ))
+                    )
                 }
             }
         }
 
-        fun Tracks.toSubtitleFile(): SubtitleFile? {
+        private fun SflixProvider.Tracks.toSubtitleFile(): SubtitleFile? {
             return this.file?.let {
                 SubtitleFile(
                     this.label ?: "Unknown",
@@ -629,15 +650,15 @@ open class YesMoviesProvider : MainAPI() {
             }
         }
 
-
         suspend fun MainAPI.extractRabbitStream(
             url: String,
             subtitleCallback: (SubtitleFile) -> Unit,
             callback: (ExtractorLink) -> Unit,
+            useSidAuthentication: Boolean,
             /** Used for extractorLink name, input: Source name */
             extractorData: String? = null,
-            nameTransformer: (String) -> String
-        ) {
+            nameTransformer: (String) -> String,
+        ) = suspendSafeApiCall {
             // https://rapid-cloud.ru/embed-6/dcPOVRE57YOT?z= -> https://rapid-cloud.ru/embed-6
             val mainIframeUrl =
                 url.substringBeforeLast("/")
@@ -652,20 +673,21 @@ open class YesMoviesProvider : MainAPI() {
                 Regex("""recaptchaNumber = '(.*?)'""").find(iframe.text)?.groupValues?.get(1)
 
             var sid: String? = null
+            if (useSidAuthentication && extractorData != null) {
+                negotiateNewSid(extractorData)?.also {
+                    app.post(
+                        "$extractorData&t=${generateTimeStamp()}&sid=${it.sid}",
+                        requestBody = "40".toRequestBody(),
+                        timeout = 60
+                    )
+                    val text = app.get(
+                        "$extractorData&t=${generateTimeStamp()}&sid=${it.sid}",
+                        timeout = 60
+                    ).text.replaceBefore("{", "")
 
-            extractorData?.let { negotiateNewSid(it) }?.also {
-                app.post(
-                    "$extractorData&t=${generateTimeStamp()}&sid=${it.sid}",
-                    json = "40",
-                    timeout = 60
-                )
-                val text = app.get(
-                    "$extractorData&t=${generateTimeStamp()}&sid=${it.sid}",
-                    timeout = 60
-                ).text.replaceBefore("{", "")
-
-                sid = parseJson<PollingData>(text).sid
-                Coroutines.ioSafe { app.get("$extractorData&t=${generateTimeStamp()}&sid=${it.sid}") }
+                    sid = parseJson<PollingData>(text).sid
+                    Coroutines.ioSafe { app.get("$extractorData&t=${generateTimeStamp()}&sid=${it.sid}") }
+                }
             }
 
             val mapped = app.get(
@@ -674,7 +696,7 @@ open class YesMoviesProvider : MainAPI() {
                         "/embed",
                         "/ajax/embed"
                     )
-                }/getSources?id=$mainIframeId&_token=$iframeToken&_number=$number${sid?.let { "&sid=$it" } ?: ""}",
+                }/getSources?id=$mainIframeId&_token=$iframeToken&_number=$number${sid?.let { "$&sId=$it" } ?: ""}",
                 referer = mainUrl,
                 headers = mapOf(
                     "X-Requested-With" to "XMLHttpRequest",
@@ -689,7 +711,7 @@ open class YesMoviesProvider : MainAPI() {
 //                        "Cache-Control" to "no-cache",
                     "TE" to "trailers"
                 )
-            ).parsed<SourceObject>()
+            ).parsed<SflixProvider.SourceObject>()
 
             mapped.tracks?.forEach { track ->
                 track?.toSubtitleFile()?.let { subtitleFile ->
@@ -703,8 +725,8 @@ open class YesMoviesProvider : MainAPI() {
                 mapped.sources2 to "source 3",
                 mapped.sourcesBackup to "source backup"
             )
-            list.apmap { subList ->
-                subList.first?.apmap { source ->
+            list.forEach { subList ->
+                subList.first?.forEach { source ->
                     source?.toExtractorLink(
                         this,
                         nameTransformer(subList.second),
@@ -720,4 +742,5 @@ open class YesMoviesProvider : MainAPI() {
         }
     }
 }
+
 

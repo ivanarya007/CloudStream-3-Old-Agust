@@ -5,6 +5,7 @@ import com.lagradost.cloudstream3.extractors.Vidstream
 import com.lagradost.cloudstream3.utils.ExtractorLink
 import com.lagradost.cloudstream3.utils.extractorApis
 import com.lagradost.cloudstream3.utils.getQualityFromName
+import com.lagradost.cloudstream3.utils.loadExtractor
 import org.jsoup.Jsoup
 import java.net.URI
 import java.util.*
@@ -144,7 +145,7 @@ open class AnimeIDProviderTemplate : MainAPI() {
 
     // This loads the homepage, which is basically a collection of search results with labels.
     // Optional function, but make sure to enable hasMainPage if you program this.
-    override suspend fun getMainPage(): HomePageResponse {
+    override suspend fun getMainPage(page: Int, request : MainPageRequest): HomePageResponse {
         val urls = homePageUrlList
         val homePageList = ArrayList<HomePageList>()
         // .pmap {} is used to fetch the different pages in parallel
@@ -210,13 +211,7 @@ open class AnimeIDProviderTemplate : MainAPI() {
         val iframe = fixUrl(doc.selectFirst("div.play-video iframe")?.attr("src")!!)
         app.get(iframe).document.select("ul.list-server-items li").apmap {
             val url = it.attr("data-video")
-            for (extractor in extractorApis) {
-                if (url.startsWith(extractor.mainUrl)) {
-                    extractor.getSafeUrl(url, data)?.apmap {
-                        callback(it)
-                    }
-                }
-            }
+            loadExtractor(url, subtitleCallback, callback)
         }
         return true
     }

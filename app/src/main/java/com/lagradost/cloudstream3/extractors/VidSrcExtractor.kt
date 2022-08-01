@@ -22,7 +22,7 @@ class VidSrcExtractor2 : VidSrcExtractor() {
 }
 
 open class VidSrcExtractor : ExtractorApi() {
-    override val name = "VidSrc"
+    override var name = "VidSrc"
     private val absoluteUrl = "https://v2.vidsrc.me"
     override val mainUrl = "$absoluteUrl/embed"
     override val requiresReferer = false

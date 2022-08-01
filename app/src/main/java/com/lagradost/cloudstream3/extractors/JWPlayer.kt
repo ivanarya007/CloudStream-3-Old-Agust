@@ -9,32 +9,32 @@ import com.lagradost.cloudstream3.utils.Qualities
 import com.lagradost.cloudstream3.utils.getQualityFromName
 
 class Meownime : JWPlayer() {
-    override val name = "Meownime"
+    override var name = "Meownime"
     override val mainUrl = "https://meownime.ltd"
 }
 
 class DesuOdchan : JWPlayer() {
-    override val name = "DesuOdchan"
+    override var name = "DesuOdchan"
     override val mainUrl = "https://desustream.me/odchan/"
 }
 
 class DesuArcg : JWPlayer() {
-    override val name = "DesuArcg"
+    override var name = "DesuArcg"
     override val mainUrl = "https://desustream.me/arcg/"
 }
 
 class DesuDrive : JWPlayer() {
-    override val name = "DesuDrive"
+    override var name = "DesuDrive"
     override val mainUrl = "https://desustream.me/desudrive/"
 }
 
 class DesuOdvip : JWPlayer() {
-    override val name = "DesuOdvip"
+    override var name = "DesuOdvip"
     override val mainUrl = "https://desustream.me/odvip/"
 }
 
 open class JWPlayer : ExtractorApi() {
-    override val name = "JWPlayer"
+    override var name = "JWPlayer"
     override val mainUrl = "https://www.jwplayer.com"
     override val requiresReferer = false
 

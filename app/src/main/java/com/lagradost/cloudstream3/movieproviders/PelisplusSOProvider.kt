@@ -20,7 +20,7 @@ class PelisplusSOProvider:MainAPI() {
         TvType.Movie,
         TvType.TvSeries,
     )
-    override suspend fun getMainPage(): HomePageResponse {
+    override suspend fun getMainPage(page: Int, request : MainPageRequest): HomePageResponse {
         val items = ArrayList<HomePageList>()
         val urls = listOf(
             Pair("$mainUrl/series", "Series actualizadas",),
@@ -214,11 +214,12 @@ class PelisplusSOProvider:MainAPI() {
         lang: String,
         referer: String,
         callback: (ExtractorLink) -> Unit,
+        subtitleCallback: (SubtitleFile) -> Unit
     ):Boolean {
         for (extractor in extractorApis) {
             if (url.startsWith(extractor.mainUrl)) {
-                extractor.getSafeUrl(url, referer)?.apmap {
-                    it.name += " $lang"
+                extractor.getSafeUrl2(url)?.apmap {
+                    extractor.name += " $lang"
                     callback(it)
                 }
             }
@@ -246,10 +247,10 @@ class PelisplusSOProvider:MainAPI() {
                     getPelisStream(url, lang ,callback)
                     doc.select("ul.list-server-items li").map {
                         val secondurl = fixUrl(it.attr("data-video"))
-                        loadExtractor2(secondurl, lang, data, callback)
+                        loadExtractor2(secondurl, lang, data, callback, subtitleCallback)
                     }
                 }
-                loadExtractor2(url, lang, data, callback)
+                loadExtractor2(url, lang, data, callback, subtitleCallback)
             }
         }
         return true

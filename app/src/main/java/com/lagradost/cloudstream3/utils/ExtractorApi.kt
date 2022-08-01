@@ -7,6 +7,7 @@ import com.lagradost.cloudstream3.USER_AGENT
 import com.lagradost.cloudstream3.app
 import com.lagradost.cloudstream3.extractors.*
 import com.lagradost.cloudstream3.mvvm.logError
+import com.lagradost.cloudstream3.mvvm.suspendSafeApiCall
 import kotlinx.coroutines.delay
 import org.jsoup.Jsoup
 
@@ -33,7 +34,7 @@ fun Long.toUs(): Long {
  * */
 data class ExtractorLinkPlayList(
     override val source: String,
-    override val name: String,
+    override var name: String,
     val playlist: List<PlayListItem>,
     override val referer: String,
     override val quality: Int,
@@ -56,7 +57,7 @@ data class ExtractorLinkPlayList(
 
 open class ExtractorLink(
     open val source: String,
-    open val name: String,
+    open var name: String,
     override val url: String,
     override val referer: String,
     open val quality: Int,
@@ -199,25 +200,16 @@ val extractorApis: Array<ExtractorApi> = arrayOf(
     VizcloudXyz(),
     VizcloudLive(),
     VizcloudInfo(),
-    MwvnVizcloudInfo(),
     VizcloudDigital(),
     VizcloudCloud(),
-    VizcloudSite(),
+
     VideoVard(),
     VideovardSX(),
     Mp4Upload(),
     StreamTape(),
-
-    //mixdrop extractors
-    MixDropBz(),
-    MixDropCh(),
-    MixDropTo(),
-
     MixDrop(),
-
-    Mcloud(),
+    MixDrop1(),
     XStreamCdn(),
-
     StreamSB(),
     StreamSB1(),
     StreamSB2(),
@@ -229,23 +221,43 @@ val extractorApis: Array<ExtractorApi> = arrayOf(
     StreamSB8(),
     StreamSB9(),
     StreamSB10(),
-    SBfull(),
-    // Streamhub(), cause Streamhub2() works
+    //Streamhub(),
     Streamhub2(),
 
+    Tomatomatela(),
+    Cinestart(),
+
+    Solidfiles(),
+    Solidfiles1(),
+
+    Sendvid(),
+    Sendvid1(),
+
     FEmbed(),
+    Femax20(),
     FeHD(),
     Fplayer(),
-    DBfilm(),
-    Luxubu(),
-    LayarKaca(),
-    //  WatchSB(), 'cause StreamSB.kt works
+    Suzihaza(),
+    // WatchSB(),
+    // Watchsb1(),
+    // Watchsb2(),
+    // Watchsb3(),
+    //  Watchsb4(),
     Uqload(),
     Uqload1(),
     Evoload(),
     Evoload1(),
     VoeExtractor(),
-    // UpstreamExtractor(), GenericM3U8.kt works
+    //  UpstreamExtractor(),
+    Upstream(),
+
+    Jawcloud(),
+
+
+    OkRu(),
+
+    Videobin(),
+    Videobin1(),
 
     Tomatomatela(),
     Cinestart(),
@@ -253,17 +265,18 @@ val extractorApis: Array<ExtractorApi> = arrayOf(
     OkRuHttps(),
 
     // dood extractors
-    DoodCxExtractor(),
-    DoodPmExtractor(),
     DoodToExtractor(),
     DoodSoExtractor(),
     DoodLaExtractor(),
     DoodWsExtractor(),
     DoodShExtractor(),
-    DoodWatchExtractor(),
+    DoodCxExtractor(),
+    DoodPmExtractor(),
 
     AsianLoad(),
 
+    YourUpload(),
+    Mcloud(),
     // GenericM3U8(),
     Jawcloud(),
     Zplayer(),
@@ -305,15 +318,11 @@ val extractorApis: Array<ExtractorApi> = arrayOf(
     DesuDrive(),
 
     Filesim(),
-    Linkbox(),
-    Acefile(),
-    SpeedoStream(),
 
     YoutubeExtractor(),
     YoutubeShortLinkExtractor(),
-    Streamlare(),
-    VidSrcExtractor(),
-    VidSrcExtractor2(),
+
+    Fastream(),
 )
 
 fun getExtractorApiFromName(name: String): ExtractorApi {
@@ -368,13 +377,13 @@ suspend fun getPostForm(requestUrl: String, html: String): String? {
 }
 
 abstract class ExtractorApi {
-    abstract val name: String
+    abstract var name: String
     abstract val mainUrl: String
     abstract val requiresReferer: Boolean
 
-    //suspend fun getSafeUrl(url: String, referer: String? = null): List<ExtractorLink>? {
-    //    return suspendSafeApiCall { getUrl(url, referer) }
-    //}
+    suspend fun getSafeUrl2(url: String, referer: String? = null): List<ExtractorLink>? {
+        return suspendSafeApiCall { getUrl(url, referer) }
+    }
 
     // this is the new extractorapi, override to add subtitles and stuff
     open suspend fun getUrl(

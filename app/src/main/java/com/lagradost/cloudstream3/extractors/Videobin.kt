@@ -8,7 +8,7 @@ class Videobin1: Videobin() {
 }
 
 open class Videobin : ExtractorApi() {
-    override val name = "Videobin m3u8"
+    override var name = "Videobin m3u8"
     override val mainUrl = "https://videobin.co"
     override val requiresReferer = false
 

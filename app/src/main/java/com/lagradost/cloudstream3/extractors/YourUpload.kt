@@ -6,7 +6,7 @@ import com.lagradost.cloudstream3.app
 
 
 open class YourUpload : ExtractorApi() {
-    override val name = "YourUpload"
+    override var name = "YourUpload"
     override val mainUrl = "https://www.yourupload.com"
     override val requiresReferer = false
 
