@@ -293,5 +293,11 @@
      <string name="sync_total_episodes_none">/??</string>
      <string name="authenticated_user" formatted="true">Autenticado %s</string>
      <string name="authenticated_user_fail" formatted="true">No se ha podido autenticar %s</string>
-
+     <string name="next">Siguiente</string>
+     <string name="previous">Anterior</string>
+     <string name="skip_setup">Saltar</string>
+     <string name="provider_languages_tip">Mira videos en estos idiomas</string>
+     <string name="preferred_media_subtext">Selecciona tu preferencia</string>
+     <string name="app_layout_subtext">Cambia la apariencia de la app para tu dispositivo</string>
+     <string name="setup_done">Listo</string>
 </resources>
