@@ -5,7 +5,7 @@ import com.lagradost.cloudstream3.utils.ExtractorLink
 import com.lagradost.cloudstream3.utils.loadExtractor
 
 class ElifilmsProvider : MainAPI() {
-    override var mainUrl: String = "https://elifilms.net"
+    override var mainUrl: String = "https://elifilms.org"
     override var name: String = "Elifilms"
     override var lang = "es"
     override val hasMainPage = true

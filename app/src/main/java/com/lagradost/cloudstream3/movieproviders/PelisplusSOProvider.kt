@@ -218,7 +218,7 @@ class PelisplusSOProvider:MainAPI() {
     ):Boolean {
         for (extractor in extractorApis) {
             if (url.startsWith(extractor.mainUrl)) {
-                extractor.getSafeUrl2(url)?.apmap {
+                extractor.getSafeUrl2(url)?.forEach {
                     extractor.name += " $lang"
                     callback(it)
                 }

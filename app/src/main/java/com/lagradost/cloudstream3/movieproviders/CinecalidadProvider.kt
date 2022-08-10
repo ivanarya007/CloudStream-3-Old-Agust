@@ -149,7 +149,7 @@ class CinecalidadProvider : MainAPI() {
         val datatext = datam.text
 
         doc.select(".dooplay_player_option").apmap {
-            val url = it.attr("data-option")
+            val url = it.attr("data-option").replace("youtube","")
             if (url.startsWith("https://cinestart.net")) {
                 val extractor = Cinestart()
                 extractor.getSafeUrl(url, null, subtitleCallback, callback)
